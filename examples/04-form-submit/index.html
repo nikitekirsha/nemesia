@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Form submit</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>Reusable Form Submit</h1>
+      <p>Fields are discovered automatically, validated by data-attributes, and submitted to endpoint from options.</p>
+
+      <form class="card stack" novalidate data-form data-form-endpoint="/api/forms/contact" data-form-success-text="Request accepted.">
+        <div>
+          <div class="label">Full Name</div>
+
+          <input
+            class="input"
+            data-form-field
+            data-validate="personName"
+            data-required-message="Name is required."
+            data-error-message="Use letters, spaces, apostrophe or dash."
+            name="fullName"
+            placeholder="Jane Doe"
+            required
+          />
+
+          <div class="error" data-error-for="fullName"></div>
+        </div>
+
+        <div>
+          <div class="label">Email</div>
+
+          <input
+            class="input"
+            data-form-field
+            data-validate="email"
+            data-required-message="Email is required."
+            data-error-message="Please provide a valid email."
+            name="email"
+            type="email"
+            placeholder="jane@company.com"
+            required
+          />
+
+          <div class="error" data-error-for="email"></div>
+        </div>
+
+        <div>
+          <div class="label">Message</div>
+
+          <textarea
+            class="textarea"
+            data-form-field
+            data-validate="message"
+            data-required-message="Message is required."
+            data-error-message="Message should be at least 10 characters."
+            name="message"
+            rows="4"
+            placeholder="Tell us about your use case"
+            required
+          ></textarea>
+
+          <div class="error" data-error-for="message"></div>
+        </div>
+
+        <div class="row">
+          <button class="btn btn--primary" data-submit type="submit">Send</button>
+          <span class="badge" data-status>idle</span>
+        </div>
+
+        <div data-response class="stack"></div>
+      </form>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

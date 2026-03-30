@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product catalog</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>Catalog: filters, pagination, counter, buy</h1>
+      <p>A realistic composed scenario with nested components and orchestration.</p>
+
+      <section class="card catalog" data-catalog data-catalog-page-size="6">
+        <div class="catalog__filters row">
+          <label class="stack catalog__filter">
+            <span class="label">Search</span>
+            <input class="input" data-catalog-query value="" placeholder="Find products" />
+          </label>
+
+          <label class="stack catalog__filter">
+            <span class="label">Category</span>
+            <select class="select" data-catalog-category>
+              <option value="all">All</option>
+              <option value="books">Books</option>
+              <option value="devices">Devices</option>
+              <option value="accessories">Accessories</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="row catalog__toolbar">
+          <span class="badge" data-catalog-meta>0 items</span>
+          <span class="badge" data-catalog-loading>idle</span>
+        </div>
+
+        <div class="catalog__grid" data-catalog-grid>
+          <article class="catalog__card" data-product-card data-product-id="book-1" data-product-price="25" data-product-stock="5" data-current-qty="1">
+            <div class="stack">
+              <strong>Getting Things Done</strong>
+              <span class="badge">books</span>
+            </div>
+            <div class="row" data-product-counter data-counter-start="1" data-counter-step="1" data-counter-max="5">
+              <button class="btn" data-counter-minus type="button">-</button>
+              <output class="badge" data-counter-value>1</output>
+              <button class="btn" data-counter-plus type="button">+</button>
+            </div>
+            <div class="row">
+              <button class="btn btn--primary" data-product-buy type="button">Buy</button>
+              <span class="badge" data-product-status>idle</span>
+            </div>
+          </article>
+
+          <article class="catalog__card" data-product-card data-product-id="device-1" data-product-price="199" data-product-stock="4" data-current-qty="1">
+            <div class="stack">
+              <strong>Noise-canceling Headphones</strong>
+              <span class="badge">devices</span>
+            </div>
+            <div class="row" data-product-counter data-counter-start="1" data-counter-step="1" data-counter-max="4">
+              <button class="btn" data-counter-minus type="button">-</button>
+              <output class="badge" data-counter-value>1</output>
+              <button class="btn" data-counter-plus type="button">+</button>
+            </div>
+            <div class="row">
+              <button class="btn btn--primary" data-product-buy type="button">Buy</button>
+              <span class="badge" data-product-status>idle</span>
+            </div>
+          </article>
+        </div>
+
+        <button class="btn" data-catalog-more type="button">Show more</button>
+      </section>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

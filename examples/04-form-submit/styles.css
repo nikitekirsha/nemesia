@@ -1,0 +1,9 @@
+@import '../shared.css';
+
+[data-form][data-loading='true'] {
+  opacity: .72;
+}
+
+[data-response] {
+  min-height: 22px;
+}

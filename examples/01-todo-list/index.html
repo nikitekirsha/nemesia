@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Todo list</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>Todo List</h1>
+      <p>Simple Todo App over existing SSR markup.</p>
+
+      <section
+        class="card todo"
+        data-todo
+        data-todo-max="8"
+        data-todo-trim="true"
+        data-todo-done-label="completed"
+      >
+        <form class="row" data-todo-form>
+          <input class="input" data-todo-input placeholder="Add task" />
+          <button class="btn btn--primary" data-todo-submit type="submit">Add</button>
+        </form>
+
+        <ul class="todo__list" data-todo-list>
+          <li data-id="a1" data-done="false">
+            <label class="row"><input type="checkbox" /> Buy milk</label>
+            <button class="btn" data-remove>Remove</button>
+          </li>
+
+          <li data-id="a2" data-done="true">
+            <label class="row"><input type="checkbox" checked /> Read docs</label>
+            <button class="btn" data-remove>Remove</button>
+          </li>
+        </ul>
+
+        <div class="row">
+	        <button class="btn" data-todo-clear-done type="button">Clear done</button>
+          <span class="badge" data-todo-meta>1 completed / 2 total</span>
+        </div>
+      </section>
+    </main>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

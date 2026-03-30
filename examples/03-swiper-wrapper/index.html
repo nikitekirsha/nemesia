@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Swiper wrapper</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="page">
+      <h1>Swiper wrapper</h1>
+      <p>Example of integrating external library lifecycle with mount/unmount.</p>
+
+      <section class="card stack">
+        <div class="row">
+          <button class="btn" id="toggle-carousel" type="button">Toggle carousel node</button>
+          <span class="badge" id="shell-meta">mounted</span>
+        </div>
+
+        <div id="carousel-host">
+          <section data-swiper-widget data-swiper-per-view="1" data-swiper-loop="false">
+            <div class="swiper" data-swiper-viewport>
+              <div class="swiper-wrapper">
+                <div class="swiper-slide">Slide A</div>
+                <div class="swiper-slide">Slide B</div>
+                <div class="swiper-slide">Slide C</div>
+              </div>
+            </div>
+
+            <div class="row">
+              <button class="btn" data-swiper-prev type="button">Prev</button>
+              <button class="btn btn--primary" data-swiper-next type="button">Next</button>
+              <span class="badge" data-swiper-status>index 0</span>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

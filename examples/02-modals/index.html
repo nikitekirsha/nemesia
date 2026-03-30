@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Modals</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body data-modals data-modals-close-on-esc="true">
+    <main class="page">
+      <h1>Modals with distributed triggers</h1>
+      <p>Triggers can live in unrelated places. Component root is body.</p>
+
+      <section class="card stack">
+        <div class="row">
+          <button class="btn btn--primary" data-modals-trigger="help" type="button">Open Help</button>
+          <button class="btn" data-modals-trigger="pricing" type="button">Open Pricing</button>
+        </div>
+
+        <div class="row">
+          <button class="btn" data-modals-trigger="release" type="button">Open Release Notes</button>
+        </div>
+      </section>
+
+      <footer class="card row">
+        <span class="badge">Footer trigger:</span>
+        <button class="btn" data-modals-trigger="help" type="button">Need Help?</button>
+      </footer>
+    </main>
+
+    <dialog data-modal-id="help">
+      <h2>Help</h2>
+      <p>Use selectors + schema, then mount once.</p>
+      <button class="btn" data-modal-close type="button">Close</button>
+    </dialog>
+
+    <dialog data-modal-id="pricing">
+      <h2>Pricing</h2>
+      <p>Starter, Pro, Enterprise.</p>
+      <button class="btn" data-modal-close type="button">Close</button>
+    </dialog>
+
+    <dialog data-modal-id="release">
+      <h2>Release Notes</h2>
+      <p>v0.1 - New runtime orchestration.</p>
+      <button class="btn" data-modal-close type="button">Close</button>
+    </dialog>
+
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,35 @@
+@import '../shared.css';
+
+.todo {
+  display: grid;
+  gap: 12px;
+}
+
+.todo__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+
+.todo__list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background-color: var(--surface-soft);
+}
+
+.todo__list .row {
+  flex-grow: 1;
+  padding: 16px 0;
+}
+
+.todo__list li[data-done='true'] label {
+  color: var(--muted);
+  text-decoration: line-through;
+}
