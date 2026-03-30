@@ -1,6 +1,6 @@
 {
   "name": "nemesia",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A tiny library for binding declarative JS components to existing HTML.",
   "main": "./dist/nemesia.js",
   "module": "./dist/nemesia.js",

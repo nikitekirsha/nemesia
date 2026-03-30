@@ -49,7 +49,7 @@ app.mount(document)
 ## Usage (UMD)
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/nemesia@0.1.0/dist/nemesia.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nemesia/dist/nemesia.umd.js"></script>
 
 <script>
   const { createApplication, defineComponent, getRef, getOption } = window.Nemesia
