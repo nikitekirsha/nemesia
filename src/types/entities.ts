@@ -38,7 +38,11 @@ export interface ComponentSchema<Refs extends RefSchema = RefSchema, Options ext
   readonly options: Options
 }
 
-type RefElement<Tag extends RefTag | undefined> = Tag extends RefTag ? HTMLElementTagNameMap[Tag] : HTMLElement
+type RefElement<Tag extends RefTag | undefined> = [Tag] extends [undefined]
+  ? HTMLElement
+  : [Extract<Tag, RefTag>] extends [never]
+    ? HTMLElement
+    : HTMLElementTagNameMap[Extract<Tag, RefTag>]
 
 export type ResolvedRef<
   Tag extends RefTag | undefined,

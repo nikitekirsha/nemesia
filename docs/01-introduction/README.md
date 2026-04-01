@@ -3,7 +3,7 @@
 ## What is Nemesia?
 
 Nemesia is a small runtime for attaching JavaScript behavior to existing HTML.
-It is useful for SSR/MPA pages where markup already exists and you want progressive enhancement.
+It is useful for SSR/MPA pages where markup already exists, and you want progressive enhancement.
 
 You define components declaratively, then mount them onto matching DOM nodes.
 
