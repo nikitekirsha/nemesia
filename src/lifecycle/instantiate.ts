@@ -8,6 +8,8 @@ import { reportWarning } from '../runtime/errors'
 import type {
   AnyComponentDefinition,
   ComponentContext,
+  ComputedContext,
+  ComputedMap,
   InternalComponentInstance,
   MethodsMap,
   StateMap
@@ -29,6 +31,26 @@ export function instantiateComponent(component: AnyComponentDefinition, element:
   const initialState: StateMap = createInitialState(component)
   const store = createStateStore(initialState)
 
+  const computedCtx: ComputedContext<Record<string, unknown>, Record<string, unknown>, StateMap> = {
+    element,
+    refs: refsResult.value,
+    options: optionsResult.value,
+    state: store.state
+  }
+
+  let computed: ComputedMap = {}
+
+  if (component.computed) {
+    try {
+      computed = (component.computed(computedCtx as never) ?? {}) as ComputedMap
+    } catch (e) {
+      reportWarning(component.name, 'computed factory failed', e)
+      store.teardown()
+
+      return null
+    }
+  }
+
   const mountHooks: Array<() => void> = []
   const refreshHooks: Array<() => void> = []
   const unmountHooks: Array<() => void> = []
@@ -46,11 +68,12 @@ export function instantiateComponent(component: AnyComponentDefinition, element:
     return dispose
   }
 
-  const ctx: ComponentContext<Record<string, unknown>, Record<string, unknown>, StateMap, MethodsMap> = {
+  const ctx: ComponentContext<Record<string, unknown>, Record<string, unknown>, StateMap, MethodsMap, ComputedMap> = {
     element,
     refs: refsResult.value,
     options: optionsResult.value,
     state: store.state,
+    computed,
     methods: {},
     setState(patch) {
       store.setState(patch)

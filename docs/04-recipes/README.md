@@ -4,6 +4,25 @@
 
 Use `watch(..., { immediate: true })` to render once on mount and then on every state change.
 
+## Computed values in methods
+
+Use `computed` for reusable derived values and consume them in `methods` and `setup`:
+
+```ts
+computed: (ctx) => ({
+  get canSubmit() {
+    return ctx.state.items.length > 0
+  }
+}),
+methods: (ctx) => ({
+  updateButton() {
+    ctx.refs.submit.disabled = !ctx.computed.canSubmit
+  }
+})
+```
+
+This keeps methods simpler and reduces cross-calls between `ctx.methods.*`.
+
 ## Optional refs
 
 Use optional refs for elements that may not exist in every template variant:

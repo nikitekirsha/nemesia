@@ -18,6 +18,7 @@ Defines a typed component contract.
 ## Optional fields
 
 - `state: () => State`
+- `computed: (ctx) => Computed`
 - `methods: (ctx) => Methods`
 - `setup: (ctx) => void`
 
@@ -33,6 +34,11 @@ const component = defineComponent({
     options: {}
   },
   state: () => ({ open: false }),
+  computed: (ctx) => ({
+    get rootOpen() {
+      return ctx.state.open
+    }
+  }),
   methods: (ctx) => ({
     toggle() {
       ctx.state.open = !ctx.state.open
@@ -40,7 +46,7 @@ const component = defineComponent({
   }),
   setup(ctx) {
     ctx.watch('open', () => {
-      ctx.refs.root.toggleAttribute('data-open', ctx.state.open)
+      ctx.refs.root.toggleAttribute('data-open', ctx.computed.rootOpen)
     }, { immediate: true })
   }
 })

@@ -8,6 +8,7 @@
 - `ctx.refs`
 - `ctx.options`
 - `ctx.state`
+- `ctx.computed`
 - `ctx.methods`
 
 ## State helpers
@@ -40,3 +41,14 @@ Runs before teardown.
 
 ### cleanup(dispose)
 Registers custom cleanup callback for unmount.
+
+## `computed(ctx)` context
+
+Inside `computed`, only read context is available:
+
+- `ctx.element`
+- `ctx.refs`
+- `ctx.options`
+- `ctx.state`
+
+`ctx.methods` and `ctx.computed` are intentionally unavailable there.

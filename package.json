@@ -1,6 +1,6 @@
 {
   "name": "nemesia",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "A tiny library for binding declarative JS components to existing HTML.",
   "main": "./dist/nemesia.js",
   "module": "./dist/nemesia.js",
@@ -23,7 +23,7 @@
     "test": "vitest run --coverage",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit && tsc --noEmit --target ES2022 --module ESNext --moduleResolution Bundler --lib ES2022,DOM examples/**/*.ts",
-    "example": "vite examples/$npm_config_id --open"
+    "example": "vite examples/$npm_config_id"
   },
   "repository": {
     "type": "git",

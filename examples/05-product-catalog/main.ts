@@ -20,6 +20,13 @@ interface CatalogState {
   requestId: number
 }
 
+interface ProductCardState {
+  qty: number
+  buying: boolean
+  message: string
+  kind: 'idle' | 'success' | 'error'
+}
+
 interface FetchProductsParams {
   query: string
   category: Category
@@ -82,27 +89,33 @@ async function buyProduct(payload: { id: string; qty: number; stock: number }): 
 function cardMarkup(product: Product): string {
   return `
     <article
-      class="catalog__card"
+      class="catalog-card"
       data-product-card
       data-product-id="${product.id}"
       data-product-price="${product.price}"
       data-product-stock="${product.stock}"
       data-current-qty="1"
     >
-      <div class="stack">
-        <strong>${product.title}</strong>
-        <span class="badge">${product.category} • $${product.price}</span>
+      <div class="grid gap-1.5">
+        <strong class="catalog-title">${product.title}</strong>
+        <span class="demo-badge">${product.category} • $${product.price}</span>
       </div>
 
-      <div class="row" data-product-counter data-counter-start="1" data-counter-step="1" data-counter-max="${Math.min(10, product.stock)}">
-        <button class="btn" data-counter-minus type="button">-</button>
-        <output class="badge" data-counter-value>1</output>
-        <button class="btn" data-counter-plus type="button">+</button>
+      <div
+        class="counter-row"
+        data-counter-max="${Math.min(10, product.stock)}"
+        data-counter-start="1"
+        data-counter-step="1"
+        data-product-counter
+      >
+        <button class="counter-btn" data-counter-minus type="button">-</button>
+        <input class="counter-value" data-counter-value value="1" readonly />
+        <button class="counter-btn" data-counter-plus type="button">+</button>
       </div>
 
-      <div class="row">
-        <button class="btn btn--primary" data-product-buy type="button">Buy</button>
-        <span class="badge" data-product-status>idle</span>
+      <div class="mt-auto grid gap-2">
+        <button class="demo-btn demo-btn-primary" data-product-buy type="button">Buy</button>
+        <span class="status-chip" data-product-status>idle</span>
       </div>
     </article>
   `
@@ -115,7 +128,7 @@ const productCounter = defineComponent({
       root: getRef('[data-product-counter]', 'div'),
       minus: getRef('[data-counter-minus]', 'button'),
       plus: getRef('[data-counter-plus]', 'button'),
-      value: getRef('[data-counter-value]', 'output')
+      value: getRef('[data-counter-value]', 'input')
     },
     options: {
       start: getOption('data-counter-start', { type: 'number', default: 1 }),
@@ -124,9 +137,23 @@ const productCounter = defineComponent({
     }
   },
   state: () => ({ qty: 1 }),
+  computed: (ctx) => ({
+    get hostCard() {
+      return ctx.refs.root.closest('[data-product-card]') as HTMLElement | null
+    },
+    get qtyText() {
+      return String(ctx.state.qty)
+    },
+    get canDecrement() {
+      return ctx.state.qty > 1
+    },
+    get canIncrement() {
+      return ctx.state.qty < ctx.options.max
+    }
+  }),
   methods: (ctx) => ({
     publish() {
-      const card = ctx.refs.root.closest('[data-product-card]') as HTMLElement | null
+      const card = ctx.computed.hostCard
 
       if (!card) {
         return
@@ -136,9 +163,9 @@ const productCounter = defineComponent({
       card.dispatchEvent(new CustomEvent('catalog:qty-change', { detail: { qty: ctx.state.qty } }))
     },
     updateUI() {
-      ctx.refs.value.textContent = String(ctx.state.qty)
-      ctx.refs.minus.disabled = ctx.state.qty <= 1
-      ctx.refs.plus.disabled = ctx.state.qty >= ctx.options.max
+      ctx.refs.value.value = ctx.computed.qtyText
+      ctx.refs.minus.disabled = !ctx.computed.canDecrement
+      ctx.refs.plus.disabled = !ctx.computed.canIncrement
     },
     increment() {
       ctx.state.qty = Math.min(ctx.state.qty + ctx.options.step, ctx.options.max)
@@ -173,31 +200,46 @@ const productCard = defineComponent({
       stock: getOption('data-product-stock', 'number')
     }
   },
-  state: () => ({
+  state: (): ProductCardState => ({
     qty: 1,
     buying: false,
     message: 'idle',
-    kind: 'idle' as 'idle' | 'success' | 'error'
+    kind: 'idle'
   }),
-  methods: (ctx) => ({
-    syncQty() {
+  computed: (ctx) => ({
+    get syncedQty() {
       const counter = ctx.refs.root.querySelector('[data-product-counter]') as Element | null
 
       if (!counter) {
-        return
+        return 1
       }
 
       const counterInstance = app.getInstance(counter)
       const qty = Number((counterInstance?.ctx.state as { qty?: number } | undefined)?.qty ?? 1)
 
-      ctx.state.qty = Number.isFinite(qty) ? qty : 1
+      return Number.isFinite(qty) ? qty : 1
+    },
+    get buyLabel() {
+      return ctx.state.buying ? 'Buying...' : `Buy (${ctx.state.qty})`
+    }
+  }),
+  methods: (ctx) => ({
+    syncQty() {
+      ctx.state.qty = ctx.computed.syncedQty
     },
     updateUI() {
       ctx.refs.buy.disabled = ctx.state.buying
-      ctx.refs.buy.textContent = ctx.state.buying ? 'Buying...' : `Buy (${ctx.state.qty})`
-
+      ctx.refs.buy.textContent = ctx.computed.buyLabel
       ctx.refs.status.textContent = ctx.state.message
       ctx.refs.status.setAttribute('data-kind', ctx.state.kind)
+      const base = 'status-chip'
+      const idle = ''
+      const success = ' status-chip-success'
+      const error = ' status-chip-error'
+
+      ctx.refs.status.className = `${base}${
+        ctx.state.kind === 'success' ? success : ctx.state.kind === 'error' ? error : idle
+      }`
     },
     async buy() {
       if (ctx.state.buying) {
@@ -263,6 +305,26 @@ const catalog = defineComponent({
     loading: false,
     requestId: 0
   }),
+  computed: (ctx) => ({
+    get metaText() {
+      const visible = ctx.state.items.length
+      const total = ctx.state.total || visible
+
+      return `${visible} / ${total} items`
+    },
+    get hasMore() {
+      return ctx.state.items.length < ctx.state.total
+    },
+    get loadingText() {
+      return ctx.state.loading ? 'loading...' : 'idle'
+    },
+    get moreButtonText() {
+      return ctx.state.items.length < ctx.state.total ? 'Show more' : 'No more products'
+    },
+    get nextPage() {
+      return ctx.state.page + 1
+    }
+  }),
   methods: (ctx) => ({
     markupToState(): Product[] {
       const cards = Array.from(ctx.refs.grid.querySelectorAll('[data-product-card]'))
@@ -270,19 +332,18 @@ const catalog = defineComponent({
       return cards.map((card) => ({
         id: card.getAttribute('data-product-id') ?? crypto.randomUUID(),
         title: card.querySelector('strong')?.textContent ?? 'Unknown',
-        category: (card.querySelector('.badge')?.textContent?.split('•')[0].trim() ?? 'accessories') as Product['category'],
+        category: (card.querySelector('.demo-badge')?.textContent?.split('•')[0].trim() ?? 'accessories') as Product['category'],
         price: Number(card.getAttribute('data-product-price') ?? 0),
         stock: Number(card.getAttribute('data-product-stock') ?? 1)
       }))
     },
     updateUI() {
       ctx.refs.root.toggleAttribute('data-loading', ctx.state.loading)
-      ctx.refs.loading.textContent = ctx.state.loading ? 'loading...' : 'idle'
-      ctx.refs.meta.textContent = `${ctx.state.items.length} / ${ctx.state.total || ctx.state.items.length} items`
-
-      const hasMore = ctx.state.items.length < ctx.state.total
-      ctx.refs.more.disabled = ctx.state.loading || !hasMore
-      ctx.refs.more.textContent = hasMore ? 'Show more' : 'No more products'
+      ctx.refs.root.classList.toggle('opacity-70', ctx.state.loading)
+      ctx.refs.loading.textContent = ctx.computed.loadingText
+      ctx.refs.meta.textContent = ctx.computed.metaText
+      ctx.refs.more.disabled = ctx.state.loading || !ctx.computed.hasMore
+      ctx.refs.more.textContent = ctx.computed.moreButtonText
     },
     updateUIGrid() {
       ctx.refs.grid.innerHTML = ctx.state.items.map(cardMarkup).join('')
@@ -339,17 +400,11 @@ const catalog = defineComponent({
     })
 
     ctx.on(ctx.refs.more, 'click', () => {
-      if (ctx.state.loading) {
+      if (ctx.state.loading || !ctx.computed.hasMore) {
         return
       }
 
-      const hasMore = ctx.state.items.length < ctx.state.total
-
-      if (!hasMore) {
-        return
-      }
-
-      ctx.methods.loadPage(ctx.state.page + 1, false)
+      ctx.methods.loadPage(ctx.computed.nextPage, false)
     })
 
     ctx.cleanup(() => {

@@ -20,18 +20,18 @@ declare const Swiper: new (
 ) => SwiperInstance
 
 const carouselMarkup = `
-  <section data-swiper-widget data-swiper-per-view="1" data-swiper-loop="true">
-    <div class="swiper" data-swiper-viewport>
+  <section class="grid gap-3" data-swiper-widget data-swiper-per-view="1" data-swiper-loop="true">
+    <div class="swiper w-full max-w-xs overflow-hidden rounded-xl border border-slate-300" data-swiper-viewport>
       <div class="swiper-wrapper">
-        <div class="swiper-slide">Slide A</div>
-        <div class="swiper-slide">Slide B</div>
-        <div class="swiper-slide">Slide C</div>
+        <div class="swiper-slide grid !h-40 place-items-center bg-slate-100 text-lg font-semibold text-slate-800">Slide A</div>
+        <div class="swiper-slide grid !h-40 place-items-center bg-slate-100 text-lg font-semibold text-slate-800">Slide B</div>
+        <div class="swiper-slide grid !h-40 place-items-center bg-slate-100 text-lg font-semibold text-slate-800">Slide C</div>
       </div>
     </div>
-    <div class="row">
-      <button class="btn" data-swiper-prev type="button">Prev</button>
-      <button class="btn btn--primary" data-swiper-next type="button">Next</button>
-      <span class="badge" data-swiper-status>index 0</span>
+    <div class="demo-row">
+      <button class="demo-btn" data-swiper-prev type="button">Prev</button>
+      <button class="demo-btn demo-btn-primary" data-swiper-next type="button">Next</button>
+      <span class="demo-badge" data-swiper-status>index 0</span>
     </div>
   </section>
 `

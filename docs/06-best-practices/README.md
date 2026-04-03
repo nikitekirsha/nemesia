@@ -120,17 +120,21 @@ setup() {
 ## 5. Keep methods decoupled
 
 - Prefer independent methods with minimal cross-calls.
-- If your method is used across other methods, move it above your component.
+- If the logic is a derived value from refs/options/state, prefer moving it into `computed`.
+- If your method is used across other methods and is not derived state, move it above your component.
 - For one-time logic, inline it where it's used.
 - Cross-calling `ctx.methods.*` is allowed, but in non-strict TS projects inference may be weaker inside `methods(...)`.
 
 **Do**
 ```ts
-const normalizeQuery = (value: string) => value.trim().toLowerCase()
-
+computed: (ctx) => ({
+  get normalizedQuery() {
+    return ctx.state.query.trim().toLowerCase()
+  }
+}),
 methods: (ctx) => ({
   search() {
-    return normalizeQuery(ctx.state.query)
+    return ctx.computed.normalizedQuery
   }
 })
 ```

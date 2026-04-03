@@ -3,6 +3,8 @@ import type {
   AnyRefDescriptor,
   ComponentDefinition,
   ComponentContext,
+  ComputedFactory,
+  ComputedMap,
   MethodsFactory,
   MethodsMap,
   ResolvedOptions,
@@ -36,6 +38,7 @@ export interface DefineComponentInput<
   Refs extends Record<string, AnyRefDescriptor>,
   Options extends Record<string, AnyOptionDescriptor>,
   State extends StateMap,
+  Computed extends ComputedMap,
   Methods extends MethodsMap
 > {
   /**
@@ -55,17 +58,23 @@ export interface DefineComponentInput<
    */
   state?: () => State
   /**
+   * Creates per-instance computed values.
+   *
+   * Returned values are available in both `ctx.computed` inside methods/setup.
+   */
+  computed?: ComputedFactory<Refs, Options, State, Computed>
+  /**
    * Creates component methods bound to typed runtime context.
    *
    * Returned methods are available in both `ctx.methods` and `setup(ctx)`.
    */
-  methods?: MethodsFactory<Refs, Options, State, Methods>
+  methods?: MethodsFactory<Refs, Options, State, Methods, Computed>
   /**
    * Runs after refs/options are resolved and methods are created.
    *
    * Use this for event bindings, watchers and lifecycle hooks.
    */
-  setup?: (ctx: ComponentContext<ResolvedRefs<Refs>, ResolvedOptions<Options>, State, Methods>) => void
+  setup?: (ctx: ComponentContext<ResolvedRefs<Refs>, ResolvedOptions<Options>, State, Methods, Computed>) => void
 }
 
 function assertRootRef(definition: { name: string; schema: { refs: Record<string, { many: boolean; optional: boolean }> } }): void {
@@ -90,8 +99,9 @@ export function defineComponent<
   const Refs extends Record<string, AnyRefDescriptor>,
   const Options extends Record<string, AnyOptionDescriptor>,
   State extends StateMap = StateMap,
+  Computed extends ComputedMap = ComputedMap,
   Methods extends MethodsMap = MethodsMap
->(definition: DefineComponentInput<Refs, Options, State, Methods>): ComponentDefinition<Refs, Options, State, Methods> {
+>(definition: DefineComponentInput<Refs, Options, State, Computed, Methods>): ComponentDefinition<Refs, Options, State, Computed, Methods> {
   if (!definition || typeof definition !== 'object') {
     throw new Error('[Nemesia] component definition must be an object')
   }

@@ -7,6 +7,7 @@ A Nemesia component is defined by:
 - `schema.refs`: DOM references (selectors)
 - `schema.options`: values from `data-*` attributes
 - `state`: local mutable state
+- `computed`: derived values from refs/options/state
 - `methods`: reusable logic bound to context
 - `setup`: wiring watchers/events/hooks
 
@@ -31,11 +32,17 @@ The rest of the app continues working.
 
 Inside `methods` and `setup`, you work with `ctx`:
 
-- `ctx.refs`, `ctx.options`, `ctx.state`, `ctx.methods`
+- `ctx.refs`, `ctx.options`, `ctx.state`, `ctx.computed`, `ctx.methods`
 - `ctx.on(...)` for events (auto-cleaned on unmount)
 - `ctx.watch(...)` for state subscriptions
 - `ctx.onMount/onRefresh/onUnmount`
 - `ctx.cleanup(...)` for custom disposal
+
+Inside `computed`, context is intentionally narrower:
+
+- `ctx.element`, `ctx.refs`, `ctx.options`, `ctx.state`
+- no `ctx.methods`
+- no `ctx.computed`
 
 ## 5) Application orchestration
 

@@ -22,7 +22,7 @@ const FIELD_VALIDATIONS: Record<string, ValidationRule> = {
   },
   message: {
     fieldTypes: ['textarea', 'text'],
-    regex: /^.{10,500}$/s,
+    regex: /^.{10,500}$/,
     message: 'Message should be 10-500 characters.'
   }
 }
@@ -168,6 +168,7 @@ const formSubmitComponent = defineComponent({
 
     updateStatus() {
       ctx.refs.root.toggleAttribute('data-loading', ctx.state.loading)
+      ctx.refs.root.classList.toggle('opacity-75', ctx.state.loading)
 
       if (ctx.refs.submit) {
         ctx.refs.submit.disabled = ctx.state.loading
@@ -179,7 +180,16 @@ const formSubmitComponent = defineComponent({
 
       if (ctx.refs.response) {
         ctx.refs.response.textContent = ctx.state.response
-        ctx.refs.response.className = ctx.state.responseType === 'success' ? 'success' : ctx.state.responseType === 'error' ? 'error' : ''
+        const base = 'response-box'
+        const success = ' response-box-success'
+        const error = ' response-box-error'
+
+        ctx.refs.response.className =
+          ctx.state.responseType === 'success'
+            ? `${base}${success}`
+            : ctx.state.responseType === 'error'
+              ? `${base}${error}`
+              : base
       }
     }
   }),

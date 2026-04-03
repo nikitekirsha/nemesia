@@ -26,9 +26,14 @@ const counter = defineComponent({
     }
   },
   state: () => ({ count: 0 }),
+  computed: (ctx) => ({
+    get label() {
+      return `Count: ${ctx.state.count}`
+    }
+  }),
   methods: (ctx) => ({
     updateUI() {
-      ctx.refs.value.textContent = String(ctx.state.count)
+      ctx.refs.value.textContent = ctx.computed.label
     },
     increment() {
       ctx.state.count += ctx.options.step
@@ -64,6 +69,13 @@ Public methods from `nemesia`:
 - `createApplication({ observeDomChanges? })`
 - `getRef(selector, tagOrConfig?)`
 - `getOption(attribute, typeOrConfig?)`
+
+Component definition fields:
+
+- `state?: () => State`
+- `computed?: (ctx) => Computed`
+- `methods?: (ctx) => Methods`
+- `setup?: (ctx) => void`
 
 Application instance methods:
 

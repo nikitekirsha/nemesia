@@ -19,9 +19,34 @@ const component = defineComponent({
     count: 0,
     loading: false
   }),
+  computed(ctx) {
+    const endpoint: string = ctx.options.endpoint
+    void endpoint
+
+    // @ts-expect-error computed context does not expose methods
+    const badMethods = ctx.methods
+    void badMethods
+
+    return {
+      get doubled() {
+        return ctx.state.count * 2
+      },
+      get endpointLabel() {
+        return `${ctx.options.endpoint}:${ctx.state.count}`
+      },
+      firstItem: ctx.refs.many[0] ?? null
+    }
+  },
   methods(ctx) {
     const stateCount: number = ctx.state.count
+    const doubled: number = ctx.computed.doubled
+    const firstItem: HTMLLIElement | null = ctx.computed.firstItem
+    // @ts-expect-error computed value is number
+    const badComputed: string = ctx.computed.doubled
     void stateCount
+    void doubled
+    void firstItem
+    void badComputed
 
     return {
       increment() {
@@ -38,6 +63,7 @@ const component = defineComponent({
     const endpoint: string = ctx.options.endpoint
     const method: () => void = ctx.methods.increment
     const status: string = ctx.methods.status()
+    const endpointLabel: string = ctx.computed.endpointLabel
     // @ts-expect-error status method returns string
     const badStatus: number = ctx.methods.status()
 
@@ -46,6 +72,7 @@ const component = defineComponent({
     void endpoint
     void method
     void status
+    void endpointLabel
     void badStatus
 
     ctx.on(document, 'keydown', (event) => {

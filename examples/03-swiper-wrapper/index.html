@@ -1,44 +1,71 @@
 <!doctype html>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Swiper wrapper</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main class="page">
-      <h1>Swiper wrapper</h1>
-      <p>Example of integrating external library lifecycle with mount/unmount.</p>
+    <link href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-      <section class="card stack">
-        <div class="row">
-          <button class="btn" id="toggle-carousel" type="button">Toggle carousel node</button>
-          <span class="badge" id="shell-meta">mounted</span>
+    <style type="text/tailwindcss">
+      @layer components {
+        .demo-page { @apply min-h-screen bg-slate-100 p-6 text-slate-900; }
+        .demo-wrap { @apply mx-auto max-w-4xl space-y-4; }
+        .demo-title { @apply text-2xl font-semibold; }
+        .demo-subtitle { @apply text-sm text-slate-600; }
+        .demo-panel { @apply rounded-xl border border-slate-300 bg-white p-4 space-y-3; }
+        .demo-row { @apply flex flex-wrap items-center gap-2; }
+        .demo-btn { @apply inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800; }
+        .demo-btn-primary { @apply border-blue-600 bg-blue-600 text-white; }
+        .demo-badge { @apply inline-flex items-center rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-600; }
+      }
+    </style>
+  </head>
+
+  <body class="demo-page">
+    <div class="demo-wrap">
+      <h1 class="demo-title">Swiper wrapper</h1>
+      <p class="demo-subtitle">Example of integrating external library lifecycle with mount/unmount.</p>
+
+      <section class="demo-panel">
+        <div class="demo-row">
+          <button class="demo-btn" id="toggle-carousel" type="button">
+            Add carousel node
+          </button>
+
+          <span class="demo-badge" id="shell-meta">mounted</span>
         </div>
 
         <div id="carousel-host">
-          <section data-swiper-widget data-swiper-per-view="1" data-swiper-loop="false">
-            <div class="swiper" data-swiper-viewport>
+          <section
+            class="grid gap-3"
+            data-swiper-widget
+            data-swiper-loop="false"
+            data-swiper-per-view="1"
+          >
+            <div
+              class="swiper w-full max-w-xs overflow-hidden rounded-xl border border-slate-300"
+              data-swiper-viewport
+            >
               <div class="swiper-wrapper">
-                <div class="swiper-slide">Slide A</div>
-                <div class="swiper-slide">Slide B</div>
-                <div class="swiper-slide">Slide C</div>
+                <div class="swiper-slide !h-40 grid place-items-center bg-slate-100 text-lg font-semibold text-slate-800">Slide A</div>
+                <div class="swiper-slide !h-40 grid place-items-center bg-slate-100 text-lg font-semibold text-slate-800">Slide B</div>
+                <div class="swiper-slide !h-40 grid place-items-center bg-slate-100 text-lg font-semibold text-slate-800">Slide C</div>
               </div>
             </div>
 
-            <div class="row">
-              <button class="btn" data-swiper-prev type="button">Prev</button>
-              <button class="btn btn--primary" data-swiper-next type="button">Next</button>
-              <span class="badge" data-swiper-status>index 0</span>
+            <div class="demo-row">
+              <button class="demo-btn" data-swiper-prev type="button">Prev</button>
+              <button class="demo-btn demo-btn-primary" data-swiper-next type="button">Next</button>
+              <span class="demo-badge" data-swiper-status>index 0</span>
             </div>
           </section>
         </div>
       </section>
-    </main>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script type="module" src="./main.ts"></script>
+    <script src="./main.ts" type="module"></script>
   </body>
 </html>

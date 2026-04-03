@@ -80,6 +80,7 @@ export type ResolvedOptions<Options extends OptionSchema> = {
 
 export type MethodsMap = Record<string, (...args: any[]) => unknown>
 export type StateMap = Record<string, any>
+export type ComputedMap = Record<string, unknown>
 type InternalMethodsMap = Record<string, (...args: any[]) => any>
 
 export interface WatchConfig {
@@ -88,13 +89,12 @@ export interface WatchConfig {
 }
 
 /**
- * Runtime context available in `methods(ctx)` and `setup(ctx)`.
+ * Read-only context available in `computed(ctx)`.
  */
-export interface ComponentContext<
+export interface ComputedContext<
   Refs extends Record<string, unknown> = Record<string, unknown>,
   Options extends Record<string, unknown> = Record<string, unknown>,
-  State extends StateMap = StateMap,
-  Methods extends MethodsMap = MethodsMap
+  State extends StateMap = StateMap
 > {
   /** Component root element instance was mounted on. */
   readonly element: Element
@@ -104,6 +104,28 @@ export interface ComponentContext<
   readonly options: Options
   /** Mutable component state object. */
   readonly state: State
+}
+
+/**
+ * Runtime context available in `methods(ctx)` and `setup(ctx)`.
+ */
+export interface ComponentContext<
+  Refs extends Record<string, unknown> = Record<string, unknown>,
+  Options extends Record<string, unknown> = Record<string, unknown>,
+  State extends StateMap = StateMap,
+  Methods extends MethodsMap = MethodsMap,
+  Computed extends ComputedMap = ComputedMap
+> {
+  /** Component root element instance was mounted on. */
+  readonly element: Element
+  /** Resolved refs defined in `schema.refs`. */
+  readonly refs: Refs
+  /** Resolved options defined in `schema.options`. */
+  readonly options: Options
+  /** Mutable component state object. */
+  readonly state: State
+  /** Computed values returned from `computed(ctx)`. */
+  readonly computed: Computed
   /** Methods returned from `methods(ctx)`. */
   methods: Methods
   /** Applies a partial state patch. */
@@ -165,21 +187,31 @@ export interface ComponentDefinition<
   Refs extends RefSchema = RefSchema,
   Options extends OptionSchema = OptionSchema,
   State extends StateMap = StateMap,
+  Computed extends ComputedMap = ComputedMap,
   Methods extends MethodsMap = MethodsMap
 > {
   readonly name: string
   readonly schema: ComponentSchema<Refs, Options>
   readonly state?: () => State
-  readonly methods?: MethodsFactory<Refs, Options, State, Methods>
-  readonly setup?: (ctx: ComponentContext<ResolvedRefs<Refs>, ResolvedOptions<Options>, State, Methods>) => void
+  readonly computed?: ComputedFactory<Refs, Options, State, Computed>
+  readonly methods?: MethodsFactory<Refs, Options, State, Methods, Computed>
+  readonly setup?: (ctx: ComponentContext<ResolvedRefs<Refs>, ResolvedOptions<Options>, State, Methods, Computed>) => void
 }
+
+export type ComputedFactory<
+  Refs extends RefSchema,
+  Options extends OptionSchema,
+  State extends StateMap,
+  Computed extends ComputedMap
+> = (ctx: ComputedContext<ResolvedRefs<Refs>, ResolvedOptions<Options>, State>) => Computed
 
 export type MethodsFactory<
   Refs extends RefSchema,
   Options extends OptionSchema,
   State extends StateMap,
-  Methods extends MethodsMap
-> = (ctx: ComponentContext<ResolvedRefs<Refs>, ResolvedOptions<Options>, State, InternalMethodsMap>) => Methods
+  Methods extends MethodsMap,
+  Computed extends ComputedMap
+> = (ctx: ComponentContext<ResolvedRefs<Refs>, ResolvedOptions<Options>, State, InternalMethodsMap, Computed>) => Methods
 
 export type AnyComponentDefinition = any
 

@@ -1,26 +1,54 @@
 <!doctype html>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Product catalog</title>
-    <link rel="stylesheet" href="./styles.css" />
-  </head>
-  <body>
-    <main class="page">
-      <h1>Catalog: filters, pagination, counter, buy</h1>
-      <p>A realistic composed scenario with nested components and orchestration.</p>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
 
-      <section class="card catalog" data-catalog data-catalog-page-size="6">
-        <div class="catalog__filters row">
-          <label class="stack catalog__filter">
-            <span class="label">Search</span>
-            <input class="input" data-catalog-query value="" placeholder="Find products" />
+    <style type="text/tailwindcss">
+      @layer components {
+        .demo-page { @apply min-h-screen bg-slate-100 p-6 text-slate-900; }
+        .demo-wrap { @apply mx-auto max-w-4xl space-y-4; }
+        .demo-title { @apply text-2xl font-semibold; }
+        .demo-subtitle { @apply text-sm text-slate-600; }
+        .demo-panel { @apply rounded-xl border border-slate-300 bg-white p-4 space-y-3; }
+        .demo-row { @apply flex flex-wrap items-center gap-2; }
+        .demo-btn { @apply inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800; }
+        .demo-btn-primary { @apply border-blue-600 bg-blue-600 text-white; }
+        .demo-input { @apply h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900; }
+        .demo-select { @apply h-10 w-full rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900; }
+        .demo-badge { @apply inline-flex items-center rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-600; }
+        .catalog-grid { @apply grid grid-cols-1 gap-3 md:grid-cols-2; }
+        .catalog-card { @apply flex flex-col gap-2 rounded-lg border border-slate-200 bg-slate-50 p-3; }
+        .catalog-title { @apply text-xl font-semibold leading-tight text-slate-900; }
+        .counter-row { @apply flex items-center gap-2; }
+        .counter-btn { @apply inline-flex h-10 w-10 items-center justify-center rounded-lg border border-slate-300 bg-white text-base font-semibold text-slate-700; }
+        .counter-value { @apply h-10 w-14 rounded-lg border border-slate-300 bg-white px-2 text-center text-sm font-semibold text-slate-800; }
+        .status-chip { @apply block w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-600; }
+        .status-chip-success { @apply border-emerald-300 bg-emerald-50 text-emerald-700; }
+        .status-chip-error { @apply border-rose-300 bg-rose-50 text-rose-700; }
+      }
+    </style>
+  </head>
+
+  <body class="demo-page">
+    <div class="demo-wrap">
+      <h1 class="demo-title">Catalog: filters, pagination, counter, buy</h1>
+      <p class="demo-subtitle">Nested components with filters, pagination and buy flow.</p>
+
+      <section class="demo-panel" data-catalog data-catalog-page-size="6">
+        <div class="grid gap-3 md:grid-cols-2">
+          <label class="grid gap-1.5">
+            <span class="text-sm font-medium text-slate-700">Search</span>
+            <input class="demo-input" data-catalog-query placeholder="Find products" value="" />
           </label>
 
-          <label class="stack catalog__filter">
-            <span class="label">Category</span>
-            <select class="select" data-catalog-category>
+          <label class="grid gap-1.5">
+            <span class="text-sm font-medium text-slate-700">Category</span>
+
+            <select class="demo-select" data-catalog-category>
               <option value="all">All</option>
               <option value="books">Books</option>
               <option value="devices">Devices</option>
@@ -29,49 +57,79 @@
           </label>
         </div>
 
-        <div class="row catalog__toolbar">
-          <span class="badge" data-catalog-meta>0 items</span>
-          <span class="badge" data-catalog-loading>idle</span>
+        <div class="demo-row justify-between">
+          <span class="demo-badge" data-catalog-meta>0 items</span>
+          <span class="demo-badge" data-catalog-loading>idle</span>
         </div>
 
-        <div class="catalog__grid" data-catalog-grid>
-          <article class="catalog__card" data-product-card data-product-id="book-1" data-product-price="25" data-product-stock="5" data-current-qty="1">
-            <div class="stack">
-              <strong>Getting Things Done</strong>
-              <span class="badge">books</span>
+        <div class="catalog-grid" data-catalog-grid>
+          <article
+            class="catalog-card"
+            data-current-qty="1"
+            data-product-card
+            data-product-id="book-1"
+            data-product-price="25"
+            data-product-stock="5"
+          >
+            <div class="grid gap-1.5">
+              <strong class="catalog-title">Getting Things Done</strong>
+              <span class="demo-badge">books</span>
             </div>
-            <div class="row" data-product-counter data-counter-start="1" data-counter-step="1" data-counter-max="5">
-              <button class="btn" data-counter-minus type="button">-</button>
-              <output class="badge" data-counter-value>1</output>
-              <button class="btn" data-counter-plus type="button">+</button>
+
+            <div
+              class="counter-row"
+              data-counter-max="5"
+              data-counter-start="1"
+              data-counter-step="1"
+              data-product-counter
+            >
+              <button class="counter-btn" data-counter-minus type="button">-</button>
+              <input class="counter-value" data-counter-value readonly value="1" />
+              <button class="counter-btn" data-counter-plus type="button">+</button>
             </div>
-            <div class="row">
-              <button class="btn btn--primary" data-product-buy type="button">Buy</button>
-              <span class="badge" data-product-status>idle</span>
+
+            <div class="mt-auto grid gap-2">
+              <button class="demo-btn demo-btn-primary" data-product-buy type="button">Buy</button>
+              <span class="status-chip" data-product-status>idle</span>
             </div>
           </article>
 
-          <article class="catalog__card" data-product-card data-product-id="device-1" data-product-price="199" data-product-stock="4" data-current-qty="1">
-            <div class="stack">
-              <strong>Noise-canceling Headphones</strong>
-              <span class="badge">devices</span>
+          <article
+            class="catalog-card"
+            data-current-qty="1"
+            data-product-card
+            data-product-id="device-1"
+            data-product-price="199"
+            data-product-stock="4"
+          >
+            <div class="grid gap-1.5">
+              <strong class="catalog-title">Noise-canceling Headphones</strong>
+              <span class="demo-badge">devices</span>
             </div>
-            <div class="row" data-product-counter data-counter-start="1" data-counter-step="1" data-counter-max="4">
-              <button class="btn" data-counter-minus type="button">-</button>
-              <output class="badge" data-counter-value>1</output>
-              <button class="btn" data-counter-plus type="button">+</button>
+
+            <div
+              class="counter-row"
+              data-counter-max="4"
+              data-counter-start="1"
+              data-counter-step="1"
+              data-product-counter
+            >
+              <button class="counter-btn" data-counter-minus type="button">-</button>
+              <input class="counter-value" data-counter-value readonly value="1" />
+              <button class="counter-btn" data-counter-plus type="button">+</button>
             </div>
-            <div class="row">
-              <button class="btn btn--primary" data-product-buy type="button">Buy</button>
-              <span class="badge" data-product-status>idle</span>
+
+            <div class="mt-auto grid gap-2">
+              <button class="demo-btn demo-btn-primary" data-product-buy type="button">Buy</button>
+              <span class="status-chip" data-product-status>idle</span>
             </div>
           </article>
         </div>
 
-        <button class="btn" data-catalog-more type="button">Show more</button>
+        <button class="demo-btn" data-catalog-more type="button">Show more</button>
       </section>
-    </main>
+    </div>
 
-    <script type="module" src="./main.ts"></script>
+    <script src="./main.ts" type="module"></script>
   </body>
 </html>

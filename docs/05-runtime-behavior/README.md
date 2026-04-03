@@ -7,9 +7,10 @@ For each candidate root element:
 1. Resolve refs
 2. Resolve options
 3. Create state store
-4. Build methods
-5. Run setup
-6. Run mount hooks
+4. Build computed
+5. Build methods
+6. Run setup
+7. Run mount hooks
 
 If required schema validation fails at steps 1-2, instance is skipped.
 

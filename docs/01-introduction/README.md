@@ -44,10 +44,15 @@ const counter = defineComponent({
     }
   },
   state: () => ({ count: 0 }),
+  computed: (ctx) => ({
+    get isAtMin() {
+      return ctx.state.count <= 0
+    }
+  }),
   methods: (ctx) => ({
     render() {
       ctx.refs.value.textContent = String(ctx.state.count)
-      ctx.refs.minus.disabled = ctx.state.count <= 0
+      ctx.refs.minus.disabled = ctx.computed.isAtMin
     },
     increment() {
       ctx.state.count += ctx.options.step

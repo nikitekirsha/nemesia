@@ -1,47 +1,90 @@
 <!doctype html>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Todo list</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <style type="text/tailwindcss">
+      @layer components {
+        .demo-page { @apply min-h-screen bg-slate-100 p-6 text-slate-900; }
+        .demo-wrap { @apply mx-auto max-w-4xl space-y-4; }
+        .demo-title { @apply text-2xl font-semibold; }
+        .demo-subtitle { @apply text-sm text-slate-600; }
+        .demo-panel { @apply rounded-xl border border-slate-300 bg-white p-4 space-y-3; }
+        .demo-row { @apply flex flex-wrap items-center gap-2; }
+        .demo-btn { @apply inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800; }
+        .demo-btn-primary { @apply border-blue-600 bg-blue-600 text-white; }
+        .demo-input { @apply h-10 grow rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-900; }
+        .demo-badge { @apply inline-flex items-center rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-600; }
+        .todo-list { @apply grid gap-2 list-none; }
+        .todo-item { @apply flex items-center justify-between gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2; }
+        .todo-item-label { @apply flex grow items-center gap-2 text-sm text-slate-700; }
+        .todo-item-label-done { @apply text-slate-500 line-through; }
+      }
+    </style>
   </head>
-  <body>
-    <main class="page">
-      <h1>Todo List</h1>
-      <p>Simple Todo App over existing SSR markup.</p>
+
+  <body class="demo-page">
+    <div class="demo-wrap">
+      <h1 class="demo-title">Todo List</h1>
+      <p class="demo-subtitle">Simple Todo App over existing SSR markup.</p>
 
       <section
-        class="card todo"
+        class="demo-panel"
         data-todo
         data-todo-max="8"
         data-todo-trim="true"
         data-todo-done-label="completed"
       >
-        <form class="row" data-todo-form>
-          <input class="input" data-todo-input placeholder="Add task" />
-          <button class="btn btn--primary" data-todo-submit type="submit">Add</button>
+        <form class="demo-row" data-todo-form>
+          <input
+            class="demo-input"
+            data-todo-input
+            placeholder="Add task"
+          />
+
+          <button
+            class="demo-btn demo-btn-primary"
+            data-todo-submit
+            type="submit"
+          >
+            Add
+          </button>
         </form>
 
-        <ul class="todo__list" data-todo-list>
-          <li data-id="a1" data-done="false">
-            <label class="row"><input type="checkbox" /> Buy milk</label>
-            <button class="btn" data-remove>Remove</button>
+        <ul class="todo-list" data-todo-list>
+          <li class="todo-item" data-id="a1" data-done="false">
+            <label class="todo-item-label">
+              <input type="checkbox" />
+              Buy milk
+            </label>
+
+            <button class="demo-btn" data-remove type="button">Remove</button>
           </li>
 
-          <li data-id="a2" data-done="true">
-            <label class="row"><input type="checkbox" checked /> Read docs</label>
-            <button class="btn" data-remove>Remove</button>
+          <li class="todo-item" data-id="a2" data-done="true">
+            <label class="todo-item-label todo-item-label-done">
+              <input checked type="checkbox" />
+              Read docs
+            </label>
+
+            <button class="demo-btn" data-remove type="button">Remove</button>
           </li>
         </ul>
 
-        <div class="row">
-	        <button class="btn" data-todo-clear-done type="button">Clear done</button>
-          <span class="badge" data-todo-meta>1 completed / 2 total</span>
+        <div class="demo-row">
+          <button class="demo-btn" data-todo-clear-done type="button">
+            Clear done
+          </button>
+
+          <span class="demo-badge" data-todo-meta>1 completed / 2 total</span>
         </div>
       </section>
-    </main>
+    </div>
 
-    <script type="module" src="./main.ts"></script>
+    <script src="./main.ts" type="module"></script>
   </body>
 </html>

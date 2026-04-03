@@ -1,51 +1,86 @@
 <!doctype html>
+
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Modals</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <style type="text/tailwindcss">
+      @layer components {
+        .demo-page { @apply min-h-screen bg-slate-100 p-6 text-slate-900; }
+        .demo-wrap { @apply mx-auto max-w-4xl space-y-4; }
+        .demo-title { @apply text-2xl font-semibold; }
+        .demo-subtitle { @apply text-sm text-slate-600; }
+        .demo-panel { @apply rounded-xl border border-slate-300 bg-white p-4 space-y-3; }
+        .demo-row { @apply flex flex-wrap items-center gap-2; }
+        .demo-btn { @apply inline-flex h-10 items-center justify-center rounded-lg border border-slate-300 bg-white px-3 text-sm text-slate-800; }
+        .demo-btn-primary { @apply border-blue-600 bg-blue-600 text-white; }
+        .demo-badge { @apply inline-flex items-center rounded-full border border-slate-300 px-3 py-1 text-sm text-slate-600; }
+        .modal-box { @apply absolute left-1/2 top-1/2 -translate-1/2 w-full max-w-md rounded-xl border border-slate-300 p-4 shadow-xl backdrop:bg-slate-900/40; }
+      }
+    </style>
   </head>
-  <body data-modals data-modals-close-on-esc="true">
-    <main class="page">
-      <h1>Modals with distributed triggers</h1>
-      <p>Triggers can live in unrelated places. Component root is body.</p>
 
-      <section class="card stack">
-        <div class="row">
-          <button class="btn btn--primary" data-modals-trigger="help" type="button">Open Help</button>
-          <button class="btn" data-modals-trigger="pricing" type="button">Open Pricing</button>
-        </div>
+  <body
+    class="demo-page"
+    data-modals
+    data-modals-close-on-esc="true"
+  >
+    <div class="demo-wrap">
+      <h1 class="demo-title">Modals with distributed triggers</h1>
+      <p class="demo-subtitle">Triggers can live in unrelated places. Component root is body.</p>
 
-        <div class="row">
-          <button class="btn" data-modals-trigger="release" type="button">Open Release Notes</button>
+      <section class="demo-panel">
+        <div class="demo-row">
+          <button
+            class="demo-btn demo-btn-primary"
+            data-modals-trigger="help"
+            type="button"
+          >
+            Open Help
+          </button>
+
+          <button class="demo-btn" data-modals-trigger="pricing" type="button">
+            Open Pricing
+          </button>
+
+          <button class="demo-btn" data-modals-trigger="release" type="button">
+            Open Release Notes
+          </button>
         </div>
       </section>
 
-      <footer class="card row">
-        <span class="badge">Footer trigger:</span>
-        <button class="btn" data-modals-trigger="help" type="button">Need Help?</button>
-      </footer>
-    </main>
+      <div class="demo-panel">
+        <div class="demo-row">
+          <span class="demo-badge">Footer trigger:</span>
 
-    <dialog data-modal-id="help">
-      <h2>Help</h2>
-      <p>Use selectors + schema, then mount once.</p>
-      <button class="btn" data-modal-close type="button">Close</button>
+          <button class="demo-btn" data-modals-trigger="help" type="button">
+            Need Help?
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <dialog class="modal-box" data-modal-id="help">
+      <h2 class="mb-2 text-lg font-semibold">Help</h2>
+      <p class="mb-4 text-sm text-slate-600">Use selectors + schema, then mount once.</p>
+      <button class="demo-btn" data-modal-close type="button">Close</button>
     </dialog>
 
-    <dialog data-modal-id="pricing">
-      <h2>Pricing</h2>
-      <p>Starter, Pro, Enterprise.</p>
-      <button class="btn" data-modal-close type="button">Close</button>
+    <dialog class="modal-box" data-modal-id="pricing">
+      <h2 class="mb-2 text-lg font-semibold">Pricing</h2>
+      <p class="mb-4 text-sm text-slate-600">Starter, Pro, Enterprise.</p>
+      <button class="demo-btn" data-modal-close type="button">Close</button>
     </dialog>
 
-    <dialog data-modal-id="release">
-      <h2>Release Notes</h2>
-      <p>v0.1 - New runtime orchestration.</p>
-      <button class="btn" data-modal-close type="button">Close</button>
+    <dialog class="modal-box" data-modal-id="release">
+      <h2 class="mb-2 text-lg font-semibold">Release Notes</h2>
+      <p class="mb-4 text-sm text-slate-600">v0.1 - New runtime orchestration.</p>
+      <button class="demo-btn" data-modal-close type="button">Close</button>
     </dialog>
 
-    <script type="module" src="./main.ts"></script>
+    <script src="./main.ts" type="module"></script>
   </body>
 </html>

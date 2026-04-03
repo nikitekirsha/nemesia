@@ -49,11 +49,12 @@ const todoComponent = defineComponent({
         .map((item) => {
           const checked = item.done ? 'checked' : ''
           const done = item.done ? 'true' : 'false'
+          const labelClass = item.done ? 'todo-item-label todo-item-label-done' : 'todo-item-label'
 
           return `
-            <li data-id="${item.id}" data-done="${done}">
-              <label class="row"><input type="checkbox" ${checked} /> ${item.title}</label>
-              <button class="btn" data-remove type="button">Remove</button>
+            <li data-id="${item.id}" data-done="${done}" class="todo-item">
+              <label class="${labelClass}"><input type="checkbox" ${checked} /> ${item.title}</label>
+              <button class="demo-btn" data-remove type="button">Remove</button>
             </li>
           `
         })
