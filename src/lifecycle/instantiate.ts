@@ -22,7 +22,7 @@ export function instantiateComponent(component: AnyComponentDefinition, element:
     return null
   }
 
-  const optionsResult = resolveOptions(component.name, element, component.schema.options)
+  const optionsResult = resolveOptions(component.name, element, component.schema.options ?? {})
 
   if (!optionsResult.ok || !optionsResult.value) {
     return null

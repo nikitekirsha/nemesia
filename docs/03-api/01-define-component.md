@@ -10,13 +10,13 @@ Defines a typed component contract.
 
 - `name: string`
 - `schema.refs`
-- `schema.options`
 - `schema.refs.root`
 
 `root` must be required single ref.
 
 ## Optional fields
 
+- `schema.options?: Record<string, OptionDescriptor>`
 - `state: () => State`
 - `computed: (ctx) => Computed`
 - `methods: (ctx) => Methods`
@@ -30,8 +30,7 @@ const component = defineComponent({
   schema: {
     refs: {
       root: getRef('[data-demo]', 'section')
-    },
-    options: {}
+    }
   },
   state: () => ({ open: false }),
   computed: (ctx) => ({

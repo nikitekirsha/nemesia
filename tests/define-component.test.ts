@@ -25,7 +25,7 @@ describe('defineComponent', () => {
     expect(() => defineComponent({ ...(validDefinition() as any), name: '' })).toThrow('non-empty string')
     expect(() => defineComponent({ name: 'x' } as never)).toThrow('requires a schema')
     expect(() => defineComponent({ name: 'x', schema: { options: {} } } as never)).toThrow('requires schema.refs')
-    expect(() => defineComponent({ name: 'x', schema: { refs: {} } } as never)).toThrow('requires schema.options')
+    expect(() => defineComponent({ name: 'x', schema: { refs: {}, options: null } } as never)).toThrow('schema.options must be an object')
 
     const missingRoot = {
       ...validDefinition(),
@@ -46,5 +46,21 @@ describe('defineComponent', () => {
     }
 
     expect(() => defineComponent(optionalRoot as never)).toThrow('required single')
+  })
+
+  it('allows missing schema.options and normalizes it to empty object', () => {
+    const definition = {
+      name: 'without-options',
+      schema: {
+        refs: {
+          root: getRef('[data-without-options]', 'div')
+        }
+      }
+    }
+
+    const result = defineComponent(definition)
+
+    expect(result).toBe(definition)
+    expect(result.schema.options).toEqual({})
   })
 })

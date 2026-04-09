@@ -5,7 +5,7 @@
 A Nemesia component is defined by:
 
 - `schema.refs`: DOM references (selectors)
-- `schema.options`: values from `data-*` attributes
+- `schema.options` (optional): values from `data-*` attributes
 - `state`: local mutable state
 - `computed`: derived values from refs/options/state
 - `methods`: reusable logic bound to context

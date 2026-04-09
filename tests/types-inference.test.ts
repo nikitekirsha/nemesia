@@ -104,9 +104,27 @@ const component = defineComponent({
   }
 })
 
+const componentWithoutOptions = defineComponent({
+  name: 'types-no-options',
+  schema: {
+    refs: {
+      root: getRef('[data-types-no-options]', 'section')
+    }
+  },
+  setup(ctx) {
+    const options: {} = ctx.options
+    void options
+
+    // @ts-expect-error schema.options is omitted, options object has no endpoint key
+    const endpoint = ctx.options.endpoint
+    void endpoint
+  }
+})
+
 describe('type inference', () => {
   it('keeps strongly typed schema contracts', () => {
     expect(component.name).toBe('types-case')
+    expect(componentWithoutOptions.name).toBe('types-no-options')
   })
 })
 

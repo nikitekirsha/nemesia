@@ -28,7 +28,7 @@ export interface DefineComponentSchemaInput<
   /**
    * Declarative option descriptors created with `getOption(...)`.
    */
-  options: Options
+  options?: Options
 }
 
 /**
@@ -97,7 +97,7 @@ function assertRootRef(definition: { name: string; schema: { refs: Record<string
  */
 export function defineComponent<
   const Refs extends Record<string, AnyRefDescriptor>,
-  const Options extends Record<string, AnyOptionDescriptor>,
+  const Options extends Record<string, AnyOptionDescriptor> = {},
   State extends StateMap = StateMap,
   Computed extends ComputedMap = ComputedMap,
   Methods extends MethodsMap = MethodsMap
@@ -118,11 +118,13 @@ export function defineComponent<
     throw new Error(`[Nemesia] component "${definition.name}" requires schema.refs`)
   }
 
-  if (!definition.schema.options || typeof definition.schema.options !== 'object') {
-    throw new Error(`[Nemesia] component "${definition.name}" requires schema.options`)
+  if (definition.schema.options === undefined) {
+    ;(definition.schema as { options: Options }).options = {} as Options
+  } else if (!definition.schema.options || typeof definition.schema.options !== 'object') {
+    throw new Error(`[Nemesia] component "${definition.name}" schema.options must be an object`)
   }
 
   assertRootRef(definition)
 
-  return definition
+  return definition as ComponentDefinition<Refs, Options, State, Computed, Methods>
 }

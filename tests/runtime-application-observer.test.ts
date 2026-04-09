@@ -15,7 +15,11 @@ function createDemoComponent(name = 'demo', selector = '[data-demo]') {
         endpoint: getOption('data-endpoint', { optional: true })
       }
     },
-    state: () => ({ mounted: 0, refreshed: 0, unmounted: 0 }),
+    state: () => ({
+      mounted: 0,
+      refreshed: 0,
+      unmounted: 0
+    }),
     setup(ctx) {
       ctx.onMount(() => {
         ctx.state.mounted += 1
@@ -45,6 +49,7 @@ describe('component and instance registries', () => {
     const component = createDemoComponent('scope')
     const root = document.createElement('div')
     const section = document.createElement('section')
+
     root.append(section)
 
     const instance = {
@@ -124,6 +129,7 @@ describe('orchestrator + application', () => {
     const root = document.querySelector('[data-shared]') as Element
     const firstA = app.getInstance(root, componentA.name)
     const firstB = app.getInstance(root, componentB.name)
+
     expect(firstA).toBeDefined()
     expect(firstB).toBeDefined()
     expect(firstA).not.toBe(firstB)
@@ -143,8 +149,10 @@ describe('orchestrator + application', () => {
     expect((app.getInstance(root, componentB.name)?.ctx.state as any).refreshed).toBe(1)
 
     app.recreate(root, componentB.name)
+
     const recreatedA = app.getInstance(root, componentA.name)
     const recreatedB = app.getInstance(root, componentB.name)
+
     expect(recreatedA).toBe(firstA)
     expect(recreatedB).toBeDefined()
     expect(recreatedB).not.toBe(firstB)

@@ -11,6 +11,25 @@ function setupDom(): HTMLElement {
 }
 
 describe('instantiateComponent', () => {
+  it('supports missing schema.options in direct component shape', () => {
+    const root = document.createElement('section')
+    root.setAttribute('data-no-options-direct', '')
+
+    const component = {
+      name: 'no-options-direct',
+      schema: {
+        refs: {
+          root: getRef('[data-no-options-direct]', 'section')
+        }
+      }
+    }
+
+    const instance = instantiateComponent(component as never, root)
+
+    expect(instance).not.toBeNull()
+    expect(instance?.ctx.options).toEqual({})
+  })
+
   it('returns null when refs resolver reports empty value', () => {
     const root = document.createElement('div')
     const spy = vi.spyOn(refsResolver, 'resolveRefs').mockReturnValue({ ok: true } as never)

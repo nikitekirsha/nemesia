@@ -4,7 +4,7 @@ The guidelines help keeping Nemesia components predictable, scalable, and easy t
 
 ## 1. Define schema before behavior
 
-- Start each component by declaring `schema.refs` and `schema.options` first.
+- Start each component by declaring `schema.refs` first, and `schema.options` when runtime options are needed.
 - After that implement `methods`, `state` and `setup` based on that definition.
 - This keeps component explicit and avoids accidental behavior drift during HTML changes.
 
@@ -33,8 +33,7 @@ defineComponent({
   schema: {
     refs: {
       root: getRef('[data-cart]')
-    },
-    options: {}
+    }
   },
   setup(ctx) {
     // Hidden dependency outside schema.
