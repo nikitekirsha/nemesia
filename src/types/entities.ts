@@ -239,12 +239,12 @@ export interface Application {
   mount(root?: ParentNode): void
   /** Mounts new instances and refreshes already mounted ones. */
   reconcile(root?: ParentNode): void
-  /** Runs refresh hooks for a specific mounted element. */
-  refresh(element: Element): void
-  /** Unmounts instance on element and mounts a fresh one. */
-  recreate(element: Element): void
+  /** Runs refresh hooks for mounted component instance on specific element. */
+  refresh(element: Element, componentName: string): void
+  /** Unmounts component instance on element and mounts a fresh one. */
+  recreate(element: Element, componentName: string): void
   /** Unmounts and cleans up all instances inside provided scope. */
   destroy(root?: ParentNode): void
-  /** Returns mounted instance for element if present. */
-  getInstance(element: Element): InternalComponentInstance | undefined
+  /** Returns mounted instance for element + component pair if present. */
+  getInstance(element: Element, componentName: string): InternalComponentInstance | undefined
 }

@@ -4,6 +4,12 @@ import { createDomObserver } from './observer'
 import { createOrchestrator } from './orchestrator'
 import type { AnyComponentDefinition, Application, CreateApplicationOptions } from '../types/entities'
 
+function assertComponentName(componentName: string): void {
+  if (typeof componentName !== 'string' || componentName.trim() === '') {
+    throw new Error('[Nemesia] componentName is required')
+  }
+}
+
 export function createApplicationRuntime(options: CreateApplicationOptions = {}): Application {
   const components = new ComponentRegistry()
   const instances = new InstanceRegistry()
@@ -28,11 +34,13 @@ export function createApplicationRuntime(options: CreateApplicationOptions = {})
       ensureObserver()
       orchestrator.reconcile(root)
     },
-    refresh(element: Element) {
-      orchestrator.refresh(element)
+    refresh(element: Element, componentName: string) {
+      assertComponentName(componentName)
+      orchestrator.refresh(element, componentName)
     },
-    recreate(element: Element) {
-      orchestrator.recreate(element)
+    recreate(element: Element, componentName: string) {
+      assertComponentName(componentName)
+      orchestrator.recreate(element, componentName)
     },
     destroy(root?: ParentNode) {
       orchestrator.destroy(root)
@@ -41,8 +49,10 @@ export function createApplicationRuntime(options: CreateApplicationOptions = {})
         observer.stop()
       }
     },
-    getInstance(element: Element) {
-      return instances.get(element)
+    getInstance(element: Element, componentName: string) {
+      assertComponentName(componentName)
+
+      return instances.get(element, componentName)
     }
   }
 }

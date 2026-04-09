@@ -4,12 +4,12 @@ import { InstanceRegistry } from '../src/registry/instance-registry'
 import { createDomObserver } from '../src/runtime/observer'
 import { createOrchestrator } from '../src/runtime/orchestrator'
 
-function createDemoComponent(name = 'demo') {
+function createDemoComponent(name = 'demo', selector = '[data-demo]') {
   return defineComponent({
     name,
     schema: {
       refs: {
-        root: getRef('[data-demo]', 'section')
+        root: getRef(selector, 'section')
       },
       options: {
         endpoint: getOption('data-endpoint', { optional: true })
@@ -57,8 +57,9 @@ describe('component and instance registries', () => {
 
     instances.set(instance)
 
-    expect(instances.has(section)).toBe(true)
-    expect(instances.get(section)).toBe(instance)
+    expect(instances.has(section, component.name)).toBe(true)
+    expect(instances.has(section, 'missing')).toBe(false)
+    expect(instances.get(section, component.name)).toBe(instance)
     expect(instances.listInScope(document)).toEqual([instance])
     expect(instances.listInScope(root)).toEqual([instance])
 
@@ -66,7 +67,8 @@ describe('component and instance registries', () => {
 
     fragment.append(root)
     expect(instances.listInScope(fragment)).toEqual([instance])
-    instances.delete(section)
+    instances.delete(document.createElement('aside'), component.name)
+    instances.delete(section, component.name)
     expect(instances.list()).toEqual([])
   })
 })
@@ -81,33 +83,93 @@ describe('orchestrator + application', () => {
     app.mount(document)
 
     const root = document.querySelector('[data-demo]') as Element
-    const first = app.getInstance(root)
+    const first = app.getInstance(root, component.name)
     expect(first).toBeDefined()
     expect((first?.ctx.state as any).mounted).toBe(1)
 
     app.mount(document)
-    expect((app.getInstance(root)?.ctx.state as any).mounted).toBe(1)
+    expect((app.getInstance(root, component.name)?.ctx.state as any).mounted).toBe(1)
 
     app.reconcile(document)
-    expect((app.getInstance(root)?.ctx.state as any).refreshed).toBe(1)
+    expect((app.getInstance(root, component.name)?.ctx.state as any).refreshed).toBe(1)
 
-    app.refresh(root)
-    expect((app.getInstance(root)?.ctx.state as any).refreshed).toBe(2)
+    app.refresh(root, component.name)
+    expect((app.getInstance(root, component.name)?.ctx.state as any).refreshed).toBe(2)
 
-    app.recreate(root)
-    const recreated = app.getInstance(root)
+    app.recreate(root, component.name)
+    const recreated = app.getInstance(root, component.name)
     expect(recreated).toBeDefined()
     expect(recreated).not.toBe(first)
     expect((recreated?.ctx.state as any).mounted).toBe(1)
 
     app.destroy(root)
-    expect(app.getInstance(root)).toBeUndefined()
+    expect(app.getInstance(root, component.name)).toBeUndefined()
 
-    app.refresh(root)
-    app.recreate(root)
+    app.refresh(root, component.name)
+    app.recreate(root, component.name)
 
     app.mount(document)
     app.destroy()
+  })
+
+  it('supports two different components on one element without collisions', () => {
+    document.body.innerHTML = '<section data-shared data-endpoint="/shared"></section>'
+    const componentA = createDemoComponent('component-a', '[data-shared]')
+    const componentB = createDemoComponent('component-b', '[data-shared]')
+
+    const app = createApplication()
+    app.register(componentA).register(componentB)
+    app.mount(document)
+
+    const root = document.querySelector('[data-shared]') as Element
+    const firstA = app.getInstance(root, componentA.name)
+    const firstB = app.getInstance(root, componentB.name)
+    expect(firstA).toBeDefined()
+    expect(firstB).toBeDefined()
+    expect(firstA).not.toBe(firstB)
+    expect((firstA?.ctx.state as any).mounted).toBe(1)
+    expect((firstB?.ctx.state as any).mounted).toBe(1)
+
+    app.mount(document)
+    expect((app.getInstance(root, componentA.name)?.ctx.state as any).mounted).toBe(1)
+    expect((app.getInstance(root, componentB.name)?.ctx.state as any).mounted).toBe(1)
+
+    app.reconcile(document)
+    expect((app.getInstance(root, componentA.name)?.ctx.state as any).refreshed).toBe(1)
+    expect((app.getInstance(root, componentB.name)?.ctx.state as any).refreshed).toBe(1)
+
+    app.refresh(root, componentA.name)
+    expect((app.getInstance(root, componentA.name)?.ctx.state as any).refreshed).toBe(2)
+    expect((app.getInstance(root, componentB.name)?.ctx.state as any).refreshed).toBe(1)
+
+    app.recreate(root, componentB.name)
+    const recreatedA = app.getInstance(root, componentA.name)
+    const recreatedB = app.getInstance(root, componentB.name)
+    expect(recreatedA).toBe(firstA)
+    expect(recreatedB).toBeDefined()
+    expect(recreatedB).not.toBe(firstB)
+    expect((recreatedB?.ctx.state as any).mounted).toBe(1)
+
+    app.destroy(root)
+    expect(app.getInstance(root, componentA.name)).toBeUndefined()
+    expect(app.getInstance(root, componentB.name)).toBeUndefined()
+  })
+
+  it('throws when componentName is missing or blank in element-targeted API', () => {
+    const app = createApplication()
+    const element = document.createElement('div')
+
+    expect(() => (app.getInstance as any)(element)).toThrow('componentName is required')
+    expect(() => app.getInstance(element, '')).toThrow('componentName is required')
+    expect(() => app.getInstance(element, '   ')).toThrow('componentName is required')
+
+    expect(() => (app.refresh as any)(element)).toThrow('componentName is required')
+    expect(() => app.refresh(element, '')).toThrow('componentName is required')
+    expect(() => app.refresh(element, '   ')).toThrow('componentName is required')
+
+    expect(() => (app.recreate as any)(element)).toThrow('componentName is required')
+    expect(() => app.recreate(element, '')).toThrow('componentName is required')
+    expect(() => app.recreate(element, '   ')).toThrow('componentName is required')
   })
 
   it('isolates failures and keeps healthy components running', () => {
@@ -148,7 +210,7 @@ describe('orchestrator + application', () => {
     app.mount(document)
 
     const goodElement = document.querySelector('[data-good]') as Element
-    expect(app.getInstance(goodElement)).toBeDefined()
+    expect(app.getInstance(goodElement, good.name)).toBeDefined()
     expect(warn).toHaveBeenCalledTimes(1)
   })
 
@@ -163,17 +225,17 @@ describe('orchestrator + application', () => {
 
     const elementScope = document.querySelector('[data-demo]') as Element
     orchestrator.mount(elementScope)
-    expect(instances.get(elementScope)).toBeDefined()
+    expect(instances.get(elementScope, component.name)).toBeDefined()
 
-    instances.delete(elementScope)
+    instances.delete(elementScope, component.name)
     orchestrator.mount()
-    expect(instances.get(elementScope)).toBeDefined()
+    expect(instances.get(elementScope, component.name)).toBeDefined()
 
     const fragment = document.createDocumentFragment()
     const clone = elementScope.cloneNode(true) as Element
     fragment.append(clone)
     orchestrator.reconcile(fragment)
-    expect(instances.get(clone)).toBeDefined()
+    expect(instances.get(clone, component.name)).toBeDefined()
   })
 })
 

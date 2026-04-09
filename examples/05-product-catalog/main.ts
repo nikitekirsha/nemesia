@@ -214,7 +214,7 @@ const productCard = defineComponent({
         return 1
       }
 
-      const counterInstance = app.getInstance(counter)
+      const counterInstance = app.getInstance(counter, productCounter.name)
       const qty = Number((counterInstance?.ctx.state as { qty?: number } | undefined)?.qty ?? 1)
 
       return Number.isFinite(qty) ? qty : 1

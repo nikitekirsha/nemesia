@@ -37,4 +37,4 @@ During unmount/destroy:
 
 - missing instances are mounted
 - existing instances are refreshed
-- already mounted nodes are not duplicated
+- already mounted `component + element` pairs are not duplicated

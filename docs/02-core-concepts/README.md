@@ -50,8 +50,8 @@ Inside `computed`, context is intentionally narrower:
 
 - `mount(root?)`: mount only new instances
 - `reconcile(root?)`: mount new + refresh existing
-- `refresh(element)`: refresh one instance
-- `recreate(element)`: unmount + fresh mount
+- `refresh(element, componentName)`: refresh one instance
+- `recreate(element, componentName)`: unmount + fresh mount
 - `destroy(root?)`: unmount/cleanup instances in scope
 
 If `observeDomChanges: true`, added nodes are reconciled and removed nodes are destroyed automatically.

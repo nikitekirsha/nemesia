@@ -82,10 +82,10 @@ Application instance methods:
 - `register(component)`
 - `mount(root?)`
 - `reconcile(root?)`
-- `refresh(element)`
-- `recreate(element)`
+- `refresh(element, componentName)`
+- `recreate(element, componentName)`
 - `destroy(root?)`
-- `getInstance(element)`
+- `getInstance(element, componentName)`
 
 ## Examples
 

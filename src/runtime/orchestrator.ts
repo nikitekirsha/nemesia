@@ -26,7 +26,7 @@ function listCandidates(root: ParentNode, selector: string): Element[] {
 }
 
 function mountOne(component: AnyComponentDefinition, element: Element, instances: InstanceRegistry): void {
-  if (instances.has(element)) {
+  if (instances.has(element, component.name)) {
     return
   }
 
@@ -39,8 +39,8 @@ function mountOne(component: AnyComponentDefinition, element: Element, instances
   instances.set(instance)
 }
 
-function refreshOne(element: Element, instances: InstanceRegistry): void {
-  const instance = instances.get(element)
+function refreshOne(element: Element, componentName: string, instances: InstanceRegistry): void {
+  const instance = instances.get(element, componentName)
 
   if (!instance) {
     return
@@ -52,8 +52,8 @@ function refreshOne(element: Element, instances: InstanceRegistry): void {
 export interface Orchestrator {
   mount(root?: ParentNode): void
   reconcile(root?: ParentNode): void
-  refresh(element: Element): void
-  recreate(element: Element): void
+  refresh(element: Element, componentName: string): void
+  recreate(element: Element, componentName: string): void
   destroy(root?: ParentNode): void
 }
 
@@ -77,7 +77,7 @@ export function createOrchestrator(componentRegistry: ComponentRegistry, instanc
         const selector = component.schema.refs.root.selector
 
         for (const candidate of listCandidates(scope, selector)) {
-          const existing = instanceRegistry.get(candidate)
+          const existing = instanceRegistry.get(candidate, component.name)
 
           if (!existing) {
             mountOne(component, candidate, instanceRegistry)
@@ -89,18 +89,18 @@ export function createOrchestrator(componentRegistry: ComponentRegistry, instanc
         }
       }
     },
-    refresh(element) {
-      refreshOne(element, instanceRegistry)
+    refresh(element, componentName) {
+      refreshOne(element, componentName, instanceRegistry)
     },
-    recreate(element) {
-      const current = instanceRegistry.get(element)
+    recreate(element, componentName) {
+      const current = instanceRegistry.get(element, componentName)
 
       if (!current) {
         return
       }
 
       current.unmount()
-      instanceRegistry.delete(element)
+      instanceRegistry.delete(element, componentName)
 
       const replacement = instantiateComponent(current.component, element)
 
@@ -113,7 +113,7 @@ export function createOrchestrator(componentRegistry: ComponentRegistry, instanc
 
       for (const instance of instanceRegistry.listInScope(scope)) {
         instance.unmount()
-        instanceRegistry.delete(instance.element)
+        instanceRegistry.delete(instance.element, instance.component.name)
       }
     }
   }
