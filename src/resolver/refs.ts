@@ -1,9 +1,16 @@
 import type { AnyRefDescriptor } from '../types/entities'
-import { reportWarning } from '../runtime/errors'
 
 export interface ResolveResult<T> {
   ok: boolean
   value?: T
+  issues: RefResolveIssue[]
+}
+
+export type RefResolveIssueType = 'missing' | 'tag-mismatch'
+
+export interface RefResolveIssue {
+  key: string
+  type: RefResolveIssueType
 }
 
 function selectAll(root: Element, selector: string): Element[] {
@@ -25,7 +32,10 @@ function matchesTag(element: Element, tag: string): boolean {
 }
 
 export function resolveRefs(componentName: string, element: Element, schema: Record<string, AnyRefDescriptor>): ResolveResult<Record<string, unknown>> {
+  void componentName
+
   const refs: Record<string, unknown> = {}
+  const issues: RefResolveIssue[] = []
 
   for (const [key, descriptor] of Object.entries(schema)) {
     const all = selectAll(element, descriptor.selector)
@@ -38,9 +48,9 @@ export function resolveRefs(componentName: string, element: Element, schema: Rec
           continue
         }
 
-        reportWarning(componentName, `required ref "${key}" was not found`)
+        issues.push({ key, type: 'missing' })
 
-        return { ok: false }
+        continue
       }
 
       const expectedTag = descriptor.tag
@@ -60,9 +70,9 @@ export function resolveRefs(componentName: string, element: Element, schema: Rec
           continue
         }
 
-        reportWarning(componentName, `required ref "${key}" has tag mismatch`)
+        issues.push({ key, type: 'tag-mismatch' })
 
-        return { ok: false }
+        continue
       }
 
       refs[key] = all
@@ -79,9 +89,9 @@ export function resolveRefs(componentName: string, element: Element, schema: Rec
         continue
       }
 
-      reportWarning(componentName, `required ref "${key}" was not found`)
+      issues.push({ key, type: 'missing' })
 
-      return { ok: false }
+      continue
     }
 
     if (!descriptor.tag || matchesTag(found, descriptor.tag)) {
@@ -96,10 +106,12 @@ export function resolveRefs(componentName: string, element: Element, schema: Rec
       continue
     }
 
-    reportWarning(componentName, `required ref "${key}" has tag mismatch`)
-
-    return { ok: false }
+    issues.push({ key, type: 'tag-mismatch' })
   }
 
-  return { ok: true, value: refs }
+  if (issues.length > 0) {
+    return { ok: false, issues }
+  }
+
+  return { ok: true, value: refs, issues }
 }

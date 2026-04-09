@@ -3,7 +3,7 @@ import { resolveOptions } from '../resolver/options'
 import { resolveRefs } from '../resolver/refs'
 import { createStateStore } from '../state/store'
 import { runDisposers, runHooks } from './hooks'
-import { reportWarning } from '../runtime/errors'
+import { reportSchemaResolveWarning, reportWarning } from '../runtime/errors'
 
 import type {
   AnyComponentDefinition,
@@ -17,12 +17,19 @@ import type {
 
 export function instantiateComponent(component: AnyComponentDefinition, element: Element): InternalComponentInstance | null {
   const refsResult = resolveRefs(component.name, element, component.schema.refs)
+  const optionsResult = resolveOptions(component.name, element, component.schema.options ?? {})
+  const refIssues = refsResult.issues ?? []
+  const optionIssues = optionsResult.issues ?? []
+
+  if (refIssues.length > 0 || optionIssues.length > 0) {
+    reportSchemaResolveWarning(component.name, element, refIssues, optionIssues)
+
+    return null
+  }
 
   if (!refsResult.ok || !refsResult.value) {
     return null
   }
-
-  const optionsResult = resolveOptions(component.name, element, component.schema.options ?? {})
 
   if (!optionsResult.ok || !optionsResult.value) {
     return null

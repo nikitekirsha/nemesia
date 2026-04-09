@@ -1,6 +1,6 @@
 import { bindEvent } from '../src/events/binder'
 import { runDisposers, runHooks } from '../src/lifecycle/hooks'
-import { reportWarning } from '../src/runtime/errors'
+import { reportSchemaResolveWarning, reportWarning } from '../src/runtime/errors'
 import { createStateStore } from '../src/state/store'
 
 describe('state store', () => {
@@ -59,7 +59,18 @@ describe('events and lifecycle utilities', () => {
     runDisposers('comp', [disposer, undefined as unknown as () => void])
     reportWarning('comp', 'plain warning')
 
+    const root = document.createElement('section')
+    root.setAttribute('data-test', '')
+
+    reportSchemaResolveWarning(
+      'comp',
+      root,
+      [{ key: 'root', type: 'missing' }],
+      [{ key: 'endpoint', type: 'missing' }]
+    )
+
     expect(ok).toHaveBeenCalledTimes(1)
-    expect(warn).toHaveBeenCalledTimes(3)
+    expect(String(warn.mock.calls[3]?.[0] ?? '')).toContain('schema resolution failed for root section[data-test]')
+    expect(warn).toHaveBeenCalledTimes(4)
   })
 })

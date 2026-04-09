@@ -14,6 +14,8 @@ For each candidate root element:
 
 If required schema validation fails at steps 1-2, instance is skipped.
 
+Schema failures are reported as a single warning including root descriptor and required ref/option issues.
+
 ## Fault isolation
 
 Errors are isolated per component instance:

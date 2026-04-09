@@ -35,15 +35,27 @@ describe('resolveRefs', () => {
     expect(result.value?.maybe).toBeNull()
     expect((result.value?.many as Element[]).length).toBe(2)
     expect(result.value?.maybeMany).toEqual([])
+    expect(result.issues).toEqual([])
   })
 
-  it('fails for missing required refs and required tag mismatch', () => {
+  it('collects required ref failures across schema', () => {
     const root = createRoot()
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
-    expect(resolveRefs('x', root, { missing: getRef('[not-here]') }).ok).toBe(false)
-    expect(resolveRefs('x', root, { wrongTag: getRef('[data-link]', 'button') }).ok).toBe(false)
-    expect(warn).toHaveBeenCalledTimes(2)
+    const result = resolveRefs('x', root, {
+      missing: getRef('[not-here]'),
+      wrongTag: getRef('[data-link]', 'button'),
+      missingMany: getRef('[data-none]', { many: true }),
+      mismatchMany: getRef('[data-item]', { many: true, tag: 'button' })
+    })
+
+    expect(result.ok).toBe(false)
+
+    expect(result.issues).toEqual([
+      { key: 'missing', type: 'missing' },
+      { key: 'wrongTag', type: 'tag-mismatch' },
+      { key: 'missingMany', type: 'missing' },
+      { key: 'mismatchMany', type: 'tag-mismatch' }
+    ])
   })
 
   it('returns empty/null for optional tag mismatch', () => {
@@ -53,18 +65,24 @@ describe('resolveRefs', () => {
 
     expect(single.ok).toBe(true)
     expect(single.value?.maybe).toBeNull()
+    expect(single.issues).toEqual([])
     expect(many.ok).toBe(true)
     expect(many.value?.maybeMany).toEqual([])
+    expect(many.issues).toEqual([])
   })
 
   it('covers many-required edge branches', () => {
     const root = createRoot()
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
-    expect(resolveRefs('x', root, { missingMany: getRef('[data-none]', { many: true }) }).ok).toBe(false)
+    expect(resolveRefs('x', root, { missingMany: getRef('[data-none]', { many: true }) }).issues).toEqual([
+      { key: 'missingMany', type: 'missing' }
+    ])
+
     expect(resolveRefs('x', root, { plainMany: getRef('[data-item]', { many: true }) }).ok).toBe(true)
-    expect(resolveRefs('x', root, { mismatchMany: getRef('[data-item]', { many: true, tag: 'button' }) }).ok).toBe(false)
-    expect(warn).toHaveBeenCalledTimes(2)
+
+    expect(resolveRefs('x', root, { mismatchMany: getRef('[data-item]', { many: true, tag: 'button' }) }).issues).toEqual([
+      { key: 'mismatchMany', type: 'tag-mismatch' }
+    ])
   })
 })
 
@@ -97,18 +115,27 @@ describe('resolveOptions', () => {
       retries: 3,
       maybe: undefined
     })
+
+    expect(result.issues).toEqual([])
   })
 
-  it('fails for missing required and parse errors', () => {
+  it('collects missing required and parse errors', () => {
     const root = document.createElement('div')
     root.setAttribute('data-number', 'NaN')
     root.setAttribute('data-boolean', 'yes')
 
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const result = resolveOptions('x', root, {
+      miss: getOption('data-miss'),
+      number: getOption('data-number', 'number'),
+      bool: getOption('data-boolean', 'boolean')
+    })
 
-    expect(resolveOptions('x', root, { miss: getOption('data-miss') }).ok).toBe(false)
-    expect(resolveOptions('x', root, { number: getOption('data-number', 'number') }).ok).toBe(false)
-    expect(resolveOptions('x', root, { bool: getOption('data-boolean', 'boolean') }).ok).toBe(false)
-    expect(warn).toHaveBeenCalledTimes(3)
+    expect(result.ok).toBe(false)
+
+    expect(result.issues).toEqual([
+      { key: 'miss', type: 'missing' },
+      { key: 'number', type: 'invalid-type' },
+      { key: 'bool', type: 'invalid-type' }
+    ])
   })
 })

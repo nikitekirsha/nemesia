@@ -1,9 +1,16 @@
 import type { AnyOptionDescriptor } from '../types/entities'
-import { reportWarning } from '../runtime/errors'
 
 export interface ResolveResult<T> {
   ok: boolean
   value?: T
+  issues: OptionResolveIssue[]
+}
+
+export type OptionResolveIssueType = 'missing' | 'invalid-type'
+
+export interface OptionResolveIssue {
+  key: string
+  type: OptionResolveIssueType
 }
 
 function parseBoolean(raw: string): boolean | undefined {
@@ -35,7 +42,10 @@ function parseOption(type: AnyOptionDescriptor['type'], raw: string): unknown {
 }
 
 export function resolveOptions(componentName: string, element: Element, schema: Record<string, AnyOptionDescriptor>): ResolveResult<Record<string, unknown>> {
+  void componentName
+
   const options: Record<string, unknown> = {}
+  const issues: OptionResolveIssue[] = []
 
   for (const [key, descriptor] of Object.entries(schema)) {
     const raw = element.getAttribute(descriptor.attribute)
@@ -53,21 +63,25 @@ export function resolveOptions(componentName: string, element: Element, schema: 
         continue
       }
 
-      reportWarning(componentName, `required option "${key}" was not found`)
+      issues.push({ key, type: 'missing' })
 
-      return { ok: false }
+      continue
     }
 
     const parsed = parseOption(descriptor.type, raw)
 
     if (parsed === undefined) {
-      reportWarning(componentName, `option "${key}" has invalid ${descriptor.type} value`)
+      issues.push({ key, type: 'invalid-type' })
 
-      return { ok: false }
+      continue
     }
 
     options[key] = parsed
   }
 
-  return { ok: true, value: options }
+  if (issues.length > 0) {
+    return { ok: false, issues }
+  }
+
+  return { ok: true, value: options, issues }
 }

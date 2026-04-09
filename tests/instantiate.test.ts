@@ -1,5 +1,6 @@
 import { defineComponent, getOption, getRef } from '../index'
 import { instantiateComponent } from '../src/lifecycle/instantiate'
+import * as optionsResolver from '../src/resolver/options'
 import * as refsResolver from '../src/resolver/refs'
 
 function setupDom(): HTMLElement {
@@ -46,22 +47,75 @@ describe('instantiateComponent', () => {
     expect(spy).toHaveBeenCalledTimes(1)
   })
 
+  it('returns null when options resolver reports failure without issues payload', () => {
+    const root = document.createElement('div')
+    root.setAttribute('data-mocked-options', '')
+
+    const spy = vi.spyOn(optionsResolver, 'resolveOptions').mockReturnValue({ ok: false, issues: [] } as never)
+
+    const component = defineComponent({
+      name: 'mocked-options',
+      schema: {
+        refs: { root: getRef('[data-mocked-options]') }
+      }
+    })
+
+    expect(instantiateComponent(component, root)).toBeNull()
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
+
+  it('supports options resolver payload without issues field', () => {
+    const root = document.createElement('div')
+    root.setAttribute('data-options-missing-issues', '')
+
+    const spy = vi.spyOn(optionsResolver, 'resolveOptions').mockReturnValue({ ok: true, value: {} } as never)
+
+    const component = defineComponent({
+      name: 'options-missing-issues',
+      schema: {
+        refs: { root: getRef('[data-options-missing-issues]') }
+      }
+    })
+
+    const instance = instantiateComponent(component, root)
+
+    expect(instance).not.toBeNull()
+    expect(spy).toHaveBeenCalledTimes(1)
+  })
+
   it('returns null for schema failures', () => {
     const root = document.createElement('div')
+
+    root.id = 'broken-root'
+    root.className = 'test-a test-b'
     root.setAttribute('data-broken', '')
+    root.setAttribute('data-number', 'oops')
+    root.innerHTML = '<a data-required-node></a>'
 
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
 
     const broken = defineComponent({
       name: 'broken',
       schema: {
-        refs: { root: getRef('[data-broken]') },
-        options: { endpoint: getOption('data-endpoint') }
+        refs: {
+          root: getRef('[data-broken]'),
+          missingNode: getRef('[data-missing-node]'),
+          requiredNode: getRef('[data-required-node]', 'button')
+        },
+        options: {
+          endpoint: getOption('data-endpoint'),
+          count: getOption('data-number', 'number')
+        }
       }
     })
 
     expect(instantiateComponent(broken, root)).toBeNull()
     expect(warn).toHaveBeenCalledTimes(1)
+    expect(String(warn.mock.calls[0]?.[0] ?? '')).toContain('[Nemesia:broken] schema resolution failed for root div#broken-root.test-a.test-b[data-broken][data-number]')
+    expect(String(warn.mock.calls[0]?.[0] ?? '')).toContain('refs missing: missingNode')
+    expect(String(warn.mock.calls[0]?.[0] ?? '')).toContain('refs tag-mismatch: requiredNode')
+    expect(String(warn.mock.calls[0]?.[0] ?? '')).toContain('options missing: endpoint')
+    expect(String(warn.mock.calls[0]?.[0] ?? '')).toContain('options invalid-type: count')
   })
 
   it('supports setup/methods/state/watch/on/cleanup hooks', () => {
