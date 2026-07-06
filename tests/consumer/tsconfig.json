@@ -13,19 +13,9 @@
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
     "noEmit": true,
-    "types": [
-      "vitest/globals",
-      "node"
-    ]
+    "types": []
   },
-  "include": [
-    "src",
-    "tests",
-    "vite.config.ts",
-    "vite.umd.config.ts",
-    "vitest.config.ts"
-  ],
-  "exclude": [
-    "tests/consumer"
+  "files": [
+    "consumer.ts"
   ]
 }

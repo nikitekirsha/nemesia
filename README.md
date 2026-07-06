@@ -1,100 +1,83 @@
 # Nemesia
 
-A tiny library for binding declarative JS components to existing HTML.
+Nemesia is a small DOM-first runtime for server-rendered and CMS-driven websites. Your server owns the HTML, and Nemesia finds components in your HTML markup then attaches your behavior to them.
 
-## Installation
+It provides typed refs and options, DOM contract validation, lifecycle hooks, automatic event cleanup, and optional observation of dynamic DOM changes. It does not render HTML or introduce a client-side application model.
 
-```bash
-npm i nemesia
+## Install
+
+### ESM
+
+```sh
+npm install nemesia
 ```
-
-## Usage (ESM)
 
 ```ts
-import { createApplication, defineComponent, getOption, getRef } from 'nemesia'
-
-const counter = defineComponent({
-  name: 'counter',
-  schema: {
-    refs: {
-      root: getRef('[data-counter]', 'section'),
-      plus: getRef('[data-counter-plus]', 'button'),
-      value: getRef('[data-counter-value]', 'output')
-    },
-    options: {
-      step: getOption('data-counter-step', { type: 'number', default: 1 })
-    }
-  },
-  state: () => ({ count: 0 }),
-  computed: (ctx) => ({
-    get label() {
-      return `Count: ${ctx.state.count}`
-    }
-  }),
-  methods: (ctx) => ({
-    updateUI() {
-      ctx.refs.value.textContent = ctx.computed.label
-    },
-    increment() {
-      ctx.state.count += ctx.options.step
-    }
-  }),
-  setup(ctx) {
-    ctx.watch('count', ctx.methods.updateUI, { immediate: true })
-    ctx.on(ctx.refs.plus, 'click', ctx.methods.increment)
-  }
-})
-
-const app = createApplication({ observeDomChanges: true })
-
-app.register(counter)
-app.mount(document)
+import { Nemesia, createApp } from 'nemesia'
 ```
 
-## Usage (UMD)
+### UMD
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/nemesia/dist/nemesia.umd.js"></script>
-
 <script>
-  const { createApplication, defineComponent, getRef, getOption } = window.Nemesia
+	const { Component, DistributedComponent, createApp } = Nemesia
 </script>
 ```
 
-## API
+## Quick example
 
-Public methods from `nemesia`:
+```ts
+import { Nemesia } from 'nemesia'
 
-- `defineComponent(...)`
-- `createApplication({ observeDomChanges? })`
-- `getRef(selector, tagOrConfig?)`
-- `getOption(attribute, typeOrConfig?)`
+class Counter extends Nemesia.Component('counter') {
+	button = this.ref.button('button')
+	value = this.ref.element('value')
+	initial = this.option.optional.number('initial', { default: 0 })
 
-Component definition fields:
+	private count = this.initial
 
-- `state?: () => State`
-- `computed?: (ctx) => Computed`
-- `methods?: (ctx) => Methods`
-- `setup?: (ctx) => void`
+	onMount() {
+		this.render()
+		this.on(this.button, 'click', () => {
+			this.count += 1
+			this.render()
+		})
+	}
 
-Application instance methods:
+	private render() {
+		this.value.textContent = String(this.count)
+	}
+}
 
-- `register(component)`
-- `mount(root?)`
-- `reconcile(root?)`
-- `refresh(element, componentName)`
-- `recreate(element, componentName)`
-- `destroy(root?)`
-- `getInstance(element, componentName)`
+const app = Nemesia.createApp({ observe: true })
+app.register([Counter])
+app.mount(document.body)
+```
 
-## Examples
+```html
+<div data-nemesia="counter" data-option-initial="10">
+	<button data-ref="button">+</button>
+	<span data-ref="value"></span>
+</div>
+```
 
-See [examples/README.md](./examples/README.md).
+## Documentation
 
-## Docs
+The complete guide lives in [`docs/`](docs/README.md):
 
-See [docs/README.md](./docs/README.md).
+1. [Getting started](docs/01-getting-started.md)
+2. [HTML contract](docs/02-html-contract.md)
+3. [Applications and registration](docs/03-applications.md)
+4. [Concrete components](docs/04-components.md)
+5. [Refs](docs/05-refs.md)
+6. [Options](docs/06-options.md)
+7. [Events and lifecycle](docs/07-events-and-lifecycle.md)
+8. [Dynamic DOM observation](docs/08-dynamic-dom.md)
+9. [Distributed components](docs/09-distributed-components.md)
+10. [TypeScript and diagnostics](docs/10-typescript-and-diagnostics.md)
+11. [Recipes](docs/11-recipes.md)
 
-## License
+## Package formats
 
-MIT
+The package ships ESM, a UMD bundle, and TypeScript declarations. Bundlers should use the ESM entry. See [TypeScript and diagnostics](docs/10-typescript-and-diagnostics.md) for exports and UMD usage.
