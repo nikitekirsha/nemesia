@@ -1,31 +1,16 @@
 {
-  "compilerOptions": {
-    "target": "ES2022",
-    "useDefineForClassFields": true,
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "lib": [
-      "ES2022",
-      "DOM",
-      "DOM.Iterable"
-    ],
-    "strict": true,
-    "noUncheckedIndexedAccess": true,
-    "exactOptionalPropertyTypes": true,
-    "noEmit": true,
-    "types": [
-      "vitest/globals",
-      "node"
-    ]
-  },
-  "include": [
-    "src",
-    "tests",
-    "vite.config.ts",
-    "vite.umd.config.ts",
-    "vitest.config.ts"
-  ],
-  "exclude": [
-    "tests/consumer"
-  ]
+	"compilerOptions": {
+		"target": "ES2022",
+		"useDefineForClassFields": true,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"noEmit": true,
+		"types": ["vitest/globals", "node"]
+	},
+	"include": ["src", "tests", "vite.config.ts", "vite.umd.config.ts", "vitest.config.ts"],
+	"exclude": ["tests/consumer"]
 }

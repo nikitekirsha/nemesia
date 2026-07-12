@@ -3,5 +3,5 @@ import { NemesiaAppImplementation } from './nemesia-app.js'
 
 /** Creates an app that owns component registrations, mounted instances, and observers. */
 export function createApp(options?: CreateAppOptions): NemesiaApp {
-  return new NemesiaAppImplementation(options)
+	return new NemesiaAppImplementation(options)
 }

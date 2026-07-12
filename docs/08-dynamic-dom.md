@@ -23,10 +23,7 @@ When nodes are added, Nemesia checks:
 Normal root, ref, and option validation applies. Already mounted roots are skipped.
 
 ```ts
-container.insertAdjacentHTML(
-	'beforeend',
-	'<div data-nemesia="gallery"></div>',
-)
+container.insertAdjacentHTML('beforeend', '<div data-nemesia="gallery"></div>')
 ```
 
 The new gallery mounts automatically when it is inside an observed scope.

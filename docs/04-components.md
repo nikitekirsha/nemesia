@@ -34,7 +34,7 @@ Use `root` when a component requires a specific HTML element:
 
 ```ts
 class SearchForm extends Nemesia.Component('search-form', {
-	root: 'form',
+	root: 'form'
 }) {
 	onMount() {
 		this.root.method = 'get' // HTMLFormElement
@@ -50,7 +50,7 @@ Without a tag constraint, `root` is an `HTMLElement`.
 
 ```ts
 class CookieBanner extends Nemesia.Component('cookie-banner', {
-	multiple: false,
+	multiple: false
 }) {}
 ```
 

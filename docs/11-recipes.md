@@ -42,7 +42,7 @@ class Tabs extends Nemesia.Component('tabs') {
 	panel = this.ref.element('panel')
 	initial = this.option.optional.number('activeIndex', {
 		default: 0,
-		min: 0,
+		min: 0
 	})
 
 	onMount() {
@@ -64,8 +64,7 @@ class Tabs extends Nemesia.Component('tabs') {
 Use a distributed component when triggers are scattered throughout a mounted scope:
 
 ```html
-<a href="/pricing" data-track="pricing-link">Pricing</a>
-<button data-track="newsletter-submit">Subscribe</button>
+<a href="/pricing" data-track="pricing-link">Pricing</a> <button data-track="newsletter-submit">Subscribe</button>
 ```
 
 ```ts
@@ -129,12 +128,7 @@ Removed component roots are destroyed before newly added roots mount.
 For larger sites, keep component registration in one application entry point:
 
 ```ts
-const components = [
-	Analytics,
-	Disclosure,
-	MapWidget,
-	Tabs,
-]
+const components = [Analytics, Disclosure, MapWidget, Tabs]
 
 const app = Nemesia.createApp({ observe: true })
 app.register(components)

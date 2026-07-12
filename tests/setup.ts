@@ -1,6 +1,6 @@
 import { afterEach, vi } from 'vitest'
 
 afterEach(() => {
-  document.body.replaceChildren()
-  vi.restoreAllMocks()
+	document.body.replaceChildren()
+	vi.restoreAllMocks()
 })

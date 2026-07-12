@@ -3,12 +3,7 @@
 Options are parsed from `data-option-*` attributes on the component root.
 
 ```html
-<div
-	data-nemesia="carousel"
-	data-option-delay="5000"
-	data-option-loop="true"
-	data-option-theme="dark"
-></div>
+<div data-nemesia="carousel" data-option-delay="5000" data-option-loop="true" data-option-theme="dark"></div>
 ```
 
 ```ts
@@ -45,7 +40,7 @@ A present but invalid value always skips the component. A default is not used to
 label = this.option.string('label', {
 	minLength: 1,
 	maxLength: 80,
-	pattern: /^[a-z ]+$/i,
+	pattern: /^[a-z ]+$/i
 })
 ```
 
@@ -76,10 +71,7 @@ interface Settings {
 
 settings = this.option.json<Settings>('settings', {
 	validate: (value): value is Settings =>
-		typeof value === 'object'
-		&& value !== null
-		&& 'mode' in value
-		&& typeof value.mode === 'string',
+		typeof value === 'object' && value !== null && 'mode' in value && typeof value.mode === 'string'
 })
 ```
 
@@ -112,16 +104,12 @@ interface Point {
 }
 
 const parsePoint = (raw: string): Point => JSON.parse(raw) as Point
-const isPoint = (value: Point): boolean =>
-	Number.isFinite(value.x) && Number.isFinite(value.y)
+const isPoint = (value: Point): boolean => Number.isFinite(value.x) && Number.isFinite(value.y)
 
 origin = this.option.custom('origin', parsePoint, isPoint)
-fallback = this.option.optional.custom(
-	'fallback',
-	parsePoint,
-	isPoint,
-	{ default: { x: 0, y: 0 } },
-)
+fallback = this.option.optional.custom('fallback', parsePoint, isPoint, {
+	default: { x: 0, y: 0 }
+})
 ```
 
 Parser exceptions and failed validators become normal contract warnings; they do not abort mounting of other roots.

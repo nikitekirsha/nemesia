@@ -50,7 +50,7 @@ One instance of each registered distributed component is mounted per exact scope
 ```ts
 app.mount(document.body)
 app.mount(document.body) // no duplicate
-app.mount(sidebar)       // a separate distributed instance
+app.mount(sidebar) // a separate distributed instance
 ```
 
 `destroy(scope)` destroys only the distributed instances associated with that exact scope. Parent/child containment does not apply to distributed instance ownership.

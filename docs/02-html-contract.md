@@ -37,11 +37,7 @@ class Gallery extends Nemesia.Component('gallery') {
 Options are set on the component root and start with `data-option-`:
 
 ```html
-<section
-	data-nemesia="gallery"
-	data-option-autoplay="true"
-	data-option-delay="5000"
-></section>
+<section data-nemesia="gallery" data-option-autoplay="true" data-option-delay="5000"></section>
 ```
 
 ```ts

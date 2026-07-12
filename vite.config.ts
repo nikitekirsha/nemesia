@@ -1,12 +1,12 @@
 import { defineConfig } from 'vite'
 
 export default defineConfig({
-  build: {
-    lib: {
-      entry: 'src/index.ts',
-      formats: ['es'],
-      fileName: () => 'nemesia.js',
-    },
-    sourcemap: true,
-  },
+	build: {
+		lib: {
+			entry: 'src/index.ts',
+			formats: ['es'],
+			fileName: () => 'nemesia.js'
+		},
+		sourcemap: true
+	}
 })

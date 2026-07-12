@@ -66,7 +66,7 @@ Destroy does not stop observation. This is useful when a container is cleared an
 
 ```ts
 app.disconnect(container) // one exact observed scope
-app.disconnect()          // all observers owned by the app
+app.disconnect() // all observers owned by the app
 ```
 
 Disconnecting only stops observation. It does not destroy existing instances or remove their listeners.

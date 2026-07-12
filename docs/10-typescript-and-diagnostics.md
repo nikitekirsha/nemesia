@@ -3,12 +3,7 @@
 ## Public runtime exports
 
 ```ts
-import {
-	BaseComponent,
-	BaseDistributedComponent,
-	Nemesia,
-	createApp,
-} from 'nemesia'
+import { BaseComponent, BaseDistributedComponent, Nemesia, createApp } from 'nemesia'
 ```
 
 Most applications need only `Nemesia` or `createApp`. The base classes are exported for typing and advanced integration; concrete classes should normally extend the factories on `Nemesia`.
@@ -35,7 +30,7 @@ The package exports:
 
 ```ts
 class TypedExample extends Nemesia.Component('typed-example', {
-	root: 'form',
+	root: 'form'
 }) {
 	button = this.ref.button('submit')
 	items = this.ref.many.element('item')
@@ -48,11 +43,11 @@ class TypedExample extends Nemesia.Component('typed-example', {
 The inferred types are:
 
 ```ts
-root    // HTMLFormElement
-button  // HTMLButtonElement
-items   // HTMLElement[]
-delay   // number
-label   // string | undefined
+root // HTMLFormElement
+button // HTMLButtonElement
+items // HTMLElement[]
+delay // number
+label // string | undefined
 columns // number
 ```
 
@@ -81,7 +76,7 @@ Use `this.warn` for application-level diagnostics:
 
 ```ts
 this.warn('unsupported layout returned by CMS', {
-	layout: this.root.dataset.layout,
+	layout: this.root.dataset.layout
 })
 ```
 

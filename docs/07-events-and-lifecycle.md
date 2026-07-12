@@ -15,7 +15,7 @@ The optional fourth argument is passed to `addEventListener`:
 ```ts
 this.on(this.button, 'click', handler, {
 	once: true,
-	passive: true,
+	passive: true
 })
 ```
 
