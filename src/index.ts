@@ -24,12 +24,19 @@ export type {
   StringOptionOptions,
 } from './option/types.js'
 
+/** Global namespace shape exposed by the UMD build and by the `Nemesia` ESM export. */
 export interface NemesiaNamespace {
+  /** Creates an app that owns component registrations, mounted instances, and observers. */
   readonly createApp: typeof createApp
+
+  /** Creates an abstract base class for a concrete component matched by `data-nemesia`. */
   readonly Component: typeof Component
+
+  /** Creates an abstract base class for a distributed component mounted once per scope. */
   readonly DistributedComponent: typeof DistributedComponent
 }
 
+/** Namespace-style API: `Nemesia.Component(...)`, `Nemesia.DistributedComponent(...)`, `Nemesia.createApp(...)`. */
 export const Nemesia: NemesiaNamespace = {
   createApp,
   Component,

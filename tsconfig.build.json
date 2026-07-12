@@ -5,6 +5,7 @@
     "emitDeclarationOnly": true,
     "declaration": true,
     "declarationMap": true,
+    "stripInternal": true,
     "outDir": "dist",
     "rootDir": "src",
     "types": []

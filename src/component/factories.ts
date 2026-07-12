@@ -8,10 +8,12 @@ import type {
   RootFor,
 } from './types.js'
 
+/** Creates an abstract base class for a concrete component with a typed root element. */
 export function Component<TTag extends keyof HTMLElementTagNameMap>(
   name: string,
   options: ConcreteComponentOptions<TTag> & { root: TTag },
 ): AbstractConcreteComponentConstructor<RootFor<TTag>>
+/** Creates an abstract base class for a concrete component matched by `data-nemesia`. */
 export function Component(
   name: string,
   options?: ConcreteComponentOptions,
@@ -32,6 +34,7 @@ export function Component(
   return ConcreteComponentBase
 }
 
+/** Creates an abstract base class for a distributed component mounted once per scope. */
 export function DistributedComponent(
   name: string,
   _options: DistributedComponentOptions = {},

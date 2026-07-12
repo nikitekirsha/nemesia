@@ -11,25 +11,30 @@ import {
   teardownComponent,
 } from '../internal/lifecycle.js'
 
+/** Base class for distributed components created with `Nemesia.DistributedComponent(...)`. */
 export abstract class BaseDistributedComponent {
   readonly #listeners = new ListenerRegistry()
   readonly #componentName: string
   #destroyed = false
 
+  /** Scope passed to `app.mount(scope)` for this distributed instance. */
   public readonly scope: ParentNode
 
+  /** Creates a distributed component instance for a mounted scope. */
   public constructor(scope: ParentNode) {
     captureConstructingComponent(new.target, scope, this)
     this.scope = scope
     this.#componentName = resolveComponentName(this)
   }
 
+  /** Registers an event listener that is removed automatically on destroy. */
   public on<TTarget extends EventTarget, TEvent extends string>(
     target: TTarget,
     eventName: TEvent,
     listener: (event: Event) => void,
     options?: AddEventListenerOptions,
   ): void
+  /** Registers the same event listener for every target in the array. */
   public on<TTarget extends EventTarget, TEvent extends string>(
     targets: readonly TTarget[],
     eventName: TEvent,
@@ -62,16 +67,19 @@ export abstract class BaseDistributedComponent {
     )
   }
 
+  /** Logs a distributed component-scoped warning with optional diagnostic payload. */
   public warn(message: string, payload?: Record<string, unknown>): void {
     warnComponent(this.#componentName, { scope: this.scope }, message, payload)
   }
 
+  /** @internal */
   public [abortComponentConstruction](): void {
     if (this.#destroyed) return
     this.#destroyed = true
     this.#listeners.clear()
   }
 
+  /** @internal */
   public [teardownComponent](): void {
     if (this.#destroyed) return
     this.#destroyed = true
@@ -110,6 +118,9 @@ export abstract class BaseDistributedComponent {
 }
 
 export interface BaseDistributedComponent {
+  /** Called after the distributed component is mounted for a scope. */
   onMount?(): void | Promise<void>
+
+  /** Called before the distributed component is destroyed; registered listeners are cleaned up afterwards. */
   onDestroy?(): void | Promise<void>
 }

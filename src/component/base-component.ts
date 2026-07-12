@@ -15,6 +15,7 @@ import type { OptionApi } from '../option/types.js'
 import { createRefApi } from '../ref/create-ref-api.js'
 import type { RefApi } from '../ref/types.js'
 
+/** Base class for concrete components created with `Nemesia.Component(...)`. */
 export abstract class BaseComponent<
   TRoot extends HTMLElement = HTMLElement,
 > {
@@ -22,10 +23,16 @@ export abstract class BaseComponent<
   readonly #componentName: string
   #destroyed = false
 
+  /** Root element matched by `data-nemesia`. */
   public readonly root: TRoot
+
+  /** Ref lookup API scoped to this component root. */
   public readonly ref: RefApi
+
+  /** Option lookup and parsing API scoped to this component root. */
   public readonly option: OptionApi
 
+  /** Creates a component instance for a matched root element. */
   public constructor(root: TRoot) {
     captureConstructingComponent(new.target, root, this)
     this.root = root
@@ -34,12 +41,14 @@ export abstract class BaseComponent<
     this.option = createOptionApi(root, this.#componentName)
   }
 
+  /** Registers an event listener that is removed automatically on destroy. */
   public on<TTarget extends EventTarget, TEvent extends string>(
     target: TTarget,
     eventName: TEvent,
     listener: (event: Event) => void,
     options?: AddEventListenerOptions,
   ): void
+  /** Registers the same event listener for every target in the array. */
   public on<TTarget extends EventTarget, TEvent extends string>(
     targets: readonly TTarget[],
     eventName: TEvent,
@@ -72,16 +81,19 @@ export abstract class BaseComponent<
     )
   }
 
+  /** Logs a component-scoped warning with optional diagnostic payload. */
   public warn(message: string, payload?: Record<string, unknown>): void {
     warnComponent(this.#componentName, { root: this.root }, message, payload)
   }
 
+  /** @internal */
   public [abortComponentConstruction](): void {
     if (this.#destroyed) return
     this.#destroyed = true
     this.#listeners.clear()
   }
 
+  /** @internal */
   public [teardownComponent](): void {
     if (this.#destroyed) return
     this.#destroyed = true
@@ -122,6 +134,9 @@ export abstract class BaseComponent<
 export interface BaseComponent<
   TRoot extends HTMLElement = HTMLElement,
 > {
+  /** Called after the component is mounted and refs/options are available. */
   onMount?(): void | Promise<void>
+
+  /** Called before the component is destroyed; registered listeners are cleaned up afterwards. */
   onDestroy?(): void | Promise<void>
 }
