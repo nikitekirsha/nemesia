@@ -64,7 +64,7 @@ app.mount(document.body)
 
 ## Documentation
 
-The complete guide lives in [`docs/`](docs/README.md):
+The complete guide lives in [`docs`](docs/README.md):
 
 1. [Getting started](docs/01-getting-started.md)
 2. [HTML contract](docs/02-html-contract.md)
@@ -77,7 +77,3 @@ The complete guide lives in [`docs/`](docs/README.md):
 9. [Distributed components](docs/09-distributed-components.md)
 10. [TypeScript and diagnostics](docs/10-typescript-and-diagnostics.md)
 11. [Recipes](docs/11-recipes.md)
-
-## Package formats
-
-The package ships ESM, a UMD bundle, and TypeScript declarations. Bundlers should use the ESM entry. See [TypeScript and diagnostics](docs/10-typescript-and-diagnostics.md) for exports and UMD usage.
