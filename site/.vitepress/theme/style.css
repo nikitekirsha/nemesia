@@ -237,7 +237,7 @@ html:has(.nm-landing) .VPLocalNav {
 
 .nm-hero__watermark {
 	position: absolute;
-	top: 42%;
+	top: 44%;
 	left: 62%;
 	width: 165%;
 	transform: translate(-50%, -50%);

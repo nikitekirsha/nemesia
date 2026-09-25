@@ -9,9 +9,9 @@ const done = ref(false)
 // Milliseconds per character, extra pauses after a line and between the two code blocks,
 // and how long each character takes to fade in.
 const CHAR = 6
-const LINE = 55
-const BLOCK = 300
-const FADE = 400
+const LINE = 20
+const BLOCK = 100
+const FADE = 200
 
 let frame = 0
 let restore: (() => void) | undefined
