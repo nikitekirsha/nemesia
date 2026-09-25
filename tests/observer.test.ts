@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { Nemesia, createApp } from '../src/index.js'
+import { Nemesia, createApp, type NemesiaApp } from '../src/index.js'
 import { normalizeMutationRoots } from '../src/internal/dom.js'
 import { flushMutations } from './helpers.js'
 
@@ -689,6 +689,33 @@ describe('observer lifecycle', () => {
 
 		expect(lifecycle).toEqual(['mount', 'destroy', 'mount'])
 		expect(listener).toHaveBeenCalledOnce()
+	})
+
+	it.each([
+		['one exact scope', (app: NemesiaApp, scope: ParentNode) => app.disconnect(scope)],
+		['every scope', (app: NemesiaApp) => app.disconnect()]
+	] as const)('destroys roots removed synchronously before disconnecting %s', async (_label, disconnect) => {
+		const lifecycle: string[] = []
+		class RemovedBeforeDisconnect extends Nemesia.Component('removed-before-disconnect') {
+			onMount(): void {
+				lifecycle.push('mount')
+			}
+			onDestroy(): void {
+				lifecycle.push('destroy')
+			}
+		}
+		const scope = document.createElement('main')
+		scope.append(componentRoot('removed-before-disconnect'))
+		document.body.append(scope)
+		const app = createApp({ observe: true }).register([RemovedBeforeDisconnect])
+		app.mount(scope)
+
+		scope.replaceChildren()
+		disconnect(app, scope)
+
+		expect(lifecycle).toEqual(['mount', 'destroy'])
+		await flushMutations()
+		expect(lifecycle).toEqual(['mount', 'destroy'])
 	})
 
 	it('disconnects every scope without destroying instances', async () => {

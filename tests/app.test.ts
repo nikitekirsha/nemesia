@@ -1018,6 +1018,72 @@ describe('destroy and disconnect', () => {
 		expect(destroys).toHaveBeenCalledOnce()
 	})
 
+	it('destroys roots detached from the scope before destroy is called', () => {
+		const lifecycle: string[] = []
+		class Replaced extends Nemesia.Component('replaced') {
+			onMount(): void {
+				lifecycle.push(`mount:${this.root.id}`)
+			}
+			onDestroy(): void {
+				lifecycle.push(`destroy:${this.root.id}`)
+			}
+		}
+		const scope = document.createElement('main')
+		scope.innerHTML = '<div id="old" data-nemesia="replaced"></div>'
+		document.body.append(scope)
+		const app = createApp().register([Replaced])
+		app.mount(scope)
+
+		scope.innerHTML = '<div id="new" data-nemesia="replaced"></div>'
+		app.destroy(scope)
+		app.mount(scope)
+
+		expect(lifecycle).toEqual(['mount:old', 'destroy:old', 'mount:new'])
+	})
+
+	it('destroys detached roots through the default body scope', () => {
+		const destroyed = vi.fn()
+		class Detached extends Nemesia.Component('detached') {
+			onDestroy(): void {
+				destroyed()
+			}
+		}
+		const element = root('detached')
+		const app = createApp().register([Detached])
+		app.mount()
+
+		element.remove()
+		app.destroy()
+
+		expect(destroyed).toHaveBeenCalledOnce()
+	})
+
+	it('keeps a root moved elsewhere in the same document when its former scope is destroyed', () => {
+		const destroyed = vi.fn()
+		class Moved extends Nemesia.Component('moved') {
+			onDestroy(): void {
+				destroyed()
+			}
+		}
+		const source = document.createElement('main')
+		const destination = document.createElement('aside')
+		const element = document.createElement('div')
+		element.setAttribute('data-nemesia', 'moved')
+		source.append(element)
+		document.body.append(source, destination)
+		const app = createApp().register([Moved])
+		app.mount(source)
+
+		destination.append(element)
+		app.destroy(source)
+
+		expect(destroyed).not.toHaveBeenCalled()
+
+		app.destroy(destination)
+
+		expect(destroyed).toHaveBeenCalledOnce()
+	})
+
 	it('disconnect remains a no-op and does not destroy mounted instances', () => {
 		const destroyed = vi.fn()
 		class Connected extends Nemesia.Component('connected') {
