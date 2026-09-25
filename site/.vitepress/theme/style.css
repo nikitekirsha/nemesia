@@ -236,11 +236,21 @@ html:has(.nm-landing) .VPLocalNav {
 	left: 62%;
 	width: 165%;
 	transform: translate(-50%, -50%);
+	fill: var(--nm-accent);
+	opacity: 0.32;
+	pointer-events: none;
+}
+
+.nm-hero__watermark-petal {
+	fill: var(--nm-bg);
+	stroke: var(--nm-accent);
+	stroke-width: 1.1;
+}
+
+.nm-hero__watermark-center {
 	fill: none;
 	stroke: var(--nm-accent);
-	stroke-width: 0.12;
-	opacity: 0.35;
-	pointer-events: none;
+	stroke-width: 1.1;
 }
 
 .nm-card {
