@@ -30,13 +30,12 @@ function verifyEsmApi(api) {
 	const label = 'ESM bundle'
 
 	check(typeof api.createApp === 'function', `${label} is missing named createApp`)
-	check(typeof api.Nemesia === 'object' && api.Nemesia !== null, `${label} is missing Nemesia namespace`)
+	check(typeof api.Component === 'function', `${label} is missing named Component`)
+	check(typeof api.DistributedComponent === 'function', `${label} is missing named DistributedComponent`)
 	check(typeof api.BaseComponent === 'function', `${label} is missing BaseComponent`)
-	check(api.Nemesia.createApp === api.createApp, `${label} Nemesia.createApp is not named createApp`)
-	check(typeof api.Nemesia.Component === 'function', `${label} is missing Nemesia.Component`)
-	check(typeof api.Nemesia.DistributedComponent === 'function', `${label} is missing Nemesia.DistributedComponent`)
+	check(!Object.hasOwn(api, 'Nemesia'), `${label} exports a Nemesia namespace`)
 
-	const Concrete = api.Nemesia.Component('build-smoke')
+	const Concrete = api.Component('build-smoke')
 	check(
 		Object.getPrototypeOf(Concrete.prototype) === api.BaseComponent.prototype,
 		`${label} Component factory does not extend BaseComponent`

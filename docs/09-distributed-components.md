@@ -5,9 +5,9 @@ Distributed components attach behavior to an application scope rather than a ded
 ## Defining one
 
 ```ts
-import { Nemesia } from 'nemesia'
+import { DistributedComponent } from 'nemesia'
 
-class ModalDelegation extends Nemesia.DistributedComponent('modal-delegation') {
+class ModalDelegation extends DistributedComponent('modal-delegation') {
 	onMount() {
 		this.on(this.scope, 'click', event => {
 			const target = event.target
@@ -27,7 +27,7 @@ class ModalDelegation extends Nemesia.DistributedComponent('modal-delegation') {
 Register distributed and concrete components together:
 
 ```ts
-const app = Nemesia.createApp()
+const app = createApp()
 app.register([ModalDelegation, Header, ContactForm])
 app.mount(document.body)
 ```

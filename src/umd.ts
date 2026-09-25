@@ -1,3 +1,3 @@
-import { Nemesia } from './index.js'
+import { Component, DistributedComponent, createApp } from './index.js'
 
-export default Nemesia
+export default { Component, DistributedComponent, createApp }

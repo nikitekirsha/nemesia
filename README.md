@@ -13,7 +13,7 @@ npm install nemesia
 ```
 
 ```ts
-import { Nemesia, createApp } from 'nemesia'
+import { Component, DistributedComponent, createApp } from 'nemesia'
 ```
 
 ### UMD
@@ -28,9 +28,9 @@ import { Nemesia, createApp } from 'nemesia'
 ## Quick example
 
 ```ts
-import { Nemesia } from 'nemesia'
+import { Component, createApp } from 'nemesia'
 
-class Counter extends Nemesia.Component('counter') {
+class Counter extends Component('counter') {
 	button = this.ref.button('button')
 	value = this.ref.element('value')
 	initial = this.option.optional.number('initial', { default: 0 })
@@ -50,7 +50,7 @@ class Counter extends Nemesia.Component('counter') {
 	}
 }
 
-const app = Nemesia.createApp({ observe: true })
+const app = createApp({ observe: true })
 app.register([Counter])
 app.mount(document.body)
 ```

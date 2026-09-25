@@ -5,9 +5,9 @@ Concrete components attach behavior to elements carrying `data-nemesia`.
 ## Basic shape
 
 ```ts
-import { Nemesia } from 'nemesia'
+import { Component } from 'nemesia'
 
-class Search extends Nemesia.Component('search') {
+class Search extends Component('search') {
 	input = this.ref.input('query')
 	results = this.ref.element('results')
 
@@ -34,7 +34,7 @@ Every concrete instance exposes:
 Use `root` when a component requires a specific HTML element:
 
 ```ts
-class SearchForm extends Nemesia.Component('search-form', {
+class SearchForm extends Component('search-form', {
 	root: 'form'
 }) {
 	onMount() {
@@ -50,7 +50,7 @@ Without a tag constraint, `root` is an `HTMLElement`.
 ## Singleton components
 
 ```ts
-class CookieBanner extends Nemesia.Component('cookie-banner', {
+class CookieBanner extends Component('cookie-banner', {
 	multiple: false
 }) {}
 ```
@@ -64,7 +64,7 @@ Invalid candidates do not consume the slot. Destroying the active instance relea
 Refs and options are intentionally requested in fields:
 
 ```ts
-class Video extends Nemesia.Component('video') {
+class Video extends Component('video') {
 	player = this.ref.element('player')
 	autoplay = this.option.optional.boolean('autoplay', { default: false })
 }
@@ -79,7 +79,7 @@ If construction fails after listeners were registered, Nemesia aborts the partia
 `find` and `findAll` return mounted instances of a component class on or inside an element, which defaults to the component root. The result is typed from the class:
 
 ```ts
-class Cart extends Nemesia.Component('cart') {
+class Cart extends Component('cart') {
 	submit = this.ref.button('submit')
 
 	get form() {
@@ -116,7 +116,7 @@ Look instances up when they are needed instead of storing them in fields: nested
 The factory result can be stored and extended:
 
 ```ts
-const FormComponent = Nemesia.Component('newsletter', { root: 'form' })
+const FormComponent = Component('newsletter', { root: 'form' })
 
 class Newsletter extends FormComponent {}
 ```

@@ -1,6 +1,13 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 
-import { BaseComponent, Nemesia, createApp, type ComponentConstructor, type NemesiaApp } from '../src/index.js'
+import {
+	BaseComponent,
+	Component,
+	DistributedComponent,
+	createApp,
+	type ComponentConstructor,
+	type NemesiaApp
+} from '../src/index.js'
 
 function root(name: string, tag = 'div'): HTMLElement {
 	const element = document.createElement(tag)
@@ -22,8 +29,8 @@ describe('app creation and registration', () => {
 	})
 
 	it('registers arrays including one-item arrays and returns the app', () => {
-		class First extends Nemesia.Component('first') {}
-		class Second extends Nemesia.Component('second') {}
+		class First extends Component('first') {}
+		class Second extends Component('second') {}
 		const app = createApp()
 
 		expect(app.register([First])).toBe(app)
@@ -37,7 +44,7 @@ describe('app creation and registration', () => {
 	})
 
 	it('rejects non-array registration at runtime with the exact TypeError', () => {
-		class Invalid extends Nemesia.Component('invalid') {}
+		class Invalid extends Component('invalid') {}
 		const register = createApp().register as unknown as (value: unknown) => unknown
 
 		expect(() => register(Invalid)).toThrow(
@@ -47,12 +54,12 @@ describe('app creation and registration', () => {
 
 	it('warns on duplicates and mounts the latest registration', () => {
 		const mounted: string[] = []
-		class Original extends Nemesia.Component('duplicate') {
+		class Original extends Component('duplicate') {
 			onMount(): void {
 				mounted.push('original')
 			}
 		}
-		class Latest extends Nemesia.Component('duplicate') {
+		class Latest extends Component('duplicate') {
 			onMount(): void {
 				mounted.push('latest')
 			}
@@ -73,7 +80,7 @@ describe('app creation and registration', () => {
 
 	it('retains distributed registrations until an explicit mount', () => {
 		const mounted = vi.fn()
-		class Distributed extends Nemesia.DistributedComponent('distributed') {
+		class Distributed extends DistributedComponent('distributed') {
 			onMount(): void {
 				mounted()
 			}
@@ -90,7 +97,7 @@ describe('app creation and registration', () => {
 describe('concrete root discovery', () => {
 	it('mounts exact data-nemesia values from the default body only', () => {
 		const mounted: Element[] = []
-		class Exact extends Nemesia.Component('exact') {
+		class Exact extends Component('exact') {
 			onMount(): void {
 				mounted.push(this.root)
 			}
@@ -110,7 +117,7 @@ describe('concrete root discovery', () => {
 
 	it('includes an element scope itself and mounts nested roots before their parents', () => {
 		const mounted: Element[] = []
-		class Ordered extends Nemesia.Component('ordered') {
+		class Ordered extends Component('ordered') {
 			onMount(): void {
 				mounted.push(this.root)
 			}
@@ -129,7 +136,7 @@ describe('concrete root discovery', () => {
 
 	it('mounts an explicitly passed detached root by exact scope identity', () => {
 		const mounted = vi.fn()
-		class DetachedExact extends Nemesia.Component('detached-exact') {
+		class DetachedExact extends Component('detached-exact') {
 			onMount(): void {
 				mounted(this.root)
 			}
@@ -150,12 +157,12 @@ describe('concrete root discovery', () => {
 		const listened: Element[] = []
 		const target = new EventTarget()
 		let stale!: HTMLElement
-		class Remover extends Nemesia.Component('explicit-candidate-remover') {
+		class Remover extends Component('explicit-candidate-remover') {
 			onMount(): void {
 				stale.remove()
 			}
 		}
-		class Singleton extends Nemesia.Component('explicit-stale-singleton', {
+		class Singleton extends Component('explicit-stale-singleton', {
 			multiple: false
 		}) {
 			tracked = (() => {
@@ -203,7 +210,7 @@ describe('concrete root discovery', () => {
 		const listened: Element[] = []
 		const target = new EventTarget()
 		let stale!: HTMLElement
-		class SelfDetaching extends Nemesia.Component('self-detaching-singleton', {
+		class SelfDetaching extends Component('self-detaching-singleton', {
 			multiple: false
 		}) {
 			tracked = (() => {
@@ -252,12 +259,12 @@ describe('concrete root discovery', () => {
 
 	it('does not mount a second component on an already mounted root', () => {
 		const mounted: string[] = []
-		class First extends Nemesia.Component('first-on-root') {
+		class First extends Component('first-on-root') {
 			onMount(): void {
 				mounted.push('first')
 			}
 		}
-		class Second extends Nemesia.Component('second-on-root') {
+		class Second extends Component('second-on-root') {
 			onMount(): void {
 				mounted.push('second')
 			}
@@ -280,7 +287,7 @@ describe('concrete root discovery', () => {
 	it('reserves a root against a different component during construction', () => {
 		const mounted: string[] = []
 		const app = createApp()
-		class First extends Nemesia.Component('constructing-first') {
+		class First extends Component('constructing-first') {
 			changed = (() => {
 				this.root.dataset.nemesia = 'constructing-second'
 				app.mount(this.root)
@@ -290,7 +297,7 @@ describe('concrete root discovery', () => {
 				mounted.push('first')
 			}
 		}
-		class Second extends Nemesia.Component('constructing-second') {
+		class Second extends Component('constructing-second') {
 			onMount(): void {
 				mounted.push('second')
 			}
@@ -309,12 +316,12 @@ describe('concrete root discovery', () => {
 
 	it('mounts nested component roots before their parents', () => {
 		const calls: string[] = []
-		class Parent extends Nemesia.Component('parent') {
+		class Parent extends Component('parent') {
 			onMount(): void {
 				calls.push('parent')
 			}
 		}
-		class Child extends Nemesia.Component('child') {
+		class Child extends Component('child') {
 			onMount(): void {
 				calls.push('child')
 			}
@@ -332,7 +339,7 @@ describe('concrete root discovery', () => {
 	it('supports detached DocumentFragment subtrees', () => {
 		const mounted: Element[] = []
 		const destroyed: Element[] = []
-		class Detached extends Nemesia.Component('detached') {
+		class Detached extends Component('detached') {
 			onMount(): void {
 				mounted.push(this.root)
 			}
@@ -359,7 +366,7 @@ describe('concrete root discovery', () => {
 	it('compares registration names exactly without selector interpolation', () => {
 		const name = 'item\"]:not([data-nemesia]) \\ slash'
 		const mounted = vi.fn()
-		class Special extends Nemesia.Component(name) {
+		class Special extends Component(name) {
 			onMount(): void {
 				mounted(this.root)
 			}
@@ -373,12 +380,12 @@ describe('concrete root discovery', () => {
 
 	it('accepts foreign-realm HTML roots and rejects SVG/default and wrong configured tags', () => {
 		const mounted: Element[] = []
-		class AnyHtml extends Nemesia.Component('any-html') {
+		class AnyHtml extends Component('any-html') {
 			onMount(): void {
 				mounted.push(this.root)
 			}
 		}
-		class FormOnly extends Nemesia.Component('form-only', { root: 'form' }) {
+		class FormOnly extends Component('form-only', { root: 'form' }) {
 			onMount(): void {
 				mounted.push(this.root)
 			}
@@ -416,13 +423,13 @@ describe('concrete root discovery', () => {
 describe('mount validation and lifecycle', () => {
 	it('converts controlled ref and option failures to exact warnings and continues', () => {
 		const goodMount = vi.fn()
-		class MissingRef extends Nemesia.Component('missing-ref') {
+		class MissingRef extends Component('missing-ref') {
 			button = this.ref.button('submit')
 		}
-		class BadOption extends Nemesia.Component('bad-option') {
+		class BadOption extends Component('bad-option') {
 			duration = this.option.number('duration')
 		}
-		class Good extends Nemesia.Component('good') {
+		class Good extends Component('good') {
 			onMount(): void {
 				goodMount()
 			}
@@ -457,12 +464,12 @@ describe('mount validation and lifecycle', () => {
 	it('logs unexpected construction errors and continues', () => {
 		const error = new Error('field failed')
 		const goodMount = vi.fn()
-		class Broken extends Nemesia.Component('broken') {
+		class Broken extends Component('broken') {
 			value = (() => {
 				throw error
 			})()
 		}
-		class Good extends Nemesia.Component('good') {
+		class Good extends Component('good') {
 			onMount(): void {
 				goodMount()
 			}
@@ -484,7 +491,7 @@ describe('mount validation and lifecycle', () => {
 	it('is idempotent and records before onMount for recursive mount safety', () => {
 		const onMount = vi.fn()
 		const app = createApp()
-		class Recursive extends Nemesia.Component('recursive') {
+		class Recursive extends Component('recursive') {
 			onMount(): void {
 				onMount()
 				app.mount(document.body)
@@ -506,7 +513,7 @@ describe('mount validation and lifecycle', () => {
 		let destroyed = 0
 		let reentered = false
 		const app = createApp()
-		class RecursiveConstructor extends Nemesia.Component('recursive-constructor', { multiple: false }) {
+		class RecursiveConstructor extends Component('recursive-constructor', { multiple: false }) {
 			construction = (() => {
 				constructed += 1
 				if (!reentered) {
@@ -557,7 +564,7 @@ describe('mount validation and lifecycle', () => {
 			const listener = vi.fn()
 			const onDestroy = vi.fn()
 			const failure = new Error('later field failed')
-			class Partial extends Nemesia.Component(`partial-${failureKind}`) {
+			class Partial extends Component(`partial-${failureKind}`) {
 				attached = (() => {
 					this.on(target, 'change', listener)
 					return true
@@ -596,7 +603,7 @@ describe('mount validation and lifecycle', () => {
 			const helperDestroy = vi.fn()
 			const outerDestroy = vi.fn()
 			const failure = new Error('outer field failed')
-			class Helper extends Nemesia.Component(`helper-${failureKind}`) {
+			class Helper extends Component(`helper-${failureKind}`) {
 				attached = (() => {
 					this.on(helperTarget, 'change', helperListener)
 					return true
@@ -607,7 +614,7 @@ describe('mount validation and lifecycle', () => {
 				}
 			}
 			let helper!: Helper
-			class Outer extends Nemesia.Component(`outer-${failureKind}`) {
+			class Outer extends Component(`outer-${failureKind}`) {
 				constructor(componentRoot: HTMLElement) {
 					helper = new Helper(document.createElement('aside'))
 					super(componentRoot)
@@ -657,7 +664,7 @@ describe('mount validation and lifecycle', () => {
 		let constructingHelper = false
 		let helper: SameTarget | undefined
 
-		class SameTarget extends Nemesia.Component('same-target-concrete') {
+		class SameTarget extends Component('same-target-concrete') {
 			constructor(sameRoot: HTMLElement) {
 				if (!constructingHelper) {
 					constructingHelper = true
@@ -703,7 +710,7 @@ describe('mount validation and lifecycle', () => {
 
 	it('resolves refs and options before onMount', () => {
 		const observations: unknown[] = []
-		class Ready extends Nemesia.Component('ready') {
+		class Ready extends Component('ready') {
 			button = this.ref.button('submit')
 			delay = this.option.number('delay')
 			onMount(): void {
@@ -723,7 +730,7 @@ describe('mount validation and lifecycle', () => {
 
 	it('claims a singleton only after valid construction and releases it on destroy', () => {
 		const mounted: Element[] = []
-		class Singleton extends Nemesia.Component('singleton', {
+		class Singleton extends Component('singleton', {
 			multiple: false
 		}) {
 			required = this.ref.button('required')
@@ -758,12 +765,12 @@ describe('mount validation and lifecycle', () => {
 
 	it('uses active counts when a live multiple registration is replaced by a singleton', () => {
 		const mounted: Element[] = []
-		class Multiple extends Nemesia.Component('changed-multiplicity') {
+		class Multiple extends Component('changed-multiplicity') {
 			onMount(): void {
 				mounted.push(this.root)
 			}
 		}
-		class Singleton extends Nemesia.Component('changed-multiplicity', {
+		class Singleton extends Component('changed-multiplicity', {
 			multiple: false
 		}) {
 			onMount(): void {
@@ -794,7 +801,7 @@ describe('mount validation and lifecycle', () => {
 		const error = new Error('mount failed')
 		const mounted: Element[] = []
 		let attempt = 0
-		class Singleton extends Nemesia.Component('sync-singleton', {
+		class Singleton extends Component('sync-singleton', {
 			multiple: false
 		}) {
 			onMount(): void {
@@ -836,7 +843,7 @@ describe('mount validation and lifecycle', () => {
 		const destroyed = vi.fn()
 		const target = new EventTarget()
 		const good = vi.fn()
-		class Broken extends Nemesia.Component('sync-broken') {
+		class Broken extends Component('sync-broken') {
 			onMount(): void {
 				this.on(target, 'change', listener)
 				throw error
@@ -845,7 +852,7 @@ describe('mount validation and lifecycle', () => {
 				destroyed()
 			}
 		}
-		class Good extends Nemesia.Component('sync-good') {
+		class Good extends Component('sync-good') {
 			onMount(): void {
 				good()
 			}
@@ -882,7 +889,7 @@ describe('mount validation and lifecycle', () => {
 		const destroyed = vi.fn()
 		const continued = vi.fn()
 		const target = new EventTarget()
-		class AsyncBroken extends Nemesia.Component('async-broken') {
+		class AsyncBroken extends Component('async-broken') {
 			onMount(): Promise<void> {
 				this.on(target, 'change', listener)
 				return resultFactory() as Promise<void>
@@ -891,7 +898,7 @@ describe('mount validation and lifecycle', () => {
 				destroyed()
 			}
 		}
-		class AsyncGood extends Nemesia.Component('async-good') {
+		class AsyncGood extends Component('async-good') {
 			onMount(): void {
 				continued()
 			}
@@ -916,7 +923,7 @@ describe('mount validation and lifecycle', () => {
 	})
 
 	it('does not create an unhandled rejection when the async diagnostic reporter throws', async () => {
-		class Broken extends Nemesia.Component('reporter-broken') {
+		class Broken extends Component('reporter-broken') {
 			onMount(): Promise<void> {
 				return Promise.reject(new Error('failed'))
 			}
@@ -939,7 +946,7 @@ describe('mount validation and lifecycle', () => {
 		const target = new EventTarget()
 		let generation = 0
 		const destroyed: number[] = []
-		class Remounted extends Nemesia.Component('remounted') {
+		class Remounted extends Component('remounted') {
 			currentGeneration = ++generation
 
 			onMount(): void | Promise<void> {
@@ -976,7 +983,7 @@ describe('mount validation and lifecycle', () => {
 	})
 
 	it('does not report an AbortError from onMount after the instance was destroyed', async () => {
-		class Loader extends Nemesia.Component('abortable-loader') {
+		class Loader extends Component('abortable-loader') {
 			private controller = new AbortController()
 
 			onMount(): Promise<void> {
@@ -1002,7 +1009,7 @@ describe('mount validation and lifecycle', () => {
 
 	it('reports an AbortError from onMount while the instance is still mounted', async () => {
 		const destroyed = vi.fn()
-		class Aborted extends Nemesia.Component('aborted-while-mounted') {
+		class Aborted extends Component('aborted-while-mounted') {
 			onMount(): Promise<void> {
 				return Promise.reject(new DOMException('aborted', 'AbortError'))
 			}
@@ -1031,7 +1038,7 @@ describe('destroy and disconnect', () => {
 		const order: string[] = []
 		const listener = vi.fn()
 		const target = new EventTarget()
-		class Parent extends Nemesia.Component('destroy-parent') {
+		class Parent extends Component('destroy-parent') {
 			onMount(): void {
 				this.on(target, 'change', listener)
 			}
@@ -1039,7 +1046,7 @@ describe('destroy and disconnect', () => {
 				order.push('parent')
 			}
 		}
-		class Child extends Nemesia.Component('destroy-child') {
+		class Child extends Component('destroy-child') {
 			onDestroy(): void {
 				order.push('child')
 			}
@@ -1062,7 +1069,7 @@ describe('destroy and disconnect', () => {
 	it('defaults destroy to body and allows a clean remount', () => {
 		const mounts = vi.fn()
 		const destroys = vi.fn()
-		class DefaultDestroy extends Nemesia.Component('default-destroy') {
+		class DefaultDestroy extends Component('default-destroy') {
 			onMount(): void {
 				mounts()
 			}
@@ -1083,7 +1090,7 @@ describe('destroy and disconnect', () => {
 
 	it('destroys roots detached from the scope before destroy is called', () => {
 		const lifecycle: string[] = []
-		class Replaced extends Nemesia.Component('replaced') {
+		class Replaced extends Component('replaced') {
 			onMount(): void {
 				lifecycle.push(`mount:${this.root.id}`)
 			}
@@ -1106,7 +1113,7 @@ describe('destroy and disconnect', () => {
 
 	it('destroys detached roots through the default body scope', () => {
 		const destroyed = vi.fn()
-		class Detached extends Nemesia.Component('detached') {
+		class Detached extends Component('detached') {
 			onDestroy(): void {
 				destroyed()
 			}
@@ -1123,7 +1130,7 @@ describe('destroy and disconnect', () => {
 
 	it('keeps a root moved elsewhere in the same document when its former scope is destroyed', () => {
 		const destroyed = vi.fn()
-		class Moved extends Nemesia.Component('moved') {
+		class Moved extends Component('moved') {
 			onDestroy(): void {
 				destroyed()
 			}
@@ -1149,7 +1156,7 @@ describe('destroy and disconnect', () => {
 
 	it('disconnect remains a no-op and does not destroy mounted instances', () => {
 		const destroyed = vi.fn()
-		class Connected extends Nemesia.Component('connected') {
+		class Connected extends Component('connected') {
 			onDestroy(): void {
 				destroyed()
 			}
@@ -1168,7 +1175,7 @@ describe('destroy and disconnect', () => {
 		const listener = vi.fn()
 		const destroyed: Element[] = []
 		let mounts = 0
-		class ThrowingDestroy extends Nemesia.Component('throwing-destroy') {
+		class ThrowingDestroy extends Component('throwing-destroy') {
 			onMount(): void {
 				mounts += 1
 				this.on(target, 'change', listener)

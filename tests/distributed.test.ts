@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 
-import { BaseDistributedComponent, Nemesia, createApp } from '../src/index.js'
+import { BaseDistributedComponent, Component, DistributedComponent, createApp } from '../src/index.js'
 
 async function flushMicrotasks(): Promise<void> {
 	await Promise.resolve()
@@ -11,7 +11,7 @@ async function flushMicrotasks(): Promise<void> {
 describe('distributed mounting', () => {
 	it('mounts once per exact scope and receives each exact scope identity', () => {
 		const scopes: ParentNode[] = []
-		class Scoped extends Nemesia.DistributedComponent('scoped') {
+		class Scoped extends DistributedComponent('scoped') {
 			onMount(): void {
 				scopes.push(this.scope)
 			}
@@ -35,7 +35,7 @@ describe('distributed mounting', () => {
 	it('defaults mount and destroy to the document body', () => {
 		const mounted: ParentNode[] = []
 		const destroyed: ParentNode[] = []
-		class DefaultScope extends Nemesia.DistributedComponent('default-scope') {
+		class DefaultScope extends DistributedComponent('default-scope') {
 			onMount(): void {
 				mounted.push(this.scope)
 			}
@@ -56,7 +56,7 @@ describe('distributed mounting', () => {
 
 	it('exposes scope/on/warn without concrete root/ref/option APIs', () => {
 		let instance: PublicSurface | undefined
-		class PublicSurface extends Nemesia.DistributedComponent('public-surface') {
+		class PublicSurface extends DistributedComponent('public-surface') {
 			onMount(): void {
 				instance = this
 			}
@@ -84,12 +84,12 @@ describe('distributed mounting', () => {
 
 	it('constructs distributed components first and mounts them after concrete components', () => {
 		const order: string[] = []
-		class Distributed extends Nemesia.DistributedComponent('order-distributed') {
+		class Distributed extends DistributedComponent('order-distributed') {
 			onMount(): void {
 				order.push('distributed')
 			}
 		}
-		class Concrete extends Nemesia.Component('order-concrete') {
+		class Concrete extends Component('order-concrete') {
 			onMount(): void {
 				order.push('concrete')
 			}
@@ -108,7 +108,7 @@ describe('distributed mounting', () => {
 		let constructed = 0
 		let mounted = 0
 		let reentered = false
-		class Recursive extends Nemesia.DistributedComponent('recursive-distributed') {
+		class Recursive extends DistributedComponent('recursive-distributed') {
 			construction = (() => {
 				constructed += 1
 				if (!reentered) {
@@ -130,7 +130,7 @@ describe('distributed mounting', () => {
 	it('records before onMount for recursive mount safety', () => {
 		const app = createApp()
 		const mounted = vi.fn()
-		class Recursive extends Nemesia.DistributedComponent('recursive-mount') {
+		class Recursive extends DistributedComponent('recursive-mount') {
 			onMount(): void {
 				mounted()
 				app.mount(this.scope)
@@ -148,7 +148,7 @@ describe('distributed exact-scope destruction', () => {
 		const singleTarget = new EventTarget()
 		const arrayTargets = [new EventTarget(), new EventTarget()] as const
 		const calls: string[] = []
-		class Listening extends Nemesia.DistributedComponent('listening') {
+		class Listening extends DistributedComponent('listening') {
 			onMount(): void {
 				this.on(singleTarget, 'change', () => calls.push('single'))
 				this.on(arrayTargets, 'change', (_event, _target, index) => {
@@ -178,7 +178,7 @@ describe('distributed exact-scope destruction', () => {
 
 	it('does not destroy parent or child distributed instances by containment', () => {
 		const destroyed: ParentNode[] = []
-		class ExactDestroy extends Nemesia.DistributedComponent('exact-destroy') {
+		class ExactDestroy extends DistributedComponent('exact-destroy') {
 			onDestroy(): void {
 				destroyed.push(this.scope)
 			}
@@ -204,12 +204,12 @@ describe('distributed exact-scope destruction', () => {
 	it('keeps concrete subtree destruction unchanged without consuming child distributed state', () => {
 		const concreteDestroyed = vi.fn()
 		const distributedDestroyed: ParentNode[] = []
-		class Concrete extends Nemesia.Component('distributed-concrete-child') {
+		class Concrete extends Component('distributed-concrete-child') {
 			onDestroy(): void {
 				concreteDestroyed()
 			}
 		}
-		class Distributed extends Nemesia.DistributedComponent('distributed-neighbor') {
+		class Distributed extends DistributedComponent('distributed-neighbor') {
 			onDestroy(): void {
 				distributedDestroyed.push(this.scope)
 			}
@@ -240,7 +240,7 @@ describe('distributed exact-scope destruction', () => {
 		const syncTarget = new EventTarget()
 		const asyncTarget = new EventTarget()
 		const scope = document.createDocumentFragment()
-		class SyncDestroy extends Nemesia.DistributedComponent('sync-destroy') {
+		class SyncDestroy extends DistributedComponent('sync-destroy') {
 			onMount(): void {
 				this.on(syncTarget, 'change', syncListener)
 			}
@@ -248,7 +248,7 @@ describe('distributed exact-scope destruction', () => {
 				throw syncError
 			}
 		}
-		class AsyncDestroy extends Nemesia.DistributedComponent('async-destroy-app') {
+		class AsyncDestroy extends DistributedComponent('async-destroy-app') {
 			onMount(): void {
 				this.on(asyncTarget, 'change', asyncListener)
 			}
@@ -288,7 +288,7 @@ describe('distributed construction and mount failures', () => {
 		const onDestroy = vi.fn()
 		const continued = vi.fn()
 		const scope = document.createDocumentFragment()
-		class Partial extends Nemesia.DistributedComponent('partial-distributed') {
+		class Partial extends DistributedComponent('partial-distributed') {
 			attached = (() => {
 				this.on(target, 'change', listener)
 				return true
@@ -302,7 +302,7 @@ describe('distributed construction and mount failures', () => {
 				onDestroy()
 			}
 		}
-		class Good extends Nemesia.DistributedComponent('construction-good') {
+		class Good extends DistributedComponent('construction-good') {
 			onMount(): void {
 				continued()
 			}
@@ -331,7 +331,7 @@ describe('distributed construction and mount failures', () => {
 		const mainListener = vi.fn()
 		const helperListener = vi.fn()
 		let helper: Captured | undefined
-		class Captured extends Nemesia.DistributedComponent('captured-distributed') {
+		class Captured extends DistributedComponent('captured-distributed') {
 			constructor(scope: ParentNode) {
 				if (scope === mainScope) helper = new Captured(helperScope)
 				super(scope)
@@ -376,7 +376,7 @@ describe('distributed construction and mount failures', () => {
 		let constructingHelper = false
 		let helper: SameTarget | undefined
 
-		class SameTarget extends Nemesia.DistributedComponent('same-target-distributed') {
+		class SameTarget extends DistributedComponent('same-target-distributed') {
 			constructor(sameScope: ParentNode) {
 				if (!constructingHelper) {
 					constructingHelper = true
@@ -431,7 +431,7 @@ describe('distributed construction and mount failures', () => {
 		const concrete = document.createElement('div')
 		concrete.dataset.nemesia = 'sync-concrete-good'
 		scope.append(concrete)
-		class Broken extends Nemesia.DistributedComponent('sync-distributed-broken') {
+		class Broken extends DistributedComponent('sync-distributed-broken') {
 			onMount(): void {
 				this.on(target, 'change', listener)
 				throw error
@@ -440,12 +440,12 @@ describe('distributed construction and mount failures', () => {
 				destroyed()
 			}
 		}
-		class DistributedGood extends Nemesia.DistributedComponent('sync-distributed-good') {
+		class DistributedGood extends DistributedComponent('sync-distributed-good') {
 			onMount(): void {
 				distributedGood()
 			}
 		}
-		class ConcreteGood extends Nemesia.Component('sync-concrete-good') {
+		class ConcreteGood extends Component('sync-concrete-good') {
 			onMount(): void {
 				concreteGood()
 			}
@@ -483,7 +483,7 @@ describe('distributed construction and mount failures', () => {
 		const continued = vi.fn()
 		const target = new EventTarget()
 		const scope = document.createDocumentFragment()
-		class AsyncBroken extends Nemesia.DistributedComponent('async-distributed-broken') {
+		class AsyncBroken extends DistributedComponent('async-distributed-broken') {
 			onMount(): Promise<void> {
 				this.on(target, 'change', listener)
 				return resultFactory() as Promise<void>
@@ -492,7 +492,7 @@ describe('distributed construction and mount failures', () => {
 				destroyed()
 			}
 		}
-		class AsyncGood extends Nemesia.DistributedComponent('async-distributed-good') {
+		class AsyncGood extends DistributedComponent('async-distributed-good') {
 			onMount(): void {
 				continued()
 			}
@@ -523,7 +523,7 @@ describe('distributed construction and mount failures', () => {
 		const destroyed: number[] = []
 		const scope = document.createDocumentFragment()
 		let generation = 0
-		class Remounted extends Nemesia.DistributedComponent('distributed-remounted') {
+		class Remounted extends DistributedComponent('distributed-remounted') {
 			currentGeneration = ++generation
 
 			onMount(): void | Promise<void> {
@@ -559,7 +559,7 @@ describe('distributed construction and mount failures', () => {
 	})
 
 	it('does not report an AbortError from onMount after the distributed instance was destroyed', async () => {
-		class Loader extends Nemesia.DistributedComponent('abortable-distributed') {
+		class Loader extends DistributedComponent('abortable-distributed') {
 			private controller = new AbortController()
 
 			onMount(): Promise<void> {
@@ -587,7 +587,7 @@ describe('distributed construction and mount failures', () => {
 describe('distributed observer boundary', () => {
 	it('does not create distributed instances for DOM additions in observe mode', async () => {
 		const scopes: ParentNode[] = []
-		class Observed extends Nemesia.DistributedComponent('observed-distributed') {
+		class Observed extends DistributedComponent('observed-distributed') {
 			onMount(): void {
 				scopes.push(this.scope)
 			}

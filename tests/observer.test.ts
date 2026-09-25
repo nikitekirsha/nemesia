@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { Nemesia, createApp, type NemesiaApp } from '../src/index.js'
+import { Component, DistributedComponent, createApp, type NemesiaApp } from '../src/index.js'
 import { normalizeMutationRoots } from '../src/internal/dom.js'
 import { flushMutations } from './helpers.js'
 
@@ -44,13 +44,13 @@ describe('automatic concrete mounting', () => {
 		scope.append(existing)
 		document.body.append(scope)
 
-		class Observed extends Nemesia.Component('observed') {
+		class Observed extends Component('observed') {
 			onMount(): void {
 				mounted.push(this.root)
 				if (this.root === existing) scope.append(componentRoot('observed'))
 			}
 		}
-		class Distributed extends Nemesia.DistributedComponent('observer-scope') {
+		class Distributed extends DistributedComponent('observer-scope') {
 			onMount(): void {
 				distributedScopes.push(this.scope)
 			}
@@ -71,7 +71,7 @@ describe('automatic concrete mounting', () => {
 
 	it('checks an added root itself and does not duplicate mounts for overlapping records or nested observers', async () => {
 		const mounted: Element[] = []
-		class Concrete extends Nemesia.Component('nested-observer') {
+		class Concrete extends Component('nested-observer') {
 			onMount(): void {
 				mounted.push(this.root)
 			}
@@ -95,10 +95,10 @@ describe('automatic concrete mounting', () => {
 
 	it('uses normal controlled validation and continues mounting valid roots', async () => {
 		const mounted = vi.fn()
-		class Invalid extends Nemesia.Component('observed-invalid') {
+		class Invalid extends Component('observed-invalid') {
 			required = this.ref.button('required')
 		}
-		class Valid extends Nemesia.Component('observed-valid') {
+		class Valid extends Component('observed-valid') {
 			onMount(): void {
 				mounted(this.root)
 			}
@@ -125,12 +125,12 @@ describe('automatic concrete mounting', () => {
 		const secondListener = vi.fn()
 		const target = new EventTarget()
 		let second!: HTMLElement
-		class First extends Nemesia.Component('candidate-first') {
+		class First extends Component('candidate-first') {
 			onMount(): void {
 				document.body.append(second)
 			}
 		}
-		class Second extends Nemesia.Component('candidate-second') {
+		class Second extends Component('candidate-second') {
 			onMount(): void {
 				secondMounted()
 				this.on(target, 'change', secondListener)
@@ -162,7 +162,7 @@ describe('automatic concrete mounting', () => {
 		const listened: Element[] = []
 		const target = new EventTarget()
 		let stale!: HTMLElement
-		class SelfDetaching extends Nemesia.Component('observed-self-detaching', {
+		class SelfDetaching extends Component('observed-self-detaching', {
 			multiple: false
 		}) {
 			tracked = (() => {
@@ -210,7 +210,7 @@ describe('automatic concrete mounting', () => {
 
 	it('does nothing automatically when observation is disabled', async () => {
 		const mounted = vi.fn()
-		class Manual extends Nemesia.Component('manual-only') {
+		class Manual extends Component('manual-only') {
 			onMount(): void {
 				mounted()
 			}
@@ -231,7 +231,7 @@ describe('automatic concrete destruction and batching', () => {
 		const destroyed = vi.fn()
 		const listened = vi.fn()
 		const target = new EventTarget()
-		class Removed extends Nemesia.Component('removed-root') {
+		class Removed extends Component('removed-root') {
 			onMount(): void {
 				this.on(target, 'change', listened)
 			}
@@ -255,12 +255,12 @@ describe('automatic concrete destruction and batching', () => {
 
 	it('destroys every mounted root in a detached ancestor subtree deepest-first without duplicates', async () => {
 		const lifecycle: string[] = []
-		class Parent extends Nemesia.Component('removed-parent') {
+		class Parent extends Component('removed-parent') {
 			onDestroy(): void {
 				lifecycle.push('parent')
 			}
 		}
-		class Child extends Nemesia.Component('removed-child') {
+		class Child extends Component('removed-child') {
 			onDestroy(): void {
 				lifecycle.push('child')
 			}
@@ -286,12 +286,12 @@ describe('automatic concrete destruction and batching', () => {
 		const childMounts: Element[] = []
 		const listener = vi.fn()
 		const target = new EventTarget()
-		class HistoricalParent extends Nemesia.Component('historical-parent') {
+		class HistoricalParent extends Component('historical-parent') {
 			onDestroy(): void {
 				destroyed.push('parent')
 			}
 		}
-		class HistoricalChild extends Nemesia.Component('historical-child', {
+		class HistoricalChild extends Component('historical-child', {
 			multiple: false
 		}) {
 			onMount(): void {
@@ -333,7 +333,7 @@ describe('automatic concrete destruction and batching', () => {
 		const mounted: Element[] = []
 		const listener = vi.fn()
 		const target = new EventTarget()
-		class ReparentedRemoval extends Nemesia.Component('reparented-removal', {
+		class ReparentedRemoval extends Component('reparented-removal', {
 			multiple: false
 		}) {
 			onMount(): void {
@@ -377,7 +377,7 @@ describe('automatic concrete destruction and batching', () => {
 			const mounted: Element[] = []
 			const listener = vi.fn()
 			const target = new EventTarget()
-			class Rebased extends Nemesia.Component('rebased-root', {
+			class Rebased extends Component('rebased-root', {
 				multiple: false
 			}) {
 				onMount(): void {
@@ -429,7 +429,7 @@ describe('automatic concrete destruction and batching', () => {
 		const lifecycle: string[] = []
 		const listener = vi.fn()
 		const target = new EventTarget()
-		class PendingRebase extends Nemesia.Component('pending-rebase') {
+		class PendingRebase extends Component('pending-rebase') {
 			onMount(): void {
 				lifecycle.push('mount')
 				this.on(target, 'change', listener)
@@ -471,7 +471,7 @@ describe('automatic concrete destruction and batching', () => {
 
 	it('processes removals before additions so a moved root is destroyed then remounted once', async () => {
 		const lifecycle: string[] = []
-		class Moved extends Nemesia.Component('moved-root') {
+		class Moved extends Component('moved-root') {
 			onMount(): void {
 				lifecycle.push('mount')
 			}
@@ -496,7 +496,7 @@ describe('automatic concrete destruction and batching', () => {
 		const lifecycle: string[] = []
 		const listener = vi.fn()
 		const target = new EventTarget()
-		class MovedAcrossScopes extends Nemesia.Component('moved-across-scopes') {
+		class MovedAcrossScopes extends Component('moved-across-scopes') {
 			onMount(): void {
 				lifecycle.push('mount')
 				this.on(target, 'change', listener)
@@ -526,7 +526,7 @@ describe('automatic concrete destruction and batching', () => {
 
 	it('does not mount a node added and removed before callback delivery', async () => {
 		const mounted = vi.fn()
-		class Transient extends Nemesia.Component('transient-root') {
+		class Transient extends Component('transient-root') {
 			onMount(): void {
 				mounted()
 			}
@@ -548,7 +548,7 @@ describe('automatic concrete destruction and batching', () => {
 		const listener = vi.fn()
 		const target = new EventTarget()
 		const distributedMounts: ParentNode[] = []
-		class DetachedConcrete extends Nemesia.Component('detached-observed') {
+		class DetachedConcrete extends Component('detached-observed') {
 			onMount(): void {
 				lifecycle.push(['mount', this.root])
 				this.on(target, 'change', () => listener(this.root))
@@ -558,7 +558,7 @@ describe('automatic concrete destruction and batching', () => {
 				lifecycle.push(['destroy', this.root])
 			}
 		}
-		class DetachedDistributed extends Nemesia.DistributedComponent('detached-distributed') {
+		class DetachedDistributed extends DistributedComponent('detached-distributed') {
 			onMount(): void {
 				distributedMounts.push(this.scope)
 			}
@@ -617,7 +617,7 @@ describe('observer lifecycle', () => {
 	it('disconnects one exact scope without destroying it and can observe it again after a later mount', async () => {
 		const mounted: Element[] = []
 		const destroyed: Element[] = []
-		class Scoped extends Nemesia.Component('scoped-observer') {
+		class Scoped extends Component('scoped-observer') {
 			onMount(): void {
 				mounted.push(this.root)
 			}
@@ -656,7 +656,7 @@ describe('observer lifecycle', () => {
 		const lifecycle: string[] = []
 		const listener = vi.fn()
 		const target = new EventTarget()
-		class PendingMove extends Nemesia.Component('pending-move') {
+		class PendingMove extends Component('pending-move') {
 			onMount(): void {
 				lifecycle.push('mount')
 				this.on(target, 'change', listener)
@@ -696,7 +696,7 @@ describe('observer lifecycle', () => {
 		['every scope', (app: NemesiaApp) => app.disconnect()]
 	] as const)('destroys roots removed synchronously before disconnecting %s', async (_label, disconnect) => {
 		const lifecycle: string[] = []
-		class RemovedBeforeDisconnect extends Nemesia.Component('removed-before-disconnect') {
+		class RemovedBeforeDisconnect extends Component('removed-before-disconnect') {
 			onMount(): void {
 				lifecycle.push('mount')
 			}
@@ -719,7 +719,7 @@ describe('observer lifecycle', () => {
 	})
 
 	it('does not walk mounted root ancestries for text-only mutations', async () => {
-		class Many extends Nemesia.Component('many-text') {}
+		class Many extends Component('many-text') {}
 		const scope = document.createElement('main')
 		for (let index = 0; index < 200; index += 1) {
 			const wrapper = document.createElement('div')
@@ -742,7 +742,7 @@ describe('observer lifecycle', () => {
 
 	it('disconnects every scope without destroying instances', async () => {
 		const lifecycle: string[] = []
-		class Global extends Nemesia.Component('global-observer') {
+		class Global extends Component('global-observer') {
 			onMount(): void {
 				lifecycle.push('mount')
 			}
@@ -769,7 +769,7 @@ describe('observer lifecycle', () => {
 
 	it('keeps an observed scope active after explicit destroy', async () => {
 		const lifecycle: string[] = []
-		class Persistent extends Nemesia.Component('persistent-observer') {
+		class Persistent extends Component('persistent-observer') {
 			onMount(): void {
 				lifecycle.push('mount')
 			}
@@ -796,7 +796,7 @@ describe('distributed observer boundary', () => {
 		const distributedMounts: ParentNode[] = []
 		const distributedDestroys: ParentNode[] = []
 		const concrete = vi.fn()
-		class Distributed extends Nemesia.DistributedComponent('observer-distributed') {
+		class Distributed extends DistributedComponent('observer-distributed') {
 			onMount(): void {
 				distributedMounts.push(this.scope)
 			}
@@ -804,7 +804,7 @@ describe('distributed observer boundary', () => {
 				distributedDestroys.push(this.scope)
 			}
 		}
-		class Concrete extends Nemesia.Component('observer-concrete') {
+		class Concrete extends Component('observer-concrete') {
 			onMount(): void {
 				concrete(this.root)
 			}

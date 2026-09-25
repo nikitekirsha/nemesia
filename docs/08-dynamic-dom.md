@@ -5,7 +5,7 @@ Observation is useful when a CMS fragment, partial navigation system, or server-
 ## Enabling observation
 
 ```ts
-const app = Nemesia.createApp({ observe: true })
+const app = createApp({ observe: true })
 
 app.register([Gallery, ContactForm])
 app.mount(document.body)

@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 
-import { BaseComponent, BaseDistributedComponent, Nemesia } from '../src/index.js'
+import { BaseComponent, BaseDistributedComponent, Component, DistributedComponent } from '../src/index.js'
 import { observeRejection } from '../src/internal/diagnostics.js'
 import { teardownComponent } from '../src/internal/lifecycle.js'
 
@@ -18,7 +18,7 @@ function teardown(instance: ComponentInstance): void {
 describe('component event facade', () => {
 	it('attaches a listener to one target and passes the dispatched Event', () => {
 		const listener = vi.fn<(event: Event) => void>()
-		class Clickable extends Nemesia.Component('clickable') {
+		class Clickable extends Component('clickable') {
 			attach(target: EventTarget): void {
 				this.on(target, 'activate', listener)
 			}
@@ -36,7 +36,7 @@ describe('component event facade', () => {
 
 	it('attaches one wrapper per readonly array target with stable targets and indexes', () => {
 		const calls: Array<[Event, EventTarget, number]> = []
-		class Collection extends Nemesia.Component('collection') {
+		class Collection extends Component('collection') {
 			attach(targets: readonly EventTarget[]): void {
 				this.on(targets, 'select', (event, target, index) => {
 					calls.push([event, target, index])
@@ -58,7 +58,7 @@ describe('component event facade', () => {
 	})
 
 	it('accepts an empty readonly target array', () => {
-		class EmptyCollection extends Nemesia.Component('empty-collection') {
+		class EmptyCollection extends Component('empty-collection') {
 			attach(targets: readonly EventTarget[]): void {
 				this.on(targets, 'select', vi.fn())
 			}
@@ -70,7 +70,7 @@ describe('component event facade', () => {
 
 	it('forwards once and capture listener options', () => {
 		const order: string[] = []
-		class Configured extends Nemesia.Component('configured') {
+		class Configured extends Component('configured') {
 			attach(parent: HTMLElement): void {
 				this.on(parent, 'click', () => order.push('capture'), {
 					capture: true,
@@ -98,7 +98,7 @@ describe('component event facade', () => {
 		const listener = vi.fn()
 		const target = new EventTarget()
 		const options: AddEventListenerOptions = { capture: true }
-		class MutableOptions extends Nemesia.Component('mutable-options') {
+		class MutableOptions extends Component('mutable-options') {
 			attach(): void {
 				this.on(target, 'change', listener, options)
 			}
@@ -128,7 +128,7 @@ describe('component event facade', () => {
 			}
 		}
 		const second = new ThrowAfterAddingTarget()
-		class Transactional extends Nemesia.Component('transactional') {
+		class Transactional extends Component('transactional') {
 			attach(): void {
 				this.on([first, second], 'change', listener)
 			}
@@ -143,7 +143,7 @@ describe('component event facade', () => {
 	})
 
 	it('preserves overload inference for concrete and distributed components', () => {
-		class TypedConcrete extends Nemesia.Component('typed-concrete') {
+		class TypedConcrete extends Component('typed-concrete') {
 			attach(target: HTMLButtonElement, targets: readonly HTMLAnchorElement[]): void {
 				this.on(target, 'click', event => {
 					expectTypeOf(event).toEqualTypeOf<PointerEvent>()
@@ -155,7 +155,7 @@ describe('component event facade', () => {
 				})
 			}
 		}
-		class TypedDistributed extends Nemesia.DistributedComponent('typed-distributed') {
+		class TypedDistributed extends DistributedComponent('typed-distributed') {
 			attach(targets: readonly HTMLInputElement[]): void {
 				this.on(targets, 'change', (event, item, index) => {
 					expectTypeOf(event).toEqualTypeOf<Event>()
@@ -177,7 +177,7 @@ describe('component teardown', () => {
 		const calls: string[] = []
 		const single = new EventTarget()
 		const collection = [new EventTarget(), new EventTarget()] as const
-		class Destroyable extends Nemesia.Component('destroyable') {
+		class Destroyable extends Component('destroyable') {
 			constructor(root: HTMLElement) {
 				super(root)
 				this.on(single, 'cleanup', () => calls.push('single'))
@@ -204,7 +204,7 @@ describe('component teardown', () => {
 
 	it('is idempotent and calls concrete onDestroy once', () => {
 		const onDestroy = vi.fn()
-		class Once extends Nemesia.Component('once') {
+		class Once extends Component('once') {
 			onDestroy(): void {
 				onDestroy()
 			}
@@ -224,7 +224,7 @@ describe('component teardown', () => {
 		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		const target = new EventTarget()
 		const root = document.createElement('section')
-		class Throwing extends Nemesia.Component('throwing') {
+		class Throwing extends Component('throwing') {
 			constructor(componentRoot: HTMLElement) {
 				super(componentRoot)
 				this.on(target, 'change', listener, { capture: true })
@@ -265,7 +265,7 @@ describe('component teardown', () => {
 		const first = new ThrowingRemovalTarget()
 		const second = new EventTarget()
 		const root = document.createElement('section')
-		class FaultyCleanup extends Nemesia.Component('faulty-cleanup') {
+		class FaultyCleanup extends Component('faulty-cleanup') {
 			constructor(componentRoot: HTMLElement) {
 				super(componentRoot)
 				this.on(first, 'change', vi.fn())
@@ -301,7 +301,7 @@ describe('component teardown', () => {
 		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 		const scope = document.createDocumentFragment()
 		const target = new EventTarget()
-		class Rejecting extends Nemesia.DistributedComponent('rejecting') {
+		class Rejecting extends DistributedComponent('rejecting') {
 			constructor(componentScope: ParentNode) {
 				super(componentScope)
 				this.on(target, 'change', listener)
@@ -332,7 +332,7 @@ describe('component teardown', () => {
 	it('observes rejected thenables without relying on Promise instanceof checks', async () => {
 		const error = new Error('foreign rejection')
 		const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
-		class Thenable extends Nemesia.DistributedComponent('thenable') {
+		class Thenable extends DistributedComponent('thenable') {
 			onDestroy(): Promise<void> {
 				return {
 					then(_onFulfilled: (value: void | PromiseLike<void>) => void, onRejected: (reason?: unknown) => void): void {
@@ -357,7 +357,7 @@ describe('component teardown', () => {
 	it('clears listeners before observing a returned foreign thenable', () => {
 		const listener = vi.fn()
 		const target = new EventTarget()
-		class Thenable extends Nemesia.Component('thenable-order') {
+		class Thenable extends Component('thenable-order') {
 			constructor(root: HTMLElement) {
 				super(root)
 				this.on(target, 'change', listener)
@@ -383,7 +383,7 @@ describe('component teardown', () => {
 		const listener = vi.fn()
 		const onDestroy = vi.fn()
 		const target = new EventTarget()
-		class Distributed extends Nemesia.DistributedComponent('distributed') {
+		class Distributed extends DistributedComponent('distributed') {
 			constructor(scope: ParentNode) {
 				super(scope)
 				this.on(target, 'change', listener)
@@ -406,7 +406,7 @@ describe('component teardown', () => {
 	it('does not attach listeners through external calls after teardown', () => {
 		const listener = vi.fn()
 		const target = new EventTarget()
-		class Closed extends Nemesia.Component('closed') {
+		class Closed extends Component('closed') {
 			attach(): void {
 				this.on(target, 'change', listener)
 			}
@@ -428,7 +428,7 @@ describe('component teardown', () => {
 		const resumed = new Promise<void>(resolve => {
 			markResumed = resolve
 		})
-		class AsyncDestroy extends Nemesia.DistributedComponent('async-destroy') {
+		class AsyncDestroy extends DistributedComponent('async-destroy') {
 			async onDestroy(): Promise<void> {
 				await Promise.resolve()
 				this.on(target, 'change', listener)
@@ -462,7 +462,7 @@ describe('component warning facade', () => {
 		const onDestroy = vi.fn()
 		const target = new EventTarget()
 		const root = document.createElement('section')
-		class Warning extends Nemesia.Component('warning') {
+		class Warning extends Component('warning') {
 			constructor(componentRoot: HTMLElement) {
 				super(componentRoot)
 				this.on(target, 'active', listener)
@@ -490,7 +490,7 @@ describe('component warning facade', () => {
 	it('warns with distributed component and scope context', () => {
 		const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
 		const scope = document.createDocumentFragment()
-		class Warning extends Nemesia.DistributedComponent('distributed-warning') {}
+		class Warning extends DistributedComponent('distributed-warning') {}
 		const instance = new Warning(scope)
 
 		instance.warn('careful', { detail: 'distributed' })
@@ -506,8 +506,8 @@ describe('component warning facade', () => {
 	it.each(['concrete', 'distributed'] as const)('contains a throwing payload getter for a %s warning', kind => {
 		const root = document.createElement('section')
 		const scope = document.createDocumentFragment()
-		class ConcreteWarning extends Nemesia.Component('proxy-concrete') {}
-		class DistributedWarning extends Nemesia.DistributedComponent('proxy-distributed') {}
+		class ConcreteWarning extends Component('proxy-concrete') {}
+		class DistributedWarning extends DistributedComponent('proxy-distributed') {}
 		const instance = kind === 'concrete' ? new ConcreteWarning(root) : new DistributedWarning(scope)
 		const payload = new Proxy(
 			{ dangerous: true },

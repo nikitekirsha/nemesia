@@ -2,7 +2,7 @@ import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 
 import {
 	BaseComponent,
-	Nemesia,
+	Component,
 	type BooleanOptionOptions,
 	type DefaultOptionOptions,
 	type JsonOptionOptions,
@@ -50,7 +50,7 @@ function expectControlledError(operation: () => unknown, reason: string, payload
 describe('option facade', () => {
 	it('is initialized before subclass field initializers run', () => {
 		const observations: boolean[] = []
-		class Initializer extends Nemesia.Component('initializer') {
+		class Initializer extends Component('initializer') {
 			value = (() => {
 				observations.push('option' in this)
 				return this.option.string('title')
@@ -97,7 +97,7 @@ describe('option facade', () => {
 
 describe('string options', () => {
 	it('returns raw strings and accepts an empty present attribute', () => {
-		class Strings extends Nemesia.Component('strings') {
+		class Strings extends Component('strings') {
 			raw = this.option.string('raw')
 			empty = this.option.string('empty')
 		}
@@ -113,7 +113,7 @@ describe('string options', () => {
 	})
 
 	it('accepts inclusive string constraints', () => {
-		class Constrained extends Nemesia.Component('constrained') {
+		class Constrained extends Component('constrained') {
 			value = this.option.string('value', {
 				minLength: 3,
 				maxLength: 3,
@@ -135,7 +135,7 @@ describe('string options', () => {
 		['maximum length', 'abcd', { maxLength: 3 }],
 		['pattern', 'ABC', { pattern: /^[a-z]+$/ }]
 	] as const)('rejects a string that violates its %s constraint', (_label, raw, options) => {
-		class InvalidString extends Nemesia.Component('invalid-string') {
+		class InvalidString extends Component('invalid-string') {
 			value = this.option.string('value', options)
 		}
 		const root = createRoot('invalid-string', { 'data-option-value': raw })
@@ -159,7 +159,7 @@ describe('string options', () => {
 		['sticky', /^ok$/y]
 	] as const)('resets stateful %s regular expressions for repeated validation', (_label, pattern) => {
 		pattern.lastIndex = 2
-		class RepeatedPattern extends Nemesia.Component('repeated-pattern') {
+		class RepeatedPattern extends Component('repeated-pattern') {
 			first = this.option.string('first', { pattern })
 			second = this.option.string('second', { pattern })
 		}
@@ -177,7 +177,7 @@ describe('string options', () => {
 
 describe('number and boolean options', () => {
 	it('uses Number semantics and accepts inclusive min/max boundaries', () => {
-		class Numbers extends Nemesia.Component('numbers') {
+		class Numbers extends Component('numbers') {
 			minimum = this.option.number('minimum', { min: 2 })
 			maximum = this.option.number('maximum', { max: 4 })
 			hexadecimal = this.option.number('hexadecimal')
@@ -205,7 +205,7 @@ describe('number and boolean options', () => {
 		['minimum', '1', { min: 2 }],
 		['maximum', '5', { max: 4 }]
 	] as const)('rejects invalid numbers for %s', (_label, raw, options) => {
-		class InvalidNumber extends Nemesia.Component('invalid-number') {
+		class InvalidNumber extends Component('invalid-number') {
 			value = this.option.number('value', options)
 		}
 
@@ -220,7 +220,7 @@ describe('number and boolean options', () => {
 	})
 
 	it('rejects an empty optional number instead of using its default', () => {
-		class EmptyNumber extends Nemesia.Component('empty-number') {
+		class EmptyNumber extends Component('empty-number') {
 			value = this.option.optional.number('value', { default: 300 })
 		}
 
@@ -230,7 +230,7 @@ describe('number and boolean options', () => {
 	})
 
 	it('rejects an empty value for a zero number literal', () => {
-		class ZeroLiteral extends Nemesia.Component('zero-literal') {
+		class ZeroLiteral extends Component('zero-literal') {
 			value = this.option.literal('value', 0)
 		}
 
@@ -240,7 +240,7 @@ describe('number and boolean options', () => {
 	})
 
 	it('parses every exact supported boolean spelling including bare attributes', () => {
-		class Booleans extends Nemesia.Component('booleans') {
+		class Booleans extends Component('booleans') {
 			trueWord = this.option.boolean('trueWord')
 			falseWord = this.option.boolean('falseWord')
 			one = this.option.boolean('one')
@@ -264,7 +264,7 @@ describe('number and boolean options', () => {
 	})
 
 	it.each(['True', 'FALSE', 'yes', '  true'])('rejects the case-sensitive boolean string %j', raw => {
-		class InvalidBoolean extends Nemesia.Component('invalid-boolean') {
+		class InvalidBoolean extends Component('invalid-boolean') {
 			value = this.option.boolean('value')
 		}
 
@@ -286,7 +286,7 @@ describe('structured and constrained options', () => {
 		}
 		const isSettings = (value: unknown): value is Settings =>
 			typeof value === 'object' && value !== null && 'enabled' in value && typeof value.enabled === 'boolean'
-		class Json extends Nemesia.Component('json') {
+		class Json extends Component('json') {
 			settings = this.option.json<Settings>('settings', {
 				validate: isSettings
 			})
@@ -308,7 +308,7 @@ describe('structured and constrained options', () => {
 		interface Settings {
 			enabled: boolean
 		}
-		class InvalidJson extends Nemesia.Component('invalid-json') {
+		class InvalidJson extends Component('invalid-json') {
 			settings = this.option.json<Settings>('settings', {
 				validate: (value): value is Settings =>
 					typeof value === 'object' && value !== null && 'enabled' in value && value.enabled === true
@@ -327,7 +327,7 @@ describe('structured and constrained options', () => {
 
 	it('validates enums and preserves their union type', () => {
 		const themes = ['light', 'dark'] as const
-		class Enum extends Nemesia.Component('enum') {
+		class Enum extends Component('enum') {
 			theme = this.option.enum('theme', themes)
 		}
 		const instance = new Enum(
@@ -341,7 +341,7 @@ describe('structured and constrained options', () => {
 	})
 
 	it('rejects a value outside an enum', () => {
-		class InvalidEnum extends Nemesia.Component('invalid-enum') {
+		class InvalidEnum extends Component('invalid-enum') {
 			theme = this.option.enum('theme', ['light', 'dark'] as const)
 		}
 
@@ -356,7 +356,7 @@ describe('structured and constrained options', () => {
 	})
 
 	it('parses string, number, and boolean literals by literal type', () => {
-		class Literals extends Nemesia.Component('literals') {
+		class Literals extends Component('literals') {
 			stringValue = this.option.literal('stringValue', 'ready')
 			numberValue = this.option.literal('numberValue', 3)
 			booleanValue = this.option.literal('booleanValue', false)
@@ -387,17 +387,17 @@ describe('structured and constrained options', () => {
 		const root = createRoot('invalid-literal', { 'data-option-value': raw })
 
 		if (kind === 'string') {
-			class StringLiteral extends Nemesia.Component('invalid-literal') {
+			class StringLiteral extends Component('invalid-literal') {
 				value = this.option.literal('value', 'expected')
 			}
 			expect(() => new StringLiteral(root)).toThrow(SkipComponentMountError)
 		} else if (kind === 'number' || kind === 'number NaN') {
-			class NumberLiteral extends Nemesia.Component('invalid-literal') {
+			class NumberLiteral extends Component('invalid-literal') {
 				value = this.option.literal('value', 3)
 			}
 			expect(() => new NumberLiteral(root)).toThrow(SkipComponentMountError)
 		} else {
-			class BooleanLiteral extends Nemesia.Component('invalid-literal') {
+			class BooleanLiteral extends Component('invalid-literal') {
 				value = this.option.literal('value', false)
 			}
 			expect(() => new BooleanLiteral(root)).toThrow(SkipComponentMountError)
@@ -408,7 +408,7 @@ describe('structured and constrained options', () => {
 describe('custom options', () => {
 	it('passes the raw string to the parser and returns its result', () => {
 		const parser = vi.fn((raw: string) => raw.split(',').map(Number))
-		class Custom extends Nemesia.Component('custom') {
+		class Custom extends Component('custom') {
 			values = this.option.custom('values', parser)
 		}
 		const instance = new Custom(
@@ -423,7 +423,7 @@ describe('custom options', () => {
 	})
 
 	it('rejects a parsed value when its validator returns false', () => {
-		class InvalidCustom extends Nemesia.Component('invalid-custom') {
+		class InvalidCustom extends Component('invalid-custom') {
 			value = this.option.custom('value', Number, value => value > 0)
 		}
 
@@ -439,7 +439,7 @@ describe('custom options', () => {
 
 	it('wraps parser exceptions as controlled invalid-option failures', () => {
 		const parserError = new Error('private parser failure')
-		class ThrowingCustom extends Nemesia.Component('throwing-custom') {
+		class ThrowingCustom extends Component('throwing-custom') {
 			value = this.option.custom('value', () => {
 				throw parserError
 			})
@@ -462,49 +462,49 @@ describe('required and optional semantics', () => {
 		[
 			'string',
 			() =>
-				class Missing extends Nemesia.Component('missing') {
+				class Missing extends Component('missing') {
 					value = this.option.string('value')
 				}
 		],
 		[
 			'number',
 			() =>
-				class Missing extends Nemesia.Component('missing') {
+				class Missing extends Component('missing') {
 					value = this.option.number('value')
 				}
 		],
 		[
 			'boolean',
 			() =>
-				class Missing extends Nemesia.Component('missing') {
+				class Missing extends Component('missing') {
 					value = this.option.boolean('value')
 				}
 		],
 		[
 			'JSON',
 			() =>
-				class Missing extends Nemesia.Component('missing') {
+				class Missing extends Component('missing') {
 					value = this.option.json<unknown>('value')
 				}
 		],
 		[
 			'enum',
 			() =>
-				class Missing extends Nemesia.Component('missing') {
+				class Missing extends Component('missing') {
 					value = this.option.enum('value', ['one'] as const)
 				}
 		],
 		[
 			'literal',
 			() =>
-				class Missing extends Nemesia.Component('missing') {
+				class Missing extends Component('missing') {
 					value = this.option.literal('value', 'one')
 				}
 		],
 		[
 			'custom',
 			() =>
-				class Missing extends Nemesia.Component('missing') {
+				class Missing extends Component('missing') {
 					value = this.option.custom('value', raw => raw)
 				}
 		]
@@ -515,7 +515,7 @@ describe('required and optional semantics', () => {
 	})
 
 	it('does not use defaults supplied to required options', () => {
-		class RequiredDefault extends Nemesia.Component('required-default') {
+		class RequiredDefault extends Component('required-default') {
 			// @ts-expect-error Required options reject defaults at the type level.
 			value = this.option.string('value', { default: 'not-used' })
 		}
@@ -524,7 +524,7 @@ describe('required and optional semantics', () => {
 	})
 
 	it('returns undefined for every absent optional family without defaults', () => {
-		class Optional extends Nemesia.Component('optional') {
+		class Optional extends Component('optional') {
 			stringValue = this.option.optional.string('stringValue')
 			numberValue = this.option.optional.number('numberValue')
 			booleanValue = this.option.optional.boolean('booleanValue')
@@ -554,7 +554,7 @@ describe('required and optional semantics', () => {
 	})
 
 	it('returns typed defaults for every absent optional family', () => {
-		class Defaults extends Nemesia.Component('defaults') {
+		class Defaults extends Component('defaults') {
 			stringValue = this.option.optional.string('stringValue', {
 				default: 'fallback'
 			})
@@ -600,7 +600,7 @@ describe('required and optional semantics', () => {
 			}
 		}
 		const options = new GetterOptions()
-		class InheritedDefault extends Nemesia.Component('inherited-default') {
+		class InheritedDefault extends Component('inherited-default') {
 			value = this.option.optional.string('value', options)
 		}
 
@@ -611,7 +611,7 @@ describe('required and optional semantics', () => {
 	})
 
 	it('rejects a present invalid optional value instead of using its default', () => {
-		class InvalidOptional extends Nemesia.Component('invalid-optional') {
+		class InvalidOptional extends Component('invalid-optional') {
 			value = this.option.optional.number('value', { default: 5 })
 		}
 
@@ -628,7 +628,7 @@ describe('required and optional semantics', () => {
 
 describe('attributes and diagnostics', () => {
 	it('maps camelCase names to root-only kebab-case attributes', () => {
-		class AttributeNames extends Nemesia.Component('attribute-names') {
+		class AttributeNames extends Component('attribute-names') {
 			slidesMobile = this.option.number('slidesMobile')
 		}
 		const root = createRoot('attribute-names', {
@@ -645,7 +645,7 @@ describe('attributes and diagnostics', () => {
 	})
 
 	it('reports exact invalid-option reason and diagnostic payload', () => {
-		class InvalidDuration extends Nemesia.Component('notifier') {
+		class InvalidDuration extends Component('notifier') {
 			duration = this.option.number('duration')
 		}
 		const root = createRoot('notifier', { 'data-option-duration': 'abc' })
@@ -661,7 +661,7 @@ describe('attributes and diagnostics', () => {
 	})
 
 	it('reports exact missing-option reason and includes expected and received', () => {
-		class MissingTitle extends Nemesia.Component('card') {
+		class MissingTitle extends Component('card') {
 			title = this.option.string('title')
 		}
 		const root = createRoot('card')

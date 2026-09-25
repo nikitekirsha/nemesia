@@ -3,12 +3,13 @@ import { describe, expect, expectTypeOf, it } from 'vitest'
 import {
 	BaseComponent,
 	BaseDistributedComponent,
-	Nemesia,
+	Component,
+	DistributedComponent,
+	createApp,
 	type ComponentConstructor,
 	type ConcreteComponentOptions,
 	type CreateAppOptions,
-	type NemesiaApp,
-	type NemesiaNamespace
+	type NemesiaApp
 } from '../src/index.js'
 import type * as Api from '../src/index.js'
 
@@ -31,7 +32,7 @@ type HiddenDistributedConstructor = Api.DistributedComponentConstructor
 
 describe('concrete component factory', () => {
 	it('uses concrete defaults and assigns the constructor root', () => {
-		class Header extends Nemesia.Component('header') {}
+		class Header extends Component('header') {}
 		const root = document.createElement('div')
 		const instance = new Header(root)
 
@@ -52,7 +53,7 @@ describe('concrete component factory', () => {
 	})
 
 	it('preserves a configured root type and singleton metadata', () => {
-		class Form extends Nemesia.Component('form', {
+		class Form extends Component('form', {
 			root: 'form',
 			multiple: false
 		}) {}
@@ -75,7 +76,7 @@ describe('concrete component factory', () => {
 	})
 
 	it('allows asynchronous lifecycle hooks', () => {
-		class AsyncComponent extends Nemesia.Component('async-component') {
+		class AsyncComponent extends Component('async-component') {
 			async onMount(): Promise<void> {}
 			async onDestroy(): Promise<void> {}
 		}
@@ -89,7 +90,7 @@ describe('concrete component factory', () => {
 	})
 
 	it('supports storing and extending the returned base class', () => {
-		const CardBase = Nemesia.Component('card', { multiple: false })
+		const CardBase = Component('card', { multiple: false })
 		class Card extends CardBase {}
 
 		const instance = new Card(document.createElement('article'))
@@ -106,7 +107,7 @@ describe('concrete component factory', () => {
 
 describe('distributed component factory', () => {
 	it('exposes metadata and assigns scope', () => {
-		const ModalBase = Nemesia.DistributedComponent('modal')
+		const ModalBase = DistributedComponent('modal')
 		class Modal extends ModalBase {}
 		const scope = document.createDocumentFragment()
 		const instance = new Modal(scope)
@@ -123,7 +124,7 @@ describe('distributed component factory', () => {
 	})
 
 	it('allows asynchronous lifecycle hooks', () => {
-		class AsyncDistributedComponent extends Nemesia.DistributedComponent('async-distributed-component') {
+		class AsyncDistributedComponent extends DistributedComponent('async-distributed-component') {
 			async onMount(): Promise<void> {}
 			async onDestroy(): Promise<void> {}
 		}
@@ -138,17 +139,16 @@ describe('distributed component factory', () => {
 })
 
 describe('public component types', () => {
-	it('keeps the namespace and constructor surfaces public', () => {
-		class Banner extends Nemesia.Component('banner') {}
-		class Form extends Nemesia.Component('form', { root: 'form' }) {}
-		class Navigation extends Nemesia.DistributedComponent('navigation') {}
+	it('keeps the constructor surfaces public', () => {
+		class Banner extends Component('banner') {}
+		class Form extends Component('form', { root: 'form' }) {}
+		class Navigation extends DistributedComponent('navigation') {}
 
 		const constructors: ComponentConstructor[] = [Banner, Form, Navigation]
 		const concreteOptions: ConcreteComponentOptions<'main'> = { root: 'main' }
 		const appOptions: CreateAppOptions = { observe: true }
 
-		expectTypeOf(Nemesia).toEqualTypeOf<NemesiaNamespace>()
-		expectTypeOf(Nemesia.createApp()).toEqualTypeOf<NemesiaApp>()
+		expectTypeOf(createApp()).toEqualTypeOf<NemesiaApp>()
 		expect(constructors).toHaveLength(3)
 		expect(concreteOptions).toEqual({ root: 'main' })
 		expect(appOptions).toEqual({ observe: true })
@@ -156,7 +156,7 @@ describe('public component types', () => {
 
 	it('stores components created from union root tags', () => {
 		const tag: 'form' | 'button' = document.body.matches('form') ? 'form' : 'button'
-		class Field extends Nemesia.Component('field', { root: tag }) {}
+		class Field extends Component('field', { root: tag }) {}
 
 		const constructors: ComponentConstructor[] = [Field]
 		const registry = new Map<string, ComponentConstructor>()
@@ -171,21 +171,22 @@ describe('public component types', () => {
 		}
 	})
 
-	it('keeps factories on the Nemesia namespace only', () => {
+	it('exports every runtime API by name without a namespace object', () => {
 		type PackageValues = typeof import('../src/index.js')
-		type HasNamedComponent = 'Component' extends keyof PackageValues ? true : false
-		type HasNamedDistributedComponent = 'DistributedComponent' extends keyof PackageValues ? true : false
+		type HasNamespace = 'Nemesia' extends keyof PackageValues ? true : false
 
-		expectTypeOf<HasNamedComponent>().toEqualTypeOf<false>()
-		expectTypeOf<HasNamedDistributedComponent>().toEqualTypeOf<false>()
+		expectTypeOf<HasNamespace>().toEqualTypeOf<false>()
+		expectTypeOf<PackageValues['Component']>().toBeFunction()
+		expectTypeOf<PackageValues['DistributedComponent']>().toBeFunction()
+		expectTypeOf<PackageValues['createApp']>().toBeFunction()
 	})
 
 	it('takes no options for distributed components', () => {
 		if (false) {
 			// @ts-expect-error Distributed components take only a name.
-			Nemesia.DistributedComponent('options', {})
+			DistributedComponent('options', {})
 		}
 
-		expect(Nemesia.DistributedComponent('options').nemesia).toEqual({ kind: 'distributed', name: 'options' })
+		expect(DistributedComponent('options').nemesia).toEqual({ kind: 'distributed', name: 'options' })
 	})
 })
