@@ -257,6 +257,29 @@ describe('concrete root discovery', () => {
 		expect(listened).toEqual([replacement])
 	})
 
+	it('lets the next singleton candidate mount when the first detaches itself during construction', () => {
+		const mounted: string[] = []
+		class Solo extends Component('self-detaching-solo', { multiple: false }) {
+			detached = (() => {
+				if (this.root.id === 'first') this.root.remove()
+			})()
+
+			onMount(): void {
+				mounted.push(this.root.id)
+			}
+		}
+		const scope = document.createElement('main')
+		scope.innerHTML =
+			'<div data-nemesia="self-detaching-solo" id="first"></div><div data-nemesia="self-detaching-solo" id="second"></div>'
+		document.body.append(scope)
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+
+		createApp().register([Solo]).mount(scope)
+
+		expect(mounted).toEqual(['second'])
+		expect(warn).not.toHaveBeenCalled()
+	})
+
 	it('does not mount a second component on an already mounted root', () => {
 		const mounted: string[] = []
 		class First extends Component('first-on-root') {
@@ -797,7 +820,7 @@ describe('mount validation and lifecycle', () => {
 		expect(mounted).toEqual([first, second])
 	})
 
-	it('mounts the next singleton candidate on a later mount after a synchronous onMount failure', () => {
+	it('retries singleton candidates on a later mount after a synchronous onMount failure', () => {
 		const error = new Error('mount failed')
 		const mounted: Element[] = []
 		let attempt = 0
@@ -834,7 +857,7 @@ describe('mount validation and lifecycle', () => {
 
 		app.mount()
 
-		expect(mounted).toEqual([second])
+		expect(mounted).toEqual([first])
 	})
 
 	it('contains sync onMount errors, destroys the partial instance, and continues', () => {

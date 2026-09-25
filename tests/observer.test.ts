@@ -543,6 +543,36 @@ describe('automatic concrete destruction and batching', () => {
 		expect(mounted).not.toHaveBeenCalled()
 	})
 
+	it('tracks an observed scope moved into another observed scope from an unobserved place', async () => {
+		const lifecycle: string[] = []
+		class Moved extends Component('moved-observed-scope') {
+			onMount(): void {
+				lifecycle.push('mount')
+			}
+
+			onDestroy(): void {
+				lifecycle.push('destroy')
+			}
+		}
+		const standalone = document.createElement('section')
+		standalone.append(componentRoot('moved-observed-scope'))
+		const outer = document.createElement('main')
+		const wrapper = document.createElement('div')
+		outer.append(wrapper)
+		document.body.append(standalone, outer)
+		const app = createApp({ observe: true }).register([Moved])
+		app.mount(outer)
+		app.mount(standalone)
+
+		wrapper.append(standalone)
+		await flushMutations()
+		expect(lifecycle).toEqual(['mount'])
+
+		wrapper.remove()
+		await flushMutations()
+		expect(lifecycle).toEqual(['mount', 'destroy', 'mount'])
+	})
+
 	it('remounts a still-observed exact scope detached from its observed outer scope', async () => {
 		const lifecycle: Array<[string, Element]> = []
 		const listener = vi.fn()
