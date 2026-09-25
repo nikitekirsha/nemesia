@@ -157,6 +157,17 @@ describe('finding component instances', () => {
 		expect(app.findAll(Notifier).map(notifier => notifier.scope)).toEqual([sidebar])
 	})
 
+	it('returns distributed instances in document order regardless of mount order', () => {
+		class Notifier extends DistributedComponent('find-ordered-notifier') {}
+		const first = html('')
+		const second = html('')
+		const app = createApp().register([Notifier])
+		app.mount(second)
+		app.mount(first)
+
+		expect(app.findAll(Notifier).map(notifier => notifier.scope)).toEqual([first, second])
+	})
+
 	it('lets distributed components find concrete instances in their scope', () => {
 		class Item extends Component('find-scoped-item') {}
 		let found: Item[] = []

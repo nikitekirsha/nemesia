@@ -158,7 +158,7 @@ describe('string options', () => {
 		['global', /^ok$/g],
 		['sticky', /^ok$/y]
 	] as const)('resets stateful %s regular expressions for repeated validation', (_label, pattern) => {
-		pattern.lastIndex = 2
+		pattern.lastIndex = 7
 		class RepeatedPattern extends Component('repeated-pattern') {
 			first = this.option.string('first', { pattern })
 			second = this.option.string('second', { pattern })
@@ -171,7 +171,7 @@ describe('string options', () => {
 		)
 
 		expect([instance.first, instance.second]).toEqual(['ok', 'ok'])
-		expect(pattern.lastIndex).toBe(2)
+		expect(pattern.lastIndex).toBe(7)
 	})
 })
 
