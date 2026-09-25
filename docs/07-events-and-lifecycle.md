@@ -21,6 +21,26 @@ this.on(this.button, 'click', handler, {
 
 `capture`, `once`, `passive`, and `signal` are supported through `AddEventListenerOptions`.
 
+## Event types
+
+Known DOM events are typed from the target and event name, the same way `addEventListener` types them:
+
+```ts
+this.on(this.button, 'click', event => event.clientX) // PointerEvent
+this.on(this.input, 'keydown', event => event.key) // KeyboardEvent
+this.on(window, 'resize', event => event.view) // UIEvent
+```
+
+Any other name is treated as a custom event and its listener receives a plain `Event`. To type a custom event, annotate the listener parameter:
+
+```ts
+this.on(this.root, 'cart:update', (event: CustomEvent<{ count: number }>) => {
+	this.count.textContent = String(event.detail.count)
+})
+```
+
+No declarations are needed. Event names are not validated, so a misspelled name such as `'clik'` is accepted as a custom event.
+
 ## Arrays of targets
 
 Refs returned by `ref.many` can be registered together:

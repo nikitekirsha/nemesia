@@ -146,10 +146,10 @@ describe('component event facade', () => {
 		class TypedConcrete extends Nemesia.Component('typed-concrete') {
 			attach(target: HTMLButtonElement, targets: readonly HTMLAnchorElement[]): void {
 				this.on(target, 'click', event => {
-					expectTypeOf(event).toEqualTypeOf<Event>()
+					expectTypeOf(event).toEqualTypeOf<PointerEvent>()
 				})
 				this.on(targets, 'click', (event, item, index) => {
-					expectTypeOf(event).toEqualTypeOf<Event>()
+					expectTypeOf(event).toEqualTypeOf<PointerEvent>()
 					expectTypeOf(item).toEqualTypeOf<HTMLAnchorElement>()
 					expectTypeOf(index).toEqualTypeOf<number>()
 				})

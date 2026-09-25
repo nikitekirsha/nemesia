@@ -227,17 +227,83 @@ describe('public TypeScript contracts', () => {
 		class EventTypes extends Nemesia.Component('event-types') {
 			check(target: HTMLButtonElement, targets: readonly HTMLInputElement[]): void {
 				this.on(target, 'click', event => {
-					expectTypeOf(event).toEqualTypeOf<Event>()
+					expectTypeOf(event).toEqualTypeOf<PointerEvent>()
 				})
 				this.on(targets, 'change', (event, item, index) => {
 					expectTypeOf(event).toEqualTypeOf<Event>()
 					expectTypeOf(item).toEqualTypeOf<HTMLInputElement>()
 					expectTypeOf(index).toEqualTypeOf<number>()
 				})
+				this.on(targets, 'keydown', event => {
+					expectTypeOf(event).toEqualTypeOf<KeyboardEvent>()
+				})
 			}
 		}
 
 		expectTypeOf<InstanceType<typeof EventTypes>['on']>().toBeFunction()
+	})
+
+	it('types known DOM events by target', () => {
+		class TargetEvents extends Nemesia.Component('target-events') {
+			check(video: HTMLVideoElement, svg: SVGSVGElement, media: MediaQueryList): void {
+				this.on(window, 'resize', event => {
+					expectTypeOf(event).toEqualTypeOf<UIEvent>()
+				})
+				this.on(document, 'visibilitychange', event => {
+					expectTypeOf(event).toEqualTypeOf<Event>()
+				})
+				this.on(document, 'pointerdown', event => {
+					expectTypeOf(event).toEqualTypeOf<PointerEvent>()
+				})
+				this.on(video, 'timeupdate', event => {
+					expectTypeOf(event).toEqualTypeOf<Event>()
+				})
+				this.on(video, 'focus', event => {
+					expectTypeOf(event).toEqualTypeOf<FocusEvent>()
+				})
+				this.on(svg, 'click', event => {
+					expectTypeOf(event).toEqualTypeOf<PointerEvent>()
+				})
+				this.on(media, 'change', event => {
+					expectTypeOf(event).toEqualTypeOf<MediaQueryListEvent>()
+				})
+				// @ts-expect-error A known event rejects an incompatible listener annotation.
+				this.on(this.root, 'click', (_event: KeyboardEvent) => {})
+			}
+		}
+		class ScopeEvents extends Nemesia.DistributedComponent('scope-events') {
+			check(): void {
+				this.on(this.scope, 'click', event => {
+					expectTypeOf(event).toEqualTypeOf<PointerEvent>()
+				})
+			}
+		}
+
+		expectTypeOf<InstanceType<typeof TargetEvents>['check']>().toBeFunction()
+		expectTypeOf<InstanceType<typeof ScopeEvents>['check']>().toBeFunction()
+	})
+
+	it('types custom events as Event unless the listener annotates them', () => {
+		class CustomEvents extends Nemesia.Component('custom-events') {
+			check(targets: readonly HTMLElement[], eventName: string): void {
+				this.on(this.root, 'cart:update', event => {
+					expectTypeOf(event).toEqualTypeOf<Event>()
+				})
+				this.on(this.root, 'cart:update', (event: CustomEvent<{ count: number }>) => {
+					expectTypeOf(event.detail.count).toEqualTypeOf<number>()
+				})
+				this.on(targets, 'item:select', (event: CustomEvent<string>, target, index) => {
+					expectTypeOf(event.detail).toEqualTypeOf<string>()
+					expectTypeOf(target).toEqualTypeOf<HTMLElement>()
+					expectTypeOf(index).toEqualTypeOf<number>()
+				})
+				this.on(this.root, eventName, event => {
+					expectTypeOf(event).toEqualTypeOf<Event>()
+				})
+			}
+		}
+
+		expectTypeOf<InstanceType<typeof CustomEvents>['check']>().toBeFunction()
 	})
 
 	it('accepts all component constructors and enforces array registration', () => {
