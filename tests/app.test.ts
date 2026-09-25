@@ -961,6 +961,56 @@ describe('mount validation and lifecycle', () => {
 		app.destroy(componentRoot)
 		expect(destroyed).toEqual([1, 2])
 	})
+
+	it('does not report an AbortError from onMount after the instance was destroyed', async () => {
+		class Loader extends Nemesia.Component('abortable-loader') {
+			private controller = new AbortController()
+
+			onMount(): Promise<void> {
+				return new Promise((_resolve, reject) => {
+					this.controller.signal.addEventListener('abort', () => reject(this.controller.signal.reason))
+				})
+			}
+
+			onDestroy(): void {
+				this.controller.abort()
+			}
+		}
+		const componentRoot = root('abortable-loader')
+		const report = vi.spyOn(console, 'error').mockImplementation(() => {})
+		const app = createApp().register([Loader])
+
+		app.mount(componentRoot)
+		app.destroy(componentRoot)
+		await flushMicrotasks()
+
+		expect(report).not.toHaveBeenCalled()
+	})
+
+	it('reports an AbortError from onMount while the instance is still mounted', async () => {
+		const destroyed = vi.fn()
+		class Aborted extends Nemesia.Component('aborted-while-mounted') {
+			onMount(): Promise<void> {
+				return Promise.reject(new DOMException('aborted', 'AbortError'))
+			}
+
+			onDestroy(): void {
+				destroyed()
+			}
+		}
+		const componentRoot = root('aborted-while-mounted')
+		const report = vi.spyOn(console, 'error').mockImplementation(() => {})
+
+		createApp().register([Aborted]).mount(componentRoot)
+		await flushMicrotasks()
+
+		expect(report).toHaveBeenCalledWith('[Nemesia] Component "aborted-while-mounted" failed during onMount.', {
+			component: 'aborted-while-mounted',
+			root: componentRoot,
+			error: expect.any(DOMException)
+		})
+		expect(destroyed).toHaveBeenCalledOnce()
+	})
 })
 
 describe('destroy and disconnect', () => {

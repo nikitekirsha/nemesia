@@ -70,6 +70,8 @@ If the hook throws, the partial mounted instance is destroyed and other componen
 
 If an asynchronous `onMount` later rejects, Nemesia reports the error and destroys that instance. Singleton candidates skipped while it was pending are not retried automatically; call `mount()` again if needed.
 
+A rejection with an `AbortError` after the instance was already destroyed is not reported: it is the expected result of aborting pending work in `onDestroy`. See [Async onMount](11-recipes.md#async-onmount).
+
 ## `onDestroy`
 
 Use `onDestroy` for resources Nemesia does not own:

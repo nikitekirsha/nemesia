@@ -23,7 +23,7 @@ import {
 	normalizeMutationRoots,
 	normalizeRemovedMutationRoots
 } from '../internal/dom.js'
-import { SkipComponentMountError } from '../internal/errors.js'
+import { SkipComponentMountError, isAbortError } from '../internal/errors.js'
 import { abortComponentConstruction, teardownComponent } from '../internal/lifecycle.js'
 import { ConcreteComponentState } from './component-state.js'
 
@@ -364,6 +364,8 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			if (hookResult !== undefined) {
 				void Promise.resolve(hookResult)
 					.catch(error => {
+						// Aborting pending work from onDestroy is expected, not a mount failure.
+						if (isAbortError(error) && this.#instances.get(root)?.get(name) !== instance) return
 						this.#failMount(root, name, instance, error)
 					})
 					.catch(() => {
@@ -410,6 +412,8 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			if (hookResult !== undefined) {
 				void Promise.resolve(hookResult)
 					.catch(error => {
+						// Aborting pending work from onDestroy is expected, not a mount failure.
+						if (isAbortError(error) && this.#distributedInstances.get(scope)?.get(name) !== instance) return
 						this.#failDistributedMount(scope, name, instance, error)
 					})
 					.catch(() => {
