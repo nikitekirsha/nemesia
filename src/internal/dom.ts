@@ -4,6 +4,12 @@ function isElement(value: ParentNode): value is Element & ParentNode {
 	return value.nodeType === 1
 }
 
+// Builds an exact attribute selector, escaping the value as a CSS string.
+export function attributeSelector(attribute: string, value: string): string {
+	const escaped = value.replace(/["\\]/g, '\\$&').replace(/[\n\r\f]/g, char => `\\${char.charCodeAt(0).toString(16)} `)
+	return `[${attribute}="${escaped}"]`
+}
+
 export function discoverConcreteRoots(scope: ParentNode, selector = '[data-nemesia]'): Element[] {
 	const roots: Element[] = []
 

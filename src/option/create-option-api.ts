@@ -1,4 +1,3 @@
-import type { DiagnosticPayload } from '../internal/diagnostics.js'
 import { SkipComponentMountError } from '../internal/errors.js'
 import type {
 	BooleanOptionOptions,
@@ -9,8 +8,6 @@ import type {
 	OptionLiteral,
 	OptionParser,
 	OptionValidator,
-	OptionalOptionApi,
-	RequiredJsonOptionOptions,
 	StringOptionOptions
 } from './types.js'
 
@@ -42,62 +39,21 @@ const parseBoolean = (raw: string): ParseResult<boolean> => {
 	return invalid()
 }
 
-export function createOptionApi(root: HTMLElement, componentName: string): OptionApi {
-	const diagnosticPayload = (
-		name: string,
-		attribute: string,
-		expected: string,
-		received: unknown
-	): DiagnosticPayload => ({
-		component: componentName,
-		root,
-		option: name,
-		attribute,
-		expected,
-		received
-	})
+// One lookup family: `option` (required) or `option.optional`.
+class OptionReader {
+	readonly #root: HTMLElement
+	readonly #componentName: string
+	readonly #required: boolean
 
-	const fail = (reason: string, name: string, attribute: string, expected: string, received: unknown): never => {
-		throw new SkipComponentMountError(reason, diagnosticPayload(name, attribute, expected, received))
+	public constructor(root: HTMLElement, componentName: string, required: boolean) {
+		this.#root = root
+		this.#componentName = componentName
+		this.#required = required
 	}
 
-	const resolve = <T>(
-		name: string,
-		required: boolean,
-		expected: string,
-		parser: ParseOption<T>,
-		options?: { default?: T }
-	): T | undefined => {
-		const attribute = optionAttribute(name)
-
-		if (!root.hasAttribute(attribute)) {
-			if (required) {
-				return fail(`missing required option "${name}"`, name, attribute, expected, undefined)
-			}
-
-			return hasDefault(options) ? options.default : undefined
-		}
-
-		const raw = root.getAttribute(attribute) ?? ''
-		let result: ParseResult<T>
-
-		try {
-			result = parser(raw)
-		} catch {
-			return fail(`invalid option "${name}"`, name, attribute, expected, raw)
-		}
-
-		if (!result.valid) {
-			return fail(`invalid option "${name}"`, name, attribute, expected, raw)
-		}
-
-		return result.value
-	}
-
-	const string = (required: boolean, name: string, options?: StringOptionOptions): string | undefined =>
-		resolve(
+	public string(name: string, options?: StringOptionOptions): string | undefined {
+		return this.#resolve(
 			name,
-			required,
 			'string',
 			raw => {
 				if (options?.minLength !== undefined && raw.length < options.minLength) {
@@ -128,11 +84,11 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 			},
 			options
 		)
+	}
 
-	const number = (required: boolean, name: string, options?: NumberOptionOptions): number | undefined =>
-		resolve(
+	public number(name: string, options?: NumberOptionOptions): number | undefined {
+		return this.#resolve(
 			name,
-			required,
 			'number',
 			raw => {
 				const value = parseNumber(raw)
@@ -153,14 +109,15 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 			},
 			options
 		)
+	}
 
-	const boolean = (required: boolean, name: string, options?: BooleanOptionOptions): boolean | undefined =>
-		resolve(name, required, 'boolean', parseBoolean, options)
+	public boolean(name: string, options?: BooleanOptionOptions): boolean | undefined {
+		return this.#resolve(name, 'boolean', parseBoolean, options)
+	}
 
-	const json = <T>(required: boolean, name: string, options?: JsonOptionOptions<T>): T | undefined =>
-		resolve(
+	public json<T>(name: string, options?: JsonOptionOptions<T>): T | undefined {
+		return this.#resolve(
 			name,
-			required,
 			'valid JSON',
 			raw => {
 				const value: unknown = JSON.parse(raw)
@@ -173,33 +130,29 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 			},
 			options
 		)
+	}
 
-	const enumOption = <T extends readonly string[]>(
-		required: boolean,
+	public enum<T extends readonly string[]>(
 		name: string,
 		values: T,
 		options?: DefaultOptionOptions<T[number]>
-	): T[number] | undefined =>
-		resolve(
+	): T[number] | undefined {
+		return this.#resolve(
 			name,
-			required,
 			`one of ${values.map(value => JSON.stringify(value)).join(', ')}`,
 			raw => (values.includes(raw) ? valid(raw as T[number]) : invalid()),
 			options
 		)
+	}
 
-	const literal = <T extends OptionLiteral>(
-		required: boolean,
+	public literal<T extends OptionLiteral>(
 		name: string,
 		literalValue: T,
 		options?: DefaultOptionOptions<T>
-	): T | undefined => {
-		const expected = `literal ${JSON.stringify(literalValue)}`
-
-		return resolve(
+	): T | undefined {
+		return this.#resolve(
 			name,
-			required,
-			expected,
+			`literal ${JSON.stringify(literalValue)}`,
 			raw => {
 				let parsed: string | number | boolean
 
@@ -227,16 +180,14 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 		)
 	}
 
-	const custom = <T>(
-		required: boolean,
+	public custom<T>(
 		name: string,
 		parser: OptionParser<T>,
 		validator?: OptionValidator<T>,
 		options?: DefaultOptionOptions<T>
-	): T | undefined =>
-		resolve(
+	): T | undefined {
+		return this.#resolve(
 			name,
-			required,
 			'valid custom value',
 			raw => {
 				const value = parser(raw)
@@ -249,109 +200,56 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 			},
 			options
 		)
-
-	function optionalString(name: string, options: StringOptionOptions & { default: string }): string
-	function optionalString(name: string, options?: StringOptionOptions): string | undefined
-	function optionalString(name: string, options?: StringOptionOptions): string | undefined {
-		return string(false, name, options)
 	}
 
-	function optionalNumber(name: string, options: NumberOptionOptions & { default: number }): number
-	function optionalNumber(name: string, options?: NumberOptionOptions): number | undefined
-	function optionalNumber(name: string, options?: NumberOptionOptions): number | undefined {
-		return number(false, name, options)
+	#resolve<T>(name: string, expected: string, parser: ParseOption<T>, options?: { default?: T }): T | undefined {
+		const attribute = optionAttribute(name)
+
+		if (!this.#root.hasAttribute(attribute)) {
+			if (this.#required) {
+				return this.#fail(`missing required option "${name}"`, name, attribute, expected, undefined)
+			}
+
+			return hasDefault(options) ? options.default : undefined
+		}
+
+		const raw = this.#root.getAttribute(attribute) ?? ''
+		let result: ParseResult<T>
+
+		try {
+			result = parser(raw)
+		} catch {
+			return this.#fail(`invalid option "${name}"`, name, attribute, expected, raw)
+		}
+
+		if (!result.valid) {
+			return this.#fail(`invalid option "${name}"`, name, attribute, expected, raw)
+		}
+
+		return result.value
 	}
 
-	function optionalBoolean(name: string, options: BooleanOptionOptions & { default: boolean }): boolean
-	function optionalBoolean(name: string, options?: BooleanOptionOptions): boolean | undefined
-	function optionalBoolean(name: string, options?: BooleanOptionOptions): boolean | undefined {
-		return boolean(false, name, options)
+	#fail(reason: string, name: string, attribute: string, expected: string, received: unknown): never {
+		throw new SkipComponentMountError(reason, {
+			component: this.#componentName,
+			root: this.#root,
+			option: name,
+			attribute,
+			expected,
+			received
+		})
 	}
+}
 
-	function optionalJson<T>(name: string, options: JsonOptionOptions<T> & { default: T }): T
-	function optionalJson<T>(name: string, options?: JsonOptionOptions<T>): T | undefined
-	function optionalJson<T>(name: string, options?: JsonOptionOptions<T>): T | undefined {
-		return json(false, name, options)
+class RootOptionReader extends OptionReader {
+	public readonly optional: OptionReader
+
+	public constructor(root: HTMLElement, componentName: string) {
+		super(root, componentName, true)
+		this.optional = new OptionReader(root, componentName, false)
 	}
+}
 
-	function optionalEnum<T extends readonly string[]>(
-		name: string,
-		values: T,
-		options: DefaultOptionOptions<T[number]> & { default: T[number] }
-	): T[number]
-	function optionalEnum<T extends readonly string[]>(
-		name: string,
-		values: T,
-		options?: DefaultOptionOptions<T[number]>
-	): T[number] | undefined
-	function optionalEnum<T extends readonly string[]>(
-		name: string,
-		values: T,
-		options?: DefaultOptionOptions<T[number]>
-	): T[number] | undefined {
-		return enumOption(false, name, values, options)
-	}
-
-	function optionalLiteral<T extends OptionLiteral>(
-		name: string,
-		value: T,
-		options: DefaultOptionOptions<T> & { default: T }
-	): T
-	function optionalLiteral<T extends OptionLiteral>(
-		name: string,
-		value: T,
-		options?: DefaultOptionOptions<T>
-	): T | undefined
-	function optionalLiteral<T extends OptionLiteral>(
-		name: string,
-		value: T,
-		options?: DefaultOptionOptions<T>
-	): T | undefined {
-		return literal(false, name, value, options)
-	}
-
-	function optionalCustom<T>(
-		name: string,
-		parser: OptionParser<T>,
-		validator: OptionValidator<T> | undefined,
-		options: DefaultOptionOptions<T> & { default: T }
-	): T
-	function optionalCustom<T>(
-		name: string,
-		parser: OptionParser<T>,
-		validator?: OptionValidator<T>,
-		options?: DefaultOptionOptions<T>
-	): T | undefined
-	function optionalCustom<T>(
-		name: string,
-		parser: OptionParser<T>,
-		validator?: OptionValidator<T>,
-		options?: DefaultOptionOptions<T>
-	): T | undefined {
-		return custom(false, name, parser, validator, options)
-	}
-
-	const optional = {
-		string: optionalString,
-		number: optionalNumber,
-		boolean: optionalBoolean,
-		json: optionalJson,
-		enum: optionalEnum,
-		literal: optionalLiteral,
-		custom: optionalCustom
-	} satisfies OptionalOptionApi
-
-	const api = {
-		string: (name, options) => string(true, name, options) as string,
-		number: (name, options) => number(true, name, options) as number,
-		boolean: name => boolean(true, name) as boolean,
-		json: <T>(name: string, options?: RequiredJsonOptionOptions<T>) => json<T>(true, name, options) as T,
-		enum: <T extends readonly string[]>(name: string, values: T) => enumOption(true, name, values) as T[number],
-		literal: <T extends OptionLiteral>(name: string, value: T) => literal(true, name, value) as T,
-		custom: <T>(name: string, parser: OptionParser<T>, validator?: OptionValidator<T>) =>
-			custom(true, name, parser, validator) as T,
-		optional
-	} satisfies OptionApi
-
-	return api
+export function createOptionApi(root: HTMLElement, componentName: string): OptionApi {
+	return new RootOptionReader(root, componentName) as unknown as OptionApi
 }

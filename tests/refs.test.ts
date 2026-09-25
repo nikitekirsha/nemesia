@@ -199,6 +199,15 @@ describe('ref discovery and ownership', () => {
 		expect(ref.button('item')).toBe(decoy)
 	})
 
+	it('matches ref names containing line breaks, quotes, and backslashes', () => {
+		const root = createRoot()
+		const name = 'line\nbreak\r"quoted"\f\\'
+		const target = appendRef(root, document.createElement('button'), name)
+		appendRef(root, document.createElement('button'), 'line')
+
+		expect(createRefApi(root, 'example').button(name)).toBe(target)
+	})
+
 	it('excludes refs owned by nested registered-looking and unregistered roots', () => {
 		const root = createRoot('parent')
 		const direct = appendRef(root, document.createElement('button'), 'item')

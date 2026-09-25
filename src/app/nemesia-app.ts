@@ -19,6 +19,7 @@ import {
 } from '../internal/diagnostics.js'
 import { beginComponentConstruction, endComponentConstruction } from '../internal/construction.js'
 import {
+	attributeSelector,
 	childrenFirst,
 	deepestFirst,
 	discoverConcreteRoots,
@@ -56,10 +57,6 @@ function defaultScope(): ParentNode | undefined {
 
 function defaultFindScope(): ParentNode | undefined {
 	return typeof document === 'undefined' ? undefined : document
-}
-
-function componentSelector(name: string): string {
-	return `[data-nemesia="${name.replace(/["\\]/g, '\\$&')}"]`
 }
 
 function observerConstructor(scope: ParentNode): typeof MutationObserver | undefined {
@@ -178,7 +175,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		const found: TInstance[] = []
 
 		if (kind === 'concrete') {
-			for (const root of discoverConcreteRoots(within, componentSelector(name))) {
+			for (const root of discoverConcreteRoots(within, attributeSelector('data-nemesia', name))) {
 				const instance = this.#roots.get(root)?.instance
 				if (instance instanceof component) found.push(instance)
 			}

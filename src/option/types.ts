@@ -64,8 +64,7 @@ type RequiredStringOptionOptions = WithoutDefault<StringOptionOptions>
 
 type RequiredNumberOptionOptions = WithoutDefault<NumberOptionOptions>
 
-/** Options accepted by the required `option.json(...)` helper. */
-export type RequiredJsonOptionOptions<T> = WithoutDefault<JsonOptionOptions<T>>
+type RequiredJsonOptionOptions<T> = WithoutDefault<JsonOptionOptions<T>>
 
 /** Required option lookup API available as `this.option`. */
 export interface RequiredOptionApi {
