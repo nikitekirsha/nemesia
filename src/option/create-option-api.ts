@@ -174,7 +174,7 @@ class OptionReader {
 					parsed = booleanResult.value
 				}
 
-				return Object.is(parsed, literalValue) ? valid(literalValue) : invalid()
+				return parsed === literalValue ? valid(literalValue) : invalid()
 			},
 			options
 		)
