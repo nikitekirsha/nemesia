@@ -4,7 +4,6 @@
 	--nm-accent: #5b4fcf;
 	--nm-accent-hover: #4b3fbd;
 	--nm-accent-soft: rgb(91 79 207 / 0.1);
-	--nm-palate: #f2be22;
 	--nm-bg: #faf9f6;
 	--nm-surface: #ffffff;
 	--nm-soft: #f3f1ec;
@@ -82,7 +81,8 @@ html:has(.nm-landing) .VPLocalNav {
 	padding: 0;
 }
 
-.nm-landing code {
+/* Kept at the lowest specificity so component styles override it. */
+:where(.nm-landing) code {
 	font-family: var(--vp-font-family-mono);
 	font-size: 0.88em;
 }
@@ -132,43 +132,6 @@ html:has(.nm-landing) .VPLocalNav {
 	font-size: 18px;
 	line-height: 1.6;
 	color: var(--nm-text-2);
-}
-
-.nm-install {
-	display: inline-flex;
-	align-items: center;
-	gap: 12px;
-	padding: 10px 10px 10px 16px;
-	border: 1px solid var(--nm-line);
-	border-radius: 10px;
-	background: var(--nm-surface);
-	font-family: var(--vp-font-family-mono);
-	font-size: 14px;
-}
-
-.nm-install code {
-	font-size: 14px;
-}
-
-.nm-install code::before {
-	content: '$ ';
-	color: var(--nm-text-3);
-}
-
-.nm-install__copy {
-	padding: 4px 10px;
-	border-radius: 6px;
-	background: var(--nm-soft);
-	color: var(--nm-text-2);
-	font-family: var(--vp-font-family-base);
-	font-size: 12px;
-	transition:
-		color 0.2s,
-		background 0.2s;
-}
-
-.nm-install__copy:hover {
-	color: var(--nm-text);
 }
 
 .nm-hero__actions {
@@ -235,243 +198,11 @@ html:has(.nm-landing) .VPLocalNav {
 	position: relative;
 }
 
-.nm-hero__watermark {
-	position: absolute;
-	top: 44%;
-	left: 62%;
-	width: 165%;
-	transform: translate(-50%, -50%);
-	fill: none;
-	stroke: var(--nm-accent);
-	stroke-width: 1;
-	opacity: 0.32;
-	pointer-events: none;
-}
-
-.nm-hero__turn {
-	transform: rotate(var(--turn, 0deg));
-	transform-box: view-box;
-	transform-origin: 127px 140px;
-}
-
-.nm-hero__watermark path {
-	stroke-dasharray: 1;
-	stroke-dashoffset: 1;
-	animation: nm-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) calc(0.15s + var(--i) * 0.14s) forwards;
-}
-
-/* The dash is dropped at the end, so the outline closes without a seam. */
-@keyframes nm-draw {
-	99% {
-		stroke-dasharray: 1;
-		stroke-dashoffset: 0;
-	}
-
-	100% {
-		stroke-dasharray: none;
-		stroke-dashoffset: 0;
-	}
-}
-
-.nm-card {
-	position: relative;
-	display: grid;
-	gap: 1px;
-	overflow: hidden;
-	border: 1px solid var(--nm-line);
-	border-radius: 14px;
-	background: var(--nm-line);
-}
-
-.nm-motion .nm-card pre {
-	visibility: hidden;
-	animation: nm-failsafe 0s 4s forwards;
-}
-
-.nm-card.is-typing pre,
-.nm-card.is-done pre {
-	visibility: visible;
-	animation: none;
-}
-
-/* Lines emptied for typing keep their height. */
-.nm-card.is-typing .line::after {
-	content: '\200b';
-}
-
-.nm-char {
-	opacity: 0;
-	transition: opacity 0.4s ease;
-}
-
-.nm-char.is-on {
-	opacity: 1;
-}
-
-.nm-card__result {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	padding: 12px 20px;
-	background: var(--nm-surface);
-}
-
-.nm-card__result > * {
-	opacity: 0;
-	transform: translateY(4px);
-	transition:
-		opacity 0.5s,
-		transform 0.5s;
-}
-
-.nm-card.is-done .nm-card__result > * {
-	opacity: 1;
-	transform: none;
-}
-
-.nm-card__label {
-	font-size: 13px;
-	color: var(--nm-text-3);
-}
-
-.nm-counter {
-	display: flex;
-	align-items: center;
-	gap: 12px;
-	font-size: 15px;
-	font-weight: 600;
-	font-variant-numeric: tabular-nums;
-}
-
-.nm-counter button {
-	width: 30px;
-	height: 30px;
-	border: 1px solid var(--nm-line);
-	border-radius: 8px;
-	font-size: 17px;
-	line-height: 1;
-	color: var(--nm-accent);
-	transition: border-color 0.2s;
-}
-
-.nm-counter button:hover {
-	border-color: var(--nm-accent);
-}
-
-.nm-counter span {
-	min-width: 2ch;
-}
-
-.nm-card div[class*='language-'] {
-	border-radius: 0 !important;
-	background: var(--nm-surface) !important;
-}
-
 /* Sections ----------------------------------------------------------------- */
 
 .nm-section {
 	padding: 96px 0;
 	border-top: 1px solid var(--nm-line);
-}
-
-.nm-label {
-	font-size: 15px;
-	font-weight: 500;
-	color: var(--nm-accent);
-}
-
-/* Motion ------------------------------------------------------------------- */
-
-/* Until a component takes over, hidden parts come back on their own in case scripts never run. */
-@keyframes nm-failsafe {
-	to {
-		visibility: visible;
-		opacity: 1;
-		transform: none;
-	}
-}
-
-.nm-word {
-	display: inline-block;
-}
-
-.nm-motion .nm-heading .nm-label,
-.nm-motion .nm-heading .nm-word,
-.nm-motion .nm-reveal {
-	opacity: 0;
-	animation: nm-failsafe 0s 4s forwards;
-}
-
-.nm-motion .nm-heading .nm-word {
-	transform: translateY(0.35em);
-}
-
-.nm-motion .nm-reveal {
-	transform: translateY(24px);
-}
-
-.nm-heading.is-ready .nm-label,
-.nm-heading.is-ready .nm-word,
-.nm-reveal.is-ready {
-	animation: none;
-}
-
-.nm-heading.is-shown .nm-label,
-.nm-heading.is-shown .nm-word,
-.nm-reveal.is-shown {
-	opacity: 1;
-	transform: none;
-}
-
-.nm-heading.is-shown .nm-label {
-	transition: opacity 0.8s ease 0.2s;
-}
-
-.nm-heading.is-shown .nm-word {
-	transition:
-		opacity 0.8s ease,
-		transform 1s cubic-bezier(0.2, 0.7, 0.2, 1);
-	transition-delay: calc(0.35s + var(--i) * 0.09s);
-}
-
-.nm-reveal.is-shown {
-	transition:
-		opacity 0.9s ease 0.3s,
-		transform 1.1s cubic-bezier(0.2, 0.7, 0.2, 1) 0.3s;
-}
-
-.nm-motion .nm-reveal--stagger {
-	opacity: 1;
-	transform: none;
-	animation: none;
-}
-
-.nm-motion .nm-reveal--stagger > * > * {
-	opacity: 0;
-	transform: translateY(16px);
-	animation: nm-failsafe 0s 4s forwards;
-}
-
-.nm-reveal--stagger.is-ready > * > * {
-	animation: none;
-}
-
-.nm-reveal--stagger.is-shown > * > * {
-	opacity: 1;
-	transform: none;
-	transition:
-		opacity 0.8s ease,
-		transform 1s cubic-bezier(0.2, 0.7, 0.2, 1);
-	transition-delay: calc(0.3s + var(--i, 0) * 0.14s);
-}
-
-.nm-title {
-	margin: 14px 0 44px !important;
-	max-width: 20em;
-	font-size: clamp(30px, 3.6vw, 42px);
-	line-height: 1.12;
-	letter-spacing: -0.025em;
-	font-weight: 600;
 }
 
 .nm-lead {
@@ -494,7 +225,7 @@ html:has(.nm-landing) .VPLocalNav {
 	color: var(--nm-text-3);
 }
 
-/* 01 — Comparison --------------------------------------------------------- */
+/* Comparison -------------------------------------------------------------- */
 
 .nm-compare {
 	display: grid;
@@ -517,10 +248,6 @@ html:has(.nm-landing) .VPLocalNav {
 	flex: 1;
 }
 
-.nm-markers {
-	position: relative;
-}
-
 .nm-compare__panel div[class*='language-'] code {
 	font-size: 12px;
 }
@@ -530,208 +257,7 @@ html:has(.nm-landing) .VPLocalNav {
 	filter: saturate(0.6);
 }
 
-.nm-marker {
-	position: absolute;
-	z-index: 2;
-	top: 0;
-	left: 0;
-	display: grid;
-	place-items: center;
-	width: 18px;
-	height: 18px;
-	padding: 0;
-	border: 1px solid var(--nm-accent);
-	border-radius: 50%;
-	background: var(--vp-code-block-bg);
-	font-family: var(--vp-font-family-base);
-	font-size: 10.5px;
-	font-weight: 600;
-	line-height: 1;
-	color: var(--nm-accent);
-	transform: translate(-50%, -50%);
-	cursor: help;
-	transition:
-		color 0.15s,
-		background 0.15s,
-		opacity 0.3s,
-		scale 0.45s cubic-bezier(0.3, 1.6, 0.5, 1);
-}
-
-.nm-markers:not(.is-placed) .nm-marker {
-	visibility: hidden;
-}
-
-.nm-marker.is-hidden {
-	opacity: 0;
-	scale: 0.4;
-}
-
-.nm-markers .line {
-	border-radius: 3px;
-	transition: background-color 0.5s;
-}
-
-.nm-markers .line.is-lit {
-	background-color: color-mix(in srgb, var(--nm-accent) 16%, transparent);
-}
-
-.nm-marker::after {
-	content: '';
-	position: absolute;
-	inset: -1px;
-	border: 1px solid var(--nm-accent);
-	border-radius: 50%;
-	opacity: 0;
-	animation: nm-pulse 2.4s ease-out infinite;
-}
-
-.nm-marker:nth-of-type(even)::after {
-	animation-delay: 1.2s;
-}
-
-.nm-marker:hover,
-.nm-marker:focus-visible,
-.nm-marker.is-open {
-	background: var(--nm-accent);
-	color: var(--nm-bg);
-}
-
-.nm-marker:hover,
-.nm-marker:focus-visible,
-.nm-marker.is-open {
-	z-index: 3;
-}
-
-.nm-marker:hover::after,
-.nm-marker:focus-visible::after,
-.nm-marker.is-open::after {
-	animation: none;
-}
-
-.nm-marker:focus-visible {
-	outline: 2px solid var(--nm-accent);
-	outline-offset: 2px;
-}
-
-@keyframes nm-pulse {
-	0% {
-		opacity: 0.6;
-		transform: scale(1);
-	}
-
-	70%,
-	100% {
-		opacity: 0;
-		transform: scale(1.9);
-	}
-}
-
-@media (prefers-reduced-motion: reduce) {
-	.nm-marker::after {
-		animation: none;
-	}
-}
-
-.nm-marker__note {
-	position: absolute;
-	top: calc(100% + 8px);
-	right: -12px;
-	width: min(280px, 80vw);
-	padding: 12px 14px;
-	border: 1px solid var(--nm-line);
-	border-radius: 10px;
-	background: var(--nm-surface);
-	box-shadow: 0 12px 32px rgb(0 0 0 / 0.1);
-	font-size: 14px;
-	font-weight: 400;
-	line-height: 1.5;
-	text-align: left;
-	color: var(--nm-text);
-	opacity: 0;
-	visibility: hidden;
-	transform: translateY(-4px);
-	transition:
-		opacity 0.15s,
-		transform 0.15s,
-		visibility 0.15s;
-	pointer-events: none;
-}
-
-.nm-marker.is-gutter .nm-marker__note {
-	right: auto;
-	left: -12px;
-}
-
-.nm-marker:hover .nm-marker__note,
-.nm-marker:focus-visible .nm-marker__note,
-.nm-marker.is-open .nm-marker__note {
-	opacity: 1;
-	visibility: visible;
-	transform: none;
-}
-
-.nm-marker__fix {
-	display: block;
-	margin-top: 8px;
-	padding-top: 8px;
-	border-top: 1px solid var(--nm-line);
-	color: var(--nm-accent);
-}
-
-/* 02 — Features ------------------------------------------------------------ */
-
-.nm-features {
-	display: grid;
-	grid-template-columns: repeat(3, minmax(0, 1fr));
-	gap: 1px;
-	overflow: hidden;
-	border: 1px solid var(--nm-line);
-	border-radius: var(--nm-radius);
-	background: var(--nm-line);
-}
-
-.nm-features article {
-	position: relative;
-	z-index: 0;
-	padding: 28px;
-	background: var(--nm-bg);
-}
-
-.nm-features article::before {
-	content: '';
-	position: absolute;
-	inset: 0;
-	z-index: -1;
-	background: radial-gradient(
-		280px circle at var(--x, 50%) var(--y, 50%),
-		color-mix(in srgb, var(--nm-accent) 9%, transparent),
-		transparent 70%
-	);
-	opacity: 0;
-	transition: opacity 0.3s;
-	pointer-events: none;
-}
-
-@media (hover: hover) {
-	.nm-features article:hover::before {
-		opacity: 1;
-	}
-}
-
-.nm-features h3 {
-	font-size: 16px;
-	font-weight: 600;
-	letter-spacing: -0.01em;
-}
-
-.nm-features p {
-	margin-top: 10px;
-	font-size: 15px;
-	line-height: 1.6;
-	color: var(--nm-text-2);
-}
-
-/* 03 — Demo ---------------------------------------------------------------- */
+/* Demo ------------------------------------------------------------------- */
 
 .nm-demo {
 	overflow: hidden;
@@ -811,279 +337,7 @@ html:has(.nm-landing) .VPLocalNav {
 	background: var(--nm-surface) !important;
 }
 
-/* Flower shop -------------------------------------------------------------- */
-
-.shop {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) 260px;
-	gap: 24px;
-	padding: 24px;
-}
-
-.shop__grid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
-	gap: 16px;
-}
-
-.flower {
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
-	padding: 14px;
-	border: 1px solid var(--nm-line);
-	border-radius: var(--nm-radius);
-	background: var(--nm-bg);
-	animation: nm-appear 0.4s ease both;
-}
-
-.flower__art {
-	width: 100%;
-	height: 104px;
-	margin-bottom: 6px;
-	padding: 6px;
-	border-radius: 8px;
-	background: color-mix(in srgb, var(--petal) 14%, var(--nm-bg));
-}
-
-.flower__name {
-	font-size: 15px !important;
-	font-weight: 600;
-	letter-spacing: -0.01em;
-}
-
-.flower__price {
-	margin: 0 !important;
-	font-variant-numeric: tabular-nums;
-	font-size: 13px;
-	color: var(--nm-text-2);
-}
-
-.flower__stepper {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-top: 6px;
-	border: 1px solid var(--nm-line);
-	border-radius: 8px;
-	font-variant-numeric: tabular-nums;
-	font-size: 14px;
-}
-
-.flower__stepper button {
-	width: 34px;
-	height: 32px;
-	color: var(--nm-text-2);
-}
-
-.flower__stepper button:hover {
-	color: var(--nm-accent);
-}
-
-.flower__add,
-.shop__more {
-	height: 36px;
-	border: 1px solid var(--nm-accent);
-	border-radius: 8px;
-	color: var(--nm-accent);
-	font-size: 14px;
-	font-weight: 500;
-	transition:
-		background 0.2s,
-		color 0.2s;
-}
-
-.flower__add:hover {
-	background: var(--nm-accent);
-	color: var(--nm-surface);
-}
-
-.shop__more {
-	width: 100%;
-	margin-top: 16px;
-	border-style: dashed;
-	border-color: var(--nm-line);
-	color: var(--nm-text-2);
-}
-
-.shop__more:hover:not(:disabled) {
-	border-color: var(--nm-accent);
-	color: var(--nm-accent);
-}
-
-.shop__more:disabled {
-	opacity: 0.5;
-	cursor: default;
-}
-
-.cart {
-	align-self: start;
-	position: sticky;
-	top: calc(var(--vp-nav-height) + 24px);
-	padding: 18px;
-	border: 1px solid var(--nm-line);
-	border-radius: var(--nm-radius);
-	background: var(--nm-bg);
-}
-
-.cart__title {
-	font-size: 15px !important;
-	font-weight: 600;
-}
-
-.cart__lines {
-	margin: 12px 0 0 !important;
-	padding: 0 !important;
-	list-style: none !important;
-	font-size: 14px;
-	color: var(--nm-text-2);
-}
-
-.cart__lines li + li {
-	margin-top: 6px;
-}
-
-.cart__empty {
-	display: none;
-	margin: 12px 0 0 !important;
-	font-size: 14px;
-	color: var(--nm-text-3);
-}
-
-.cart[data-empty] .cart__empty {
-	display: block;
-}
-
-.cart__total {
-	display: flex;
-	justify-content: space-between;
-	margin: 16px 0 0 !important;
-	padding-top: 12px;
-	border-top: 1px solid var(--nm-line);
-	font-weight: 600;
-}
-
-.cart__total span {
-	font-variant-numeric: tabular-nums;
-}
-
-.cart__clear {
-	margin-top: 10px;
-	font-size: 13px;
-	color: var(--nm-text-3);
-}
-
-.cart__clear:hover {
-	color: var(--nm-text);
-}
-
-.cart[data-empty] .cart__clear {
-	visibility: hidden;
-}
-
-.shop__log {
-	grid-column: 1 / -1;
-	margin: 0 -24px -24px !important;
-	padding: 14px 24px !important;
-	min-height: 118px;
-	border-top: 1px solid var(--nm-line);
-	background: var(--nm-soft);
-	list-style: none !important;
-	font-size: 13px;
-	line-height: 1.8;
-	color: var(--nm-text-3);
-}
-
-.shop__log li::before {
-	content: '› ';
-	color: var(--nm-accent);
-}
-
-.shop__log li:last-child {
-	color: var(--nm-text);
-}
-
-.toast {
-	position: fixed;
-	right: 24px;
-	bottom: 24px;
-	z-index: 100;
-	padding: 12px 16px;
-	border-radius: 10px;
-	background: var(--nm-text);
-	color: var(--nm-bg);
-	font-size: 14px;
-	opacity: 0;
-	transform: translateY(8px);
-	pointer-events: none;
-	transition:
-		opacity 0.25s,
-		transform 0.25s;
-}
-
-.toast.is-visible {
-	opacity: 1;
-	transform: none;
-}
-
-@keyframes nm-appear {
-	from {
-		opacity: 0;
-		transform: translateY(6px);
-	}
-}
-
-/* 04 — Size ---------------------------------------------------------------- */
-
-.nm-size {
-	display: grid;
-	gap: 14px;
-	max-width: 720px;
-}
-
-.nm-size__row {
-	display: grid;
-	grid-template-columns: 110px minmax(0, 1fr) 72px;
-	gap: 16px;
-	align-items: center;
-	font-variant-numeric: tabular-nums;
-	font-size: 14px;
-	color: var(--nm-text-2);
-}
-
-.nm-size__row span:last-child {
-	text-align: right;
-}
-
-.nm-size__bar {
-	height: 10px;
-	border-radius: 5px;
-	background: var(--nm-soft);
-}
-
-.nm-size__bar::before {
-	content: '';
-	display: block;
-	width: var(--size);
-	height: 100%;
-	border-radius: inherit;
-	transform: scaleX(var(--grow, 1));
-	transform-origin: left;
-	background: var(--nm-text-3);
-	opacity: 0.45;
-}
-
-.nm-size__row--self {
-	color: var(--nm-text);
-	font-weight: 600;
-}
-
-.nm-size__row--self .nm-size__bar::before {
-	background: var(--nm-accent);
-	opacity: 1;
-}
-
-/* 05 — FAQ ----------------------------------------------------------------- */
+/* FAQ -------------------------------------------------------------------- */
 
 .nm-faq {
 	display: grid;
@@ -1139,51 +393,28 @@ html:has(.nm-landing) .VPLocalNav {
 	color: var(--nm-accent);
 }
 
-.nm-footer__note,
 .nm-footer__copy {
 	margin-top: 12px;
 }
 
-/* Motion and small screens -------------------------------------------------- */
+/* Motion ------------------------------------------------------------------- */
 
-@media (prefers-reduced-motion: reduce) {
-	.flower,
-	.toast {
-		animation: none;
-		transition: none;
-	}
-
-	.nm-hero__watermark path {
-		stroke-dashoffset: 0;
-		animation: none;
+/* Parts hidden until a component reveals them come back on their own if scripts never run. */
+@keyframes nm-failsafe {
+	to {
+		visibility: visible;
+		opacity: 1;
+		transform: none;
 	}
 }
+
+/* Small screens ------------------------------------------------------------ */
 
 @media (max-width: 960px) {
 	.nm-hero {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 48px;
 		padding: 56px 0 72px;
-	}
-
-	/* The card spans the full width here, so the flower sits to the right of the buttons and reaches past the hero. */
-	.nm-hero__watermark {
-		top: -325px;
-		left: 150px;
-		width: 1048px;
-		transform: none;
-	}
-
-	.nm-features {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-	}
-
-	.shop {
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	.cart {
-		position: static;
 	}
 }
 
@@ -1194,10 +425,6 @@ html:has(.nm-landing) .VPLocalNav {
 
 	.nm-section {
 		padding: 64px 0;
-	}
-
-	.nm-hero__watermark {
-		display: none;
 	}
 
 	.nm-compare {
@@ -1219,40 +446,11 @@ html:has(.nm-landing) .VPLocalNav {
 		display: flex;
 	}
 
-	.nm-features,
 	.nm-faq {
 		grid-template-columns: minmax(0, 1fr);
 	}
 
-	.nm-size__row {
-		grid-template-columns: 84px minmax(0, 1fr) 60px;
-		gap: 10px;
-		font-size: 13px;
-	}
-
-	.shop {
-		padding: 16px;
-	}
-
-	.shop__grid {
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 10px;
-	}
-
-	.flower {
-		padding: 10px;
-	}
-
-	.flower__art {
-		height: 76px;
-	}
-
 	.nm-landing .vp-doc div[class*='language-'] code {
 		font-size: 11.5px;
-	}
-
-	.shop__log {
-		margin: 0 -16px -16px !important;
-		padding: 12px 16px !important;
 	}
 }

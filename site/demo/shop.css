@@ -1,0 +1,263 @@
+/* Styles for the flower shop markup in shop.html and server.ts. */
+
+.shop {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) 260px;
+	gap: 24px;
+	padding: 24px;
+}
+
+.shop__grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+	gap: 16px;
+}
+
+.flower {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+	padding: 14px;
+	border: 1px solid var(--nm-line);
+	border-radius: var(--nm-radius);
+	background: var(--nm-bg);
+	animation: nm-appear 0.4s ease both;
+}
+
+.flower__art {
+	width: 100%;
+	height: 104px;
+	margin-bottom: 6px;
+	padding: 6px;
+	border-radius: 8px;
+	background: color-mix(in srgb, var(--petal) 14%, var(--nm-bg));
+}
+
+.flower__name {
+	font-size: 15px !important;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+
+.flower__price {
+	margin: 0 !important;
+	font-variant-numeric: tabular-nums;
+	font-size: 13px;
+	color: var(--nm-text-2);
+}
+
+.flower__stepper {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-top: 6px;
+	border: 1px solid var(--nm-line);
+	border-radius: 8px;
+	font-variant-numeric: tabular-nums;
+	font-size: 14px;
+}
+
+.flower__stepper button {
+	width: 34px;
+	height: 32px;
+	color: var(--nm-text-2);
+}
+
+.flower__stepper button:hover {
+	color: var(--nm-accent);
+}
+
+.flower__add,
+.shop__more {
+	height: 36px;
+	border: 1px solid var(--nm-accent);
+	border-radius: 8px;
+	color: var(--nm-accent);
+	font-size: 14px;
+	font-weight: 500;
+	transition:
+		background 0.2s,
+		color 0.2s;
+}
+
+.flower__add:hover {
+	background: var(--nm-accent);
+	color: var(--nm-surface);
+}
+
+.shop__more {
+	width: 100%;
+	margin-top: 16px;
+	border-style: dashed;
+	border-color: var(--nm-line);
+	color: var(--nm-text-2);
+}
+
+.shop__more:hover:not(:disabled) {
+	border-color: var(--nm-accent);
+	color: var(--nm-accent);
+}
+
+.shop__more:disabled {
+	opacity: 0.5;
+	cursor: default;
+}
+
+.cart {
+	align-self: start;
+	position: sticky;
+	top: calc(var(--vp-nav-height) + 24px);
+	padding: 18px;
+	border: 1px solid var(--nm-line);
+	border-radius: var(--nm-radius);
+	background: var(--nm-bg);
+}
+
+.cart__title {
+	font-size: 15px !important;
+	font-weight: 600;
+}
+
+.cart__lines {
+	margin: 12px 0 0 !important;
+	padding: 0 !important;
+	list-style: none !important;
+	font-size: 14px;
+	color: var(--nm-text-2);
+}
+
+.cart__lines li + li {
+	margin-top: 6px;
+}
+
+.cart__empty {
+	display: none;
+	margin: 12px 0 0 !important;
+	font-size: 14px;
+	color: var(--nm-text-3);
+}
+
+.cart[data-empty] .cart__empty {
+	display: block;
+}
+
+.cart__total {
+	display: flex;
+	justify-content: space-between;
+	margin: 16px 0 0 !important;
+	padding-top: 12px;
+	border-top: 1px solid var(--nm-line);
+	font-weight: 600;
+}
+
+.cart__total span {
+	font-variant-numeric: tabular-nums;
+}
+
+.cart__clear {
+	margin-top: 10px;
+	font-size: 13px;
+	color: var(--nm-text-3);
+}
+
+.cart__clear:hover {
+	color: var(--nm-text);
+}
+
+.cart[data-empty] .cart__clear {
+	visibility: hidden;
+}
+
+.shop__log {
+	grid-column: 1 / -1;
+	margin: 0 -24px -24px !important;
+	padding: 14px 24px !important;
+	min-height: 118px;
+	border-top: 1px solid var(--nm-line);
+	background: var(--nm-soft);
+	list-style: none !important;
+	font-size: 13px;
+	line-height: 1.8;
+	color: var(--nm-text-3);
+}
+
+.shop__log li::before {
+	content: '› ';
+	color: var(--nm-accent);
+}
+
+.shop__log li:last-child {
+	color: var(--nm-text);
+}
+
+.toast {
+	position: fixed;
+	right: 24px;
+	bottom: 24px;
+	z-index: 100;
+	padding: 12px 16px;
+	border-radius: 10px;
+	background: var(--nm-text);
+	color: var(--nm-bg);
+	font-size: 14px;
+	opacity: 0;
+	transform: translateY(8px);
+	pointer-events: none;
+	transition:
+		opacity 0.25s,
+		transform 0.25s;
+}
+
+.toast.is-visible {
+	opacity: 1;
+	transform: none;
+}
+
+@keyframes nm-appear {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.flower,
+	.toast {
+		animation: none;
+		transition: none;
+	}
+}
+
+@media (max-width: 960px) {
+	.shop {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.cart {
+		position: static;
+	}
+}
+
+@media (max-width: 720px) {
+	.shop {
+		padding: 16px;
+	}
+
+	.shop__grid {
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 10px;
+	}
+
+	.flower {
+		padding: 10px;
+	}
+
+	.flower__art {
+		height: 76px;
+	}
+
+	.shop__log {
+		margin: 0 -16px -16px !important;
+		padding: 12px 16px !important;
+	}
+}

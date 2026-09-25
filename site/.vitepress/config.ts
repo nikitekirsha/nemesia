@@ -17,8 +17,9 @@ function mirror(): void {
 
 mirror()
 if (process.argv.includes('dev')) {
-	// A directory watcher keeps working when editors and git replace files instead of writing into them.
+	// Directory watchers keep working when editors and git replace files instead of writing into them.
 	watch(root('docs'), () => mirror())
+	watch(root(''), (_event, file) => file === 'CHANGELOG.md' && mirror())
 }
 
 export default defineConfig({

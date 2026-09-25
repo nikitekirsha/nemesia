@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import { reveal } from '../reveal'
+import { useReveal } from '../reveal'
 
 interface Row {
 	name: string
@@ -17,7 +17,6 @@ const max = Math.max(...props.rows.map(row => row.size))
 const root = ref<HTMLElement>()
 const progress = ref(props.rows.map(() => 1))
 
-let stop: (() => void) | undefined
 let frame = 0
 
 // Every bar grows at the same speed, so the shortest one stops first.
@@ -32,15 +31,13 @@ function grow() {
 	frame = requestAnimationFrame(tick)
 }
 
+const { animated } = useReveal(root, grow)
+
 onMounted(() => {
-	stop = reveal(root.value!, grow)
-	if (stop !== undefined) progress.value = props.rows.map(() => 0)
+	if (animated.value) progress.value = props.rows.map(() => 0)
 })
 
-onUnmounted(() => {
-	stop?.()
-	cancelAnimationFrame(frame)
-})
+onUnmounted(() => cancelAnimationFrame(frame))
 </script>
 
 <template>
@@ -52,3 +49,61 @@ onUnmounted(() => {
 		</div>
 	</div>
 </template>
+
+<style>
+.nm-size {
+	display: grid;
+	gap: 14px;
+	max-width: 720px;
+}
+
+.nm-size__row {
+	display: grid;
+	grid-template-columns: 110px minmax(0, 1fr) 72px;
+	gap: 16px;
+	align-items: center;
+	font-variant-numeric: tabular-nums;
+	font-size: 14px;
+	color: var(--nm-text-2);
+}
+
+.nm-size__row span:last-child {
+	text-align: right;
+}
+
+.nm-size__bar {
+	height: 10px;
+	border-radius: 5px;
+	background: var(--nm-soft);
+}
+
+.nm-size__bar::before {
+	content: '';
+	display: block;
+	width: var(--size);
+	height: 100%;
+	border-radius: inherit;
+	transform: scaleX(var(--grow, 1));
+	transform-origin: left;
+	background: var(--nm-text-3);
+	opacity: 0.45;
+}
+
+.nm-size__row--self {
+	color: var(--nm-text);
+	font-weight: 600;
+}
+
+.nm-size__row--self .nm-size__bar::before {
+	background: var(--nm-accent);
+	opacity: 1;
+}
+
+@media (max-width: 720px) {
+	.nm-size__row {
+		grid-template-columns: 84px minmax(0, 1fr) 60px;
+		gap: 10px;
+		font-size: 13px;
+	}
+}
+</style>

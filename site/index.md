@@ -104,7 +104,7 @@ const notes = [
 
 <Reveal>
 
-<NmTabs kind="compare" :tabs="{ before: 'Before', after: 'After' }">
+<Tabs kind="compare" :tabs="{ before: 'Before', after: 'After' }">
 <template v-slot:before>
 <CodeMarkers class="vp-doc" :notes="notes">
 <p class="nm-file">vanilla.js</p>
@@ -158,7 +158,7 @@ class Tabs extends Component('tabs') {
 
 </div>
 </template>
-</NmTabs>
+</Tabs>
 
 </Reveal>
 
@@ -170,7 +170,7 @@ class Tabs extends Component('tabs') {
 
 <Reveal>
 
-<Spotlight>
+<FeatureGrid>
 	<article>
 		<h3>Behavior lives in the class</h3>
 		<p>Components are found by <code>data-nemesia</code>. The elements and options they need are defined in the class.</p>
@@ -195,7 +195,7 @@ class Tabs extends Component('tabs') {
 		<h3>Components that work together</h3>
 		<p>Build a page from small parts that know about each other, instead of one script that knows everything.</p>
 	</article>
-</Spotlight>
+</FeatureGrid>
 
 </Reveal>
 
@@ -209,12 +209,12 @@ class Tabs extends Component('tabs') {
 
 <p class="nm-lead">Plain server HTML, four small components. Add a few flowers, then load more from the “server”.</p>
 
-<NmTabs kind="demo" :tabs="{ result: 'Result', html: 'HTML', components: 'Components' }">
+<Tabs kind="demo" :tabs="{ result: 'Result', html: 'HTML', components: 'Components' }">
 <template v-slot:bar>
 <span class="nm-demo__dots" aria-hidden="true"><i></i><i></i><i></i></span>
 </template>
 <template v-slot:result>
-<NemesiaDemo>
+<NemesiaDemo demo="shop">
 
 <!--@include: ./demo/shop.html-->
 
@@ -244,7 +244,7 @@ class Tabs extends Component('tabs') {
 
 </div>
 </template>
-</NmTabs>
+</Tabs>
 
 </Reveal>
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-import { reveal } from '../reveal'
+import { useReveal } from '../reveal'
 
 const root = ref<HTMLElement>()
 const typing = ref(false)
@@ -90,26 +90,29 @@ function finish() {
 	done.value = true
 }
 
-let stop: (() => void) | undefined
+const { animated } = useReveal(root, type)
 
 onMounted(() => {
-	stop = reveal(root.value!, type)
-	if (stop === undefined) done.value = true
+	if (!animated.value) done.value = true
 })
 
 onUnmounted(() => {
-	stop?.()
 	cancelAnimationFrame(frame)
 	if (restore !== undefined) finish()
 })
 </script>
 
 <template>
-	<div ref="root" class="nm-card vp-doc" :class="{ 'is-typing': typing, 'is-done': done }">
+	<div
+		ref="root"
+		class="nm-card vp-doc"
+		:class="{ 'is-typing': typing, 'is-done': done }"
+		:style="{ '--fade': `${FADE}ms` }"
+	>
 		<slot />
 		<div class="nm-card__result">
 			<span class="nm-card__label">Result</span>
-			<NemesiaDemo>
+			<NemesiaDemo demo="counter">
 				<div class="nm-counter" data-nemesia="counter" data-option-initial="10">
 					<button type="button" data-ref="button" aria-label="Increase">+</button>
 					<span data-ref="value"></span>
@@ -118,3 +121,99 @@ onUnmounted(() => {
 		</div>
 	</div>
 </template>
+
+<style>
+.nm-card {
+	position: relative;
+	display: grid;
+	gap: 1px;
+	overflow: hidden;
+	border: 1px solid var(--nm-line);
+	border-radius: 14px;
+	background: var(--nm-line);
+}
+
+.nm-motion .nm-card pre {
+	visibility: hidden;
+	animation: nm-failsafe 0s 4s forwards;
+}
+
+.nm-card.is-typing pre,
+.nm-card.is-done pre {
+	visibility: visible;
+	animation: none;
+}
+
+/* Lines emptied for typing keep their height. */
+.nm-card.is-typing .line::after {
+	content: '\200b';
+}
+
+.nm-char {
+	opacity: 0;
+	transition: opacity var(--fade) ease;
+}
+
+.nm-char.is-on {
+	opacity: 1;
+}
+
+.nm-card__result {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 12px 20px;
+	background: var(--nm-surface);
+}
+
+.nm-card__result > * {
+	opacity: 0;
+	transform: translateY(4px);
+	transition:
+		opacity 0.5s,
+		transform 0.5s;
+}
+
+.nm-card.is-done .nm-card__result > * {
+	opacity: 1;
+	transform: none;
+}
+
+.nm-card__label {
+	font-size: 13px;
+	color: var(--nm-text-3);
+}
+
+.nm-counter {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	font-size: 15px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+}
+
+.nm-counter button {
+	width: 30px;
+	height: 30px;
+	border: 1px solid var(--nm-line);
+	border-radius: 8px;
+	font-size: 17px;
+	line-height: 1;
+	color: var(--nm-accent);
+	transition: border-color 0.2s;
+}
+
+.nm-counter button:hover {
+	border-color: var(--nm-accent);
+}
+
+.nm-counter span {
+	min-width: 2ch;
+}
+
+.nm-card div[class*='language-'] {
+	border-radius: 0 !important;
+	background: var(--nm-surface) !important;
+}
+</style>

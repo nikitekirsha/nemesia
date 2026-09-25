@@ -60,3 +60,66 @@ onUnmounted(() => {
 		</g>
 	</svg>
 </template>
+
+<style>
+.nm-hero__watermark {
+	position: absolute;
+	top: 44%;
+	left: 62%;
+	width: 165%;
+	transform: translate(-50%, -50%);
+	fill: none;
+	stroke: var(--nm-accent);
+	stroke-width: 1;
+	opacity: 0.32;
+	pointer-events: none;
+}
+
+.nm-hero__turn {
+	transform: rotate(var(--turn, 0deg));
+	transform-box: view-box;
+	transform-origin: 127px 140px;
+}
+
+.nm-hero__watermark path {
+	stroke-dasharray: 1;
+	stroke-dashoffset: 1;
+	animation: nm-draw 1.6s cubic-bezier(0.65, 0, 0.35, 1) calc(0.15s + var(--i) * 0.14s) forwards;
+}
+
+/* The dash is dropped at the end, so the outline closes without a seam. */
+@keyframes nm-draw {
+	99% {
+		stroke-dasharray: 1;
+		stroke-dashoffset: 0;
+	}
+
+	100% {
+		stroke-dasharray: none;
+		stroke-dashoffset: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nm-hero__watermark path {
+		stroke-dashoffset: 0;
+		animation: none;
+	}
+}
+
+@media (max-width: 960px) {
+	/* The card spans the full width here, so the flower sits to the right of the buttons and reaches past the hero. */
+	.nm-hero__watermark {
+		top: -325px;
+		left: 150px;
+		width: 1048px;
+		transform: none;
+	}
+}
+
+@media (max-width: 720px) {
+	.nm-hero__watermark {
+		display: none;
+	}
+}
+</style>
