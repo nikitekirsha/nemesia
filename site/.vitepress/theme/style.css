@@ -220,10 +220,22 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
 	margin-top: 28px;
-	font-family: var(--vp-font-family-mono);
-	font-size: 13px;
+	font-size: 14px;
 	color: var(--nm-text-3);
+}
+
+.nm-meta span + span::before {
+	content: '';
+	display: inline-block;
+	width: 1px;
+	height: 12px;
+	margin: 0 14px;
+	vertical-align: -1px;
+	background: var(--nm-line);
 }
 
 .nm-hero__visual {
@@ -236,21 +248,11 @@ html:has(.nm-landing) .VPLocalNav {
 	left: 62%;
 	width: 165%;
 	transform: translate(-50%, -50%);
-	fill: var(--nm-accent);
-	opacity: 0.32;
-	pointer-events: none;
-}
-
-.nm-hero__watermark-petal {
-	fill: var(--nm-bg);
-	stroke: var(--nm-accent);
-	stroke-width: 1.1;
-}
-
-.nm-hero__watermark-center {
 	fill: none;
 	stroke: var(--nm-accent);
-	stroke-width: 1.1;
+	stroke-width: 1;
+	opacity: 0.32;
+	pointer-events: none;
 }
 
 .nm-card {
@@ -276,10 +278,8 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-label {
-	font-family: var(--vp-font-family-mono);
-	font-size: 12px;
-	letter-spacing: 0.12em;
-	text-transform: uppercase;
+	font-size: 15px;
+	font-weight: 500;
 	color: var(--nm-accent);
 }
 
@@ -326,6 +326,7 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-compare__panel {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 }
@@ -339,43 +340,120 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-compare__panel--before div[class*='language-'] {
-	opacity: 0.72;
-	filter: saturate(0.35);
+	opacity: 0.88;
+	filter: saturate(0.6);
 }
 
-.nm-diff {
-	display: grid;
-	margin: 40px 0 0;
+.nm-marker {
+	position: absolute;
+	z-index: 2;
+	top: 0;
+	left: 0;
+	width: 22px;
+	height: 22px;
 	padding: 0;
-	list-style: none;
+	border-radius: 50%;
+	transform: translate(-50%, -50%);
+	cursor: help;
+}
+
+.nm-marker::before,
+.nm-marker::after {
+	content: '';
+	position: absolute;
+	inset: 6px;
+	border-radius: 50%;
+	background: var(--nm-accent);
+}
+
+.nm-marker::after {
+	opacity: 0;
+	animation: nm-pulse 2.4s ease-out infinite;
+}
+
+.nm-marker:nth-of-type(even)::after {
+	animation-delay: 1.2s;
+}
+
+.nm-marker:hover,
+.nm-marker:focus-visible,
+.nm-marker.is-open {
+	z-index: 3;
+}
+
+.nm-marker:hover::after,
+.nm-marker:focus-visible::after,
+.nm-marker.is-open::after {
+	animation: none;
+}
+
+.nm-marker:focus-visible {
+	outline: 2px solid var(--nm-accent);
+	outline-offset: 2px;
+}
+
+@keyframes nm-pulse {
+	0% {
+		opacity: 0.5;
+		transform: scale(1);
+	}
+
+	70%,
+	100% {
+		opacity: 0;
+		transform: scale(2.6);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.nm-marker::after {
+		animation: none;
+	}
+}
+
+.nm-marker__note {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: -12px;
+	width: min(280px, 80vw);
+	padding: 12px 14px;
+	border: 1px solid var(--nm-line);
+	border-radius: 10px;
+	background: var(--nm-surface);
+	box-shadow: 0 12px 32px rgb(0 0 0 / 0.1);
+	font-family: var(--vp-font-family-base);
+	font-size: 14px;
+	line-height: 1.5;
+	text-align: left;
+	color: var(--nm-text);
+	opacity: 0;
+	visibility: hidden;
+	transform: translateY(-4px);
+	transition:
+		opacity 0.15s,
+		transform 0.15s,
+		visibility 0.15s;
+	pointer-events: none;
+}
+
+.nm-marker.is-gutter .nm-marker__note {
+	right: auto;
+	left: -12px;
+}
+
+.nm-marker:hover .nm-marker__note,
+.nm-marker:focus-visible .nm-marker__note,
+.nm-marker.is-open .nm-marker__note {
+	opacity: 1;
+	visibility: visible;
+	transform: none;
+}
+
+.nm-marker__fix {
+	display: block;
+	margin-top: 8px;
+	padding-top: 8px;
 	border-top: 1px solid var(--nm-line);
-}
-
-.nm-diff li {
-	display: grid;
-	grid-template-columns: 40px minmax(0, 1fr) minmax(0, 1fr);
-	gap: 24px;
-	padding: 16px 0;
-	border-bottom: 1px solid var(--nm-line);
-	font-size: 15px;
-}
-
-.nm-diff__mark {
-	font-family: var(--vp-font-family-mono);
-	color: var(--nm-accent);
-}
-
-.nm-diff__before {
-	color: var(--nm-text-3);
-}
-
-.nm-diff__before::before {
-	content: '✕ ';
-	color: var(--nm-text-3);
-}
-
-.nm-diff__after::before {
-	content: '✓ ';
 	color: var(--nm-accent);
 }
 
@@ -883,15 +961,6 @@ html:has(.nm-landing) .VPLocalNav {
 
 	.nm-compare__panel.is-active {
 		display: flex;
-	}
-
-	.nm-diff li {
-		grid-template-columns: 28px minmax(0, 1fr);
-		gap: 4px 12px;
-	}
-
-	.nm-diff__after {
-		grid-column: 2;
 	}
 
 	.nm-features,
