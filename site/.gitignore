@@ -1,0 +1,6 @@
+node_modules/
+.vitepress/cache/
+.vitepress/dist/
+# Mirrored from ../docs and ../CHANGELOG.md on every run; edit the originals.
+guide/
+changelog.md

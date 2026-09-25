@@ -64,7 +64,7 @@ app.mount(document.body)
 
 ## Documentation
 
-The complete guide lives in [`docs`](docs/README.md):
+Read the guide on the website: **[nikitekirsha.github.io/nemesia](https://nikitekirsha.github.io/nemesia/)**. The same pages live in [`docs`](docs/README.md):
 
 1. [Getting started](docs/01-getting-started.md)
 2. [HTML contract](docs/02-html-contract.md)
