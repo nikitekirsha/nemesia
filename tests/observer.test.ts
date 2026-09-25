@@ -718,6 +718,28 @@ describe('observer lifecycle', () => {
 		expect(lifecycle).toEqual(['mount', 'destroy'])
 	})
 
+	it('does not walk mounted root ancestries for text-only mutations', async () => {
+		class Many extends Nemesia.Component('many-text') {}
+		const scope = document.createElement('main')
+		for (let index = 0; index < 200; index += 1) {
+			const wrapper = document.createElement('div')
+			wrapper.append(componentRoot('many-text'))
+			scope.append(wrapper)
+		}
+		const text = document.createElement('span')
+		scope.append(text)
+		document.body.append(scope)
+		const app = createApp({ observe: true }).register([Many])
+		app.mount(scope)
+		await flushMutations()
+		const parentNode = vi.spyOn(Node.prototype, 'parentNode', 'get')
+
+		text.textContent = 'updated'
+		await flushMutations()
+
+		expect(parentNode.mock.calls.length).toBeLessThan(200)
+	})
+
 	it('disconnects every scope without destroying instances', async () => {
 		const lifecycle: string[] = []
 		class Global extends Nemesia.Component('global-observer') {

@@ -48,6 +48,13 @@ function observerConstructor(scope: ParentNode): typeof MutationObserver | undef
 	return typeof MutationObserver === 'undefined' ? undefined : MutationObserver
 }
 
+function hasAncestorIn(node: Node, ancestors: ReadonlySet<Node>): boolean {
+	for (let current: Node | null = node; current !== null; current = current.parentNode) {
+		if (ancestors.has(current)) return true
+	}
+	return false
+}
+
 function snapshotAncestry(node: Node): readonly Node[] {
 	const ancestry: Node[] = []
 	let current: Node | null = node
@@ -218,6 +225,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 		const removedRoots = normalizeRemovedMutationRoots(this.#pendingRemovedNodes.splice(0))
 		const addedRoots = normalizeMutationRoots(this.#pendingAddedNodes.splice(0))
+		if (removedRoots.length === 0 && addedRoots.length === 0) return
 
 		const scopesToReconcile = this.#observedScopesHistoricallyWithin(removedRoots)
 
@@ -237,6 +245,8 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	}
 
 	#destroyHistoricallyRemovedConcrete(removedRoots: Element[]): void {
+		if (removedRoots.length === 0) return
+
 		const removed = new Set<Node>(removedRoots)
 		const roots = [...this.#mountedRoots].filter(
 			root => this.#mountedRootAncestries.get(root)?.some(ancestor => removed.has(ancestor)) ?? false
@@ -250,6 +260,8 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	}
 
 	#observedScopesHistoricallyWithin(removedRoots: Element[]): ParentNode[] {
+		if (removedRoots.length === 0) return []
+
 		const removed = new Set<Node>(removedRoots)
 
 		return [...this.#observedScopes].filter(
@@ -258,12 +270,12 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	}
 
 	#refreshObservedScopeAncestries(addedRoots: Element[]): void {
-		const added = new Set<Node>(addedRoots)
+		if (addedRoots.length === 0) return
 
+		const added = new Set<Node>(addedRoots)
 		for (const scope of this.#observedScopes) {
-			const ancestry = snapshotAncestry(scope as Node)
-			if (ancestry.some(ancestor => added.has(ancestor))) {
-				this.#observedScopeAncestries.set(scope, ancestry)
+			if (hasAncestorIn(scope as Node, added)) {
+				this.#observedScopeAncestries.set(scope, snapshotAncestry(scope as Node))
 			}
 		}
 	}
@@ -271,11 +283,11 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	#refreshMountedRootAncestriesWithin(scopes: Iterable<ParentNode>): void {
 		const scopeNodes = new Set<Node>()
 		for (const scope of scopes) scopeNodes.add(scope as Node)
+		if (scopeNodes.size === 0) return
 
 		for (const root of this.#mountedRoots) {
-			const ancestry = snapshotAncestry(root)
-			if (ancestry.some(ancestor => scopeNodes.has(ancestor))) {
-				this.#mountedRootAncestries.set(root, ancestry)
+			if (hasAncestorIn(root, scopeNodes)) {
+				this.#mountedRootAncestries.set(root, snapshotAncestry(root))
 			}
 		}
 	}
