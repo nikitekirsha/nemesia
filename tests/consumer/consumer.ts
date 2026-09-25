@@ -43,7 +43,8 @@ class Typed extends Nemesia.Component('typed', concreteOptions) {
 	many = this.ref.many.element('item')
 	optionalMany = this.ref.optional.many.input('optionalItem')
 
-	title = this.option.string('title', stringOptions)
+	title = this.option.string('title', { minLength: 1 })
+	subtitle = this.option.optional.string('subtitle', stringOptions)
 	count = this.option.optional.number('count', numberOptions)
 	enabled = this.option.optional.boolean('enabled', booleanOptions)
 	config = this.option.optional.json<{ enabled: boolean }>('config', jsonOptions)
@@ -103,6 +104,12 @@ if (false) {
 	app.register(Typed)
 	// @ts-expect-error A form-root component rejects a div constructor root.
 	new Typed(document.createElement('div'))
+
+	class RequiredDefault extends Nemesia.Component('required-default') {
+		// @ts-expect-error Required options reject a default they would never use.
+		value = this.option.string('value', stringOptions)
+	}
+	void RequiredDefault
 }
 
 void namespace

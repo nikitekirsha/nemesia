@@ -10,6 +10,7 @@ import type {
 	OptionParser,
 	OptionValidator,
 	OptionalOptionApi,
+	RequiredJsonOptionOptions,
 	StringOptionOptions
 } from './types.js'
 
@@ -33,6 +34,8 @@ const hasDefault = <T>(options: { default?: T } | undefined): options is { defau
 
 const optionAttribute = (name: string): string =>
 	`data-option-${name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`
+
+const parseNumber = (raw: string): number => (raw.trim() === '' ? Number.NaN : Number(raw))
 
 const parseBoolean = (raw: string): ParseResult<boolean> => {
 	if (raw === '' || raw === 'true' || raw === '1') {
@@ -139,7 +142,7 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 			required,
 			'number',
 			raw => {
-				const value = Number(raw)
+				const value = parseNumber(raw)
 
 				if (Number.isNaN(value)) {
 					return invalid()
@@ -210,7 +213,7 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 				if (typeof literalValue === 'string') {
 					parsed = raw
 				} else if (typeof literalValue === 'number') {
-					parsed = Number(raw)
+					parsed = parseNumber(raw)
 
 					if (Number.isNaN(parsed)) {
 						return invalid()
@@ -348,18 +351,12 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 	const api = {
 		string: (name, options) => string(true, name, options) as string,
 		number: (name, options) => number(true, name, options) as number,
-		boolean: (name, options) => boolean(true, name, options) as boolean,
-		json: <T>(name: string, options?: JsonOptionOptions<T>) => json(true, name, options) as T,
-		enum: <T extends readonly string[]>(name: string, values: T, options?: DefaultOptionOptions<T[number]>) =>
-			enumOption(true, name, values, options) as T[number],
-		literal: <T extends OptionLiteral>(name: string, value: T, options?: DefaultOptionOptions<T>) =>
-			literal(true, name, value, options) as T,
-		custom: <T>(
-			name: string,
-			parser: OptionParser<T>,
-			validator?: OptionValidator<T>,
-			options?: DefaultOptionOptions<T>
-		) => custom(true, name, parser, validator, options) as T,
+		boolean: name => boolean(true, name) as boolean,
+		json: <T>(name: string, options?: RequiredJsonOptionOptions<T>) => json<T>(true, name, options) as T,
+		enum: <T extends readonly string[]>(name: string, values: T) => enumOption(true, name, values) as T[number],
+		literal: <T extends OptionLiteral>(name: string, value: T) => literal(true, name, value) as T,
+		custom: <T>(name: string, parser: OptionParser<T>, validator?: OptionValidator<T>) =>
+			custom(true, name, parser, validator) as T,
 		optional
 	} satisfies OptionApi
 

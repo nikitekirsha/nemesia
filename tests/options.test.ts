@@ -182,7 +182,6 @@ describe('number and boolean options', () => {
 			minimum = this.option.number('minimum', { min: 2 })
 			maximum = this.option.number('maximum', { max: 4 })
 			hexadecimal = this.option.number('hexadecimal')
-			empty = this.option.number('empty')
 			infinity = this.option.number('infinity')
 		}
 		const instance = new Numbers(
@@ -190,7 +189,6 @@ describe('number and boolean options', () => {
 				'data-option-minimum': '2',
 				'data-option-maximum': '4',
 				'data-option-hexadecimal': '0x10',
-				'data-option-empty': '',
 				'data-option-infinity': 'Infinity'
 			})
 		)
@@ -198,12 +196,13 @@ describe('number and boolean options', () => {
 		expect(instance.minimum).toBe(2)
 		expect(instance.maximum).toBe(4)
 		expect(instance.hexadecimal).toBe(16)
-		expect(instance.empty).toBe(0)
 		expect(instance.infinity).toBe(Number.POSITIVE_INFINITY)
 	})
 
 	it.each([
 		['NaN', 'not-a-number', {}],
+		['an empty value', '', {}],
+		['a whitespace-only value', ' \n\t', {}],
 		['minimum', '1', { min: 2 }],
 		['maximum', '5', { max: 4 }]
 	] as const)('rejects invalid numbers for %s', (_label, raw, options) => {
@@ -219,6 +218,26 @@ describe('number and boolean options', () => {
 					})
 				)
 		).toThrow(SkipComponentMountError)
+	})
+
+	it('rejects an empty optional number instead of using its default', () => {
+		class EmptyNumber extends Nemesia.Component('empty-number') {
+			value = this.option.optional.number('value', { default: 300 })
+		}
+
+		expect(() => new EmptyNumber(createRoot('empty-number', { 'data-option-value': '' }))).toThrow(
+			SkipComponentMountError
+		)
+	})
+
+	it('rejects an empty value for a zero number literal', () => {
+		class ZeroLiteral extends Nemesia.Component('zero-literal') {
+			value = this.option.literal('value', 0)
+		}
+
+		expect(() => new ZeroLiteral(createRoot('zero-literal', { 'data-option-value': '' }))).toThrow(
+			SkipComponentMountError
+		)
 	})
 
 	it('parses every exact supported boolean spelling including bare attributes', () => {
@@ -498,6 +517,7 @@ describe('required and optional semantics', () => {
 
 	it('does not use defaults supplied to required options', () => {
 		class RequiredDefault extends Nemesia.Component('required-default') {
+			// @ts-expect-error Required options reject defaults at the type level.
 			value = this.option.string('value', { default: 'not-used' })
 		}
 

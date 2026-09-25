@@ -26,6 +26,8 @@ Optional helpers return `undefined` when absent:
 subtitle = this.option.optional.string('subtitle')
 ```
 
+Required helpers do not accept `default`, because a missing required option never falls back.
+
 An optional default produces a non-optional value:
 
 ```ts
@@ -52,7 +54,7 @@ Strings use the raw attribute value. An empty value is valid unless constrained.
 columns = this.option.number('columns', { min: 1, max: 12 })
 ```
 
-Numbers use `Number(raw)`, reject `NaN`, and apply inclusive `min` and `max` constraints.
+Numbers use `Number(raw)`, reject empty or whitespace-only values and `NaN`, and apply inclusive `min` and `max` constraints. An empty value is invalid rather than `0`, so a CMS field rendered as `data-option-delay=""` produces a warning instead of a silent zero.
 
 ## Boolean
 
