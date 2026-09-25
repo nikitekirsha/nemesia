@@ -4,7 +4,6 @@ import type {
 	AbstractConcreteComponentConstructor,
 	AbstractDistributedComponentConstructor,
 	ConcreteComponentOptions,
-	DistributedComponentOptions,
 	RootFor
 } from './types.js'
 
@@ -35,10 +34,7 @@ export function Component(
 }
 
 /** Creates an abstract base class for a distributed component mounted once per scope. */
-export function DistributedComponent(
-	name: string,
-	_options: DistributedComponentOptions = {}
-): AbstractDistributedComponentConstructor {
+export function DistributedComponent(name: string): AbstractDistributedComponentConstructor {
 	abstract class DistributedComponentBase extends BaseDistributedComponent {
 		public static readonly nemesia = {
 			kind: 'distributed',

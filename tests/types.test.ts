@@ -10,7 +10,6 @@ import {
 	type ConcreteComponentOptions,
 	type CreateAppOptions,
 	type DefaultOptionOptions,
-	type DistributedComponentOptions,
 	type JsonOptionOptions,
 	type NemesiaApp,
 	type NemesiaNamespace,
@@ -367,7 +366,6 @@ describe('public TypeScript contracts', () => {
 		const namespace: NemesiaNamespace = Nemesia
 		const appOptions: CreateAppOptions = { observe: true }
 		const concreteOptions: ConcreteComponentOptions<'main'> = { root: 'main' }
-		const distributedOptions: DistributedComponentOptions = {}
 		const app: NemesiaApp = createApp(appOptions)
 		const componentBase: typeof BaseComponent = BaseComponent
 		const distributedBase: typeof BaseDistributedComponent = BaseDistributedComponent
@@ -384,6 +382,5 @@ describe('public TypeScript contracts', () => {
 		expectTypeOf(componentBase).toEqualTypeOf<typeof BaseComponent>()
 		expectTypeOf(distributedBase).toEqualTypeOf<typeof BaseDistributedComponent>()
 		expectTypeOf(concreteOptions).toEqualTypeOf<ConcreteComponentOptions<'main'>>()
-		expectTypeOf(distributedOptions).toEqualTypeOf<DistributedComponentOptions>()
 	})
 })

@@ -17,7 +17,6 @@ The package exports:
 - `CreateAppOptions`
 - `ComponentConstructor`
 - `ConcreteComponentOptions`
-- `DistributedComponentOptions`
 - `StringOptionOptions`
 - `NumberOptionOptions`
 - `BooleanOptionOptions`
