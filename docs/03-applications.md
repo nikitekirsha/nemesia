@@ -62,6 +62,15 @@ app.destroy(document.body)
 
 Destroy does not stop observation. This is useful when a container is cleared and later receives fresh server-rendered markup.
 
+## Finding instances
+
+```ts
+const cart = app.find(Cart) // Cart | null
+const items = app.findAll(CartItem, container) // CartItem[]
+```
+
+`find` and `findAll` return mounted instances of a component class on or inside the given node, which defaults to `document`. Distributed instances are found by the scope they were mounted for.
+
 ## Disconnecting observers
 
 ```ts

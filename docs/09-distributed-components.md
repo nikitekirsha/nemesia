@@ -39,6 +39,7 @@ A distributed instance exposes:
 - `scope` — the exact `ParentNode` passed to `mount`;
 - `on` — listener registration with automatic cleanup;
 - `warn` — contextual warnings;
+- `find` and `findAll` — lookup of mounted components, inside the scope by default;
 - optional `onMount` and `onDestroy` hooks.
 
 It does not expose `root`, `ref`, or `option` because there is no component root.
@@ -56,6 +57,12 @@ app.mount(sidebar) // a separate distributed instance
 `destroy(scope)` destroys only the distributed instances associated with that exact scope. Parent/child containment does not apply to distributed instance ownership.
 
 Concrete components are different: destroying a scope destroys concrete roots throughout its subtree.
+
+A distributed instance is found by its scope:
+
+```ts
+this.find(Notifier, document.body) // Notifier | null
+```
 
 ## Observation behavior
 

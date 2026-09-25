@@ -56,6 +56,8 @@ Nemesia creates one listener per target. The callback receives the event, curren
 
 `onMount` runs after construction and after all field initializers have resolved refs and options.
 
+Within one mount, every component is constructed first. `onMount` then runs for nested components before their parents, and for distributed components last.
+
 ```ts
 onMount() {
 	this.root.setAttribute('data-ready', '')
@@ -66,7 +68,9 @@ Nemesia records the instance before calling the hook, so recursive calls to `mou
 
 If the hook throws, the partial mounted instance is destroyed and other components continue. A returned promise is observed, but `mount()` remains synchronous and does not await it.
 
-If an asynchronous `onMount` later rejects, Nemesia reports the error and destroys that instance. Singleton candidates skipped while it was pending are not retried automatically; call `mount()` again if needed.
+If an asynchronous `onMount` later rejects, Nemesia reports the error and destroys that instance.
+
+Singleton candidates skipped in favor of an instance whose `onMount` fails are not retried automatically; call `mount()` again if needed.
 
 ## `onDestroy`
 

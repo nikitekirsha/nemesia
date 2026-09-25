@@ -2,7 +2,7 @@
 
 Nemesia is a small DOM-first runtime for server-rendered and CMS-driven websites. Your server owns the HTML, and Nemesia finds components in your HTML markup then attaches your behavior to them.
 
-It provides typed refs and options, DOM contract validation, lifecycle hooks, automatic event cleanup, and optional observation of dynamic DOM changes. It does not render HTML or introduce a client-side application model.
+It provides typed refs and options, DOM contract validation, lifecycle hooks, component lookup, automatic event cleanup, and optional observation of dynamic DOM changes. It does not render HTML or introduce a client-side application model.
 
 ## Install
 

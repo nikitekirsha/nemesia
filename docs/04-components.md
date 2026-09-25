@@ -26,6 +26,7 @@ Every concrete instance exposes:
 - `option` — typed root-attribute parsing;
 - `on` — event registration with automatic cleanup;
 - `warn` — a contextual warning helper;
+- `find` and `findAll` — lookup of other mounted components;
 - optional `onMount` and `onDestroy` hooks.
 
 ## Root tag constraints
@@ -72,6 +73,43 @@ class Video extends Nemesia.Component('video') {
 This keeps the markup contract beside the behavior that needs it.
 
 If construction fails after listeners were registered, Nemesia aborts the partial instance and removes those listeners without calling `onDestroy`.
+
+## Finding components
+
+`find` and `findAll` return mounted instances of a component class on or inside an element, which defaults to the component root. The result is typed from the class:
+
+```ts
+class Cart extends Nemesia.Component('cart') {
+	submit = this.ref.button('submit')
+
+	get form() {
+		return this.find(CheckoutForm) // CheckoutForm | null
+	}
+
+	get items() {
+		return this.findAll(CartItem) // CartItem[]
+	}
+
+	onMount() {
+		this.on(this.submit, 'click', () => {
+			if (!this.form?.isValid) return
+			console.log(this.items.length)
+		})
+	}
+}
+```
+
+Pass an element to search in a specific place, for example to tell apart two instances of the same class:
+
+```ts
+shipping = this.ref.form('shipping')
+
+get shippingForm() {
+	return this.find(AddressForm, this.shipping)
+}
+```
+
+Look instances up when they are needed instead of storing them in fields: nested components can be destroyed and mounted again.
 
 ## Stored base classes
 
