@@ -134,8 +134,6 @@ class ProductPrice extends Nemesia.Component('product-price') {
 }
 ```
 
-An `onMount` rejection with an `AbortError` after destroy is not reported.
-
 ## Replacing a server fragment
 
 With observation enabled, replacing markup is enough:
