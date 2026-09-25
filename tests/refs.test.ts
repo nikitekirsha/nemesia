@@ -1,6 +1,6 @@
 import { describe, expect, expectTypeOf, it, vi } from 'vitest'
 
-import { Nemesia } from '../src/index.js'
+import { Component } from '../src/index.js'
 import type * as Api from '../src/index.js'
 import { SkipComponentMountError } from '../src/internal/errors.js'
 import { createRefApi } from '../src/ref/create-ref-api.js'
@@ -322,7 +322,7 @@ describe('BaseComponent ref initialization', () => {
 		const root = createRoot('field-initializer')
 		const button = appendRef(root, document.createElement('button'), 'submit')
 
-		class FieldInitializer extends Nemesia.Component('field-initializer') {
+		class FieldInitializer extends Component('field-initializer') {
 			public readonly submit = this.ref.button('submit')
 		}
 

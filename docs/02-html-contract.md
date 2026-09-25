@@ -25,7 +25,7 @@ Refs identify elements used by the component:
 The component requests them by the exact `data-ref` value:
 
 ```ts
-class Gallery extends Nemesia.Component('gallery') {
+class Gallery extends Component('gallery') {
 	previous = this.ref.button('previous')
 	viewport = this.ref.element('viewport')
 	next = this.ref.button('next')

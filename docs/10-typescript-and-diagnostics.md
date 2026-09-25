@@ -3,16 +3,15 @@
 ## Public runtime exports
 
 ```ts
-import { BaseComponent, BaseDistributedComponent, Nemesia, createApp } from 'nemesia'
+import { BaseComponent, BaseDistributedComponent, Component, DistributedComponent, createApp } from 'nemesia'
 ```
 
-Most applications need only `Nemesia` or `createApp`. The base classes are exported for typing and advanced integration; concrete classes should normally extend the factories on `Nemesia`.
+Most applications need only `Component`, `DistributedComponent`, and `createApp`. The base classes are exported for typing and advanced integration; concrete classes should normally extend the factories.
 
 ## Public types
 
 The package exports:
 
-- `NemesiaNamespace`
 - `NemesiaApp`
 - `CreateAppOptions`
 - `ComponentConstructor`
@@ -28,7 +27,7 @@ The package exports:
 ## Common inferred types
 
 ```ts
-class TypedExample extends Nemesia.Component('typed-example', {
+class TypedExample extends Component('typed-example', {
 	root: 'form'
 }) {
 	button = this.ref.button('submit')
@@ -86,7 +85,7 @@ The helper adds component and root or scope context. It is informational and doe
 Bundlers should use the package normally:
 
 ```ts
-import { Nemesia, createApp } from 'nemesia'
+import { Component, createApp } from 'nemesia'
 ```
 
 ## UMD

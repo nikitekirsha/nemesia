@@ -7,7 +7,7 @@ export interface CreateAppOptions {
 	observe?: boolean
 }
 
-/** Options for a concrete component created with `Nemesia.Component(...)`. */
+/** Options for a concrete component created with `Component(...)`. */
 export interface ConcreteComponentOptions<TTag extends keyof HTMLElementTagNameMap = keyof HTMLElementTagNameMap> {
 	/** Expected root tag name, used for a narrower `this.root` type. */
 	root?: TTag
@@ -75,7 +75,7 @@ export type FindableComponent<TInstance> = (abstract new (target: never) => TIns
 /** Any component constructor that can be registered in an app. */
 export type ComponentConstructor = RegistrableConcreteComponentConstructor | DistributedComponentConstructor
 
-/** Abstract base constructor returned by `Nemesia.Component(...)`. */
+/** Abstract base constructor returned by `Component(...)`. */
 export type AbstractConcreteComponentConstructor<TRoot extends HTMLElement = HTMLElement> = (abstract new (
 	root: TRoot
 ) => BaseComponent<TRoot>) & {
@@ -83,7 +83,7 @@ export type AbstractConcreteComponentConstructor<TRoot extends HTMLElement = HTM
 	readonly nemesia: ConcreteMetadata
 }
 
-/** Abstract base constructor returned by `Nemesia.DistributedComponent(...)`. */
+/** Abstract base constructor returned by `DistributedComponent(...)`. */
 export type AbstractDistributedComponentConstructor = (abstract new (scope: ParentNode) => BaseDistributedComponent) & {
 	/** Runtime metadata inherited by subclasses. */
 	readonly nemesia: DistributedMetadata

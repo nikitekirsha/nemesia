@@ -4,12 +4,10 @@ An application owns component registrations, mounted instances, and observers.
 
 ## Creating an app
 
-Both forms create the same application type:
-
 ```ts
-import { Nemesia, createApp } from 'nemesia'
+import { createApp } from 'nemesia'
 
-const app = Nemesia.createApp()
+const app = createApp()
 const observedApp = createApp({ observe: true })
 ```
 

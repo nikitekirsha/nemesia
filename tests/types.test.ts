@@ -3,7 +3,8 @@ import { describe, expectTypeOf, it } from 'vitest'
 import {
 	BaseComponent,
 	BaseDistributedComponent,
-	Nemesia,
+	Component,
+	DistributedComponent,
 	createApp,
 	type BooleanOptionOptions,
 	type ComponentConstructor,
@@ -12,7 +13,6 @@ import {
 	type DefaultOptionOptions,
 	type JsonOptionOptions,
 	type NemesiaApp,
-	type NemesiaNamespace,
 	type NumberOptionOptions,
 	type OptionParser,
 	type OptionValidator,
@@ -21,8 +21,8 @@ import {
 
 describe('public TypeScript contracts', () => {
 	it('narrows roots and every ref family', () => {
-		class DefaultRoot extends Nemesia.Component('default-root') {}
-		class TypedRefs extends Nemesia.Component('typed-refs', { root: 'form' }) {
+		class DefaultRoot extends Component('default-root') {}
+		class TypedRefs extends Component('typed-refs', { root: 'form' }) {
 			element = this.ref.element('element')
 			button = this.ref.button('button')
 			input = this.ref.input('input')
@@ -138,7 +138,7 @@ describe('public TypeScript contracts', () => {
 			}
 		}
 
-		class TypedOptions extends Nemesia.Component('typed-options') {
+		class TypedOptions extends Component('typed-options') {
 			string = this.option.string('string')
 			number = this.option.number('number')
 			boolean = this.option.boolean('boolean')
@@ -194,7 +194,7 @@ describe('public TypeScript contracts', () => {
 	})
 
 	it('rejects defaults on required option helpers', () => {
-		class RequiredDefaults extends Nemesia.Component('required-defaults') {
+		class RequiredDefaults extends Component('required-defaults') {
 			check(): void {
 				// @ts-expect-error Required strings never use a default.
 				this.option.string('string', { default: 'unused' })
@@ -223,7 +223,7 @@ describe('public TypeScript contracts', () => {
 	})
 
 	it('infers single and readonly-array event listener arguments', () => {
-		class EventTypes extends Nemesia.Component('event-types') {
+		class EventTypes extends Component('event-types') {
 			check(target: HTMLButtonElement, targets: readonly HTMLInputElement[]): void {
 				this.on(target, 'click', event => {
 					expectTypeOf(event).toEqualTypeOf<PointerEvent>()
@@ -243,7 +243,7 @@ describe('public TypeScript contracts', () => {
 	})
 
 	it('types known DOM events by target', () => {
-		class TargetEvents extends Nemesia.Component('target-events') {
+		class TargetEvents extends Component('target-events') {
 			check(video: HTMLVideoElement, svg: SVGSVGElement, media: MediaQueryList): void {
 				this.on(window, 'resize', event => {
 					expectTypeOf(event).toEqualTypeOf<UIEvent>()
@@ -270,7 +270,7 @@ describe('public TypeScript contracts', () => {
 				this.on(this.root, 'click', (_event: KeyboardEvent) => {})
 			}
 		}
-		class ScopeEvents extends Nemesia.DistributedComponent('scope-events') {
+		class ScopeEvents extends DistributedComponent('scope-events') {
 			check(): void {
 				this.on(this.scope, 'click', event => {
 					expectTypeOf(event).toEqualTypeOf<PointerEvent>()
@@ -283,7 +283,7 @@ describe('public TypeScript contracts', () => {
 	})
 
 	it('types custom events as Event unless the listener annotates them', () => {
-		class CustomEvents extends Nemesia.Component('custom-events') {
+		class CustomEvents extends Component('custom-events') {
 			check(targets: readonly HTMLElement[], eventName: string): void {
 				this.on(this.root, 'cart:update', event => {
 					expectTypeOf(event).toEqualTypeOf<Event>()
@@ -306,14 +306,14 @@ describe('public TypeScript contracts', () => {
 	})
 
 	it('accepts all component constructors and enforces array registration', () => {
-		class LiteralRoot extends Nemesia.Component('literal-root', {
+		class LiteralRoot extends Component('literal-root', {
 			root: 'form'
 		}) {}
 		const unionTag: 'form' | 'button' = Math.random() > 0.5 ? 'form' : 'button'
-		class UnionRoot extends Nemesia.Component('union-root', {
+		class UnionRoot extends Component('union-root', {
 			root: unionTag
 		}) {}
-		class Distributed extends Nemesia.DistributedComponent('distributed') {}
+		class Distributed extends DistributedComponent('distributed') {}
 
 		const constructors: ComponentConstructor[] = [LiteralRoot, UnionRoot, Distributed]
 		const app = createApp()
@@ -335,7 +335,7 @@ describe('public TypeScript contracts', () => {
 	})
 
 	it('exposes only scope/on/warn on distributed component instances', () => {
-		class Distributed extends Nemesia.DistributedComponent('surface') {
+		class Distributed extends DistributedComponent('surface') {
 			check(targets: readonly HTMLButtonElement[]): void {
 				expectTypeOf(this.scope).toEqualTypeOf<ParentNode>()
 				expectTypeOf(this.warn).toBeFunction()
@@ -356,28 +356,24 @@ describe('public TypeScript contracts', () => {
 	})
 
 	it('keeps factories usable inline or stored and exports the deliberate public types', () => {
-		const Stored = Nemesia.Component('stored', { root: 'main' })
+		const Stored = Component('stored', { root: 'main' })
 		class StoredComponent extends Stored {}
-		class InlineComponent extends Nemesia.Component('inline') {}
-		const StoredDistributed = Nemesia.DistributedComponent('stored-distributed')
+		class InlineComponent extends Component('inline') {}
+		const StoredDistributed = DistributedComponent('stored-distributed')
 		class StoredDistributedComponent extends StoredDistributed {}
-		class InlineDistributedComponent extends Nemesia.DistributedComponent('inline-distributed') {}
+		class InlineDistributedComponent extends DistributedComponent('inline-distributed') {}
 
-		const namespace: NemesiaNamespace = Nemesia
 		const appOptions: CreateAppOptions = { observe: true }
 		const concreteOptions: ConcreteComponentOptions<'main'> = { root: 'main' }
 		const app: NemesiaApp = createApp(appOptions)
 		const componentBase: typeof BaseComponent = BaseComponent
 		const distributedBase: typeof BaseDistributedComponent = BaseDistributedComponent
 
-		expectTypeOf(Nemesia).toEqualTypeOf<NemesiaNamespace>()
-		expectTypeOf(Nemesia.createApp).toEqualTypeOf<typeof createApp>()
-		expectTypeOf(Nemesia.createApp()).toEqualTypeOf<NemesiaApp>()
+		expectTypeOf(createApp()).toEqualTypeOf<NemesiaApp>()
 		expectTypeOf<InstanceType<typeof StoredComponent>['root']>().toEqualTypeOf<HTMLElementTagNameMap['main']>()
 		expectTypeOf<InstanceType<typeof InlineComponent>['root']>().toEqualTypeOf<HTMLElement>()
 		expectTypeOf<InstanceType<typeof StoredDistributedComponent>['scope']>().toEqualTypeOf<ParentNode>()
 		expectTypeOf<InstanceType<typeof InlineDistributedComponent>['scope']>().toEqualTypeOf<ParentNode>()
-		expectTypeOf(namespace).toEqualTypeOf<NemesiaNamespace>()
 		expectTypeOf(app).toEqualTypeOf<NemesiaApp>()
 		expectTypeOf(componentBase).toEqualTypeOf<typeof BaseComponent>()
 		expectTypeOf(distributedBase).toEqualTypeOf<typeof BaseDistributedComponent>()

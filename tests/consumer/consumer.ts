@@ -1,6 +1,7 @@
 import {
 	BaseComponent,
-	Nemesia,
+	Component,
+	DistributedComponent,
 	createApp,
 	type BooleanOptionOptions,
 	type ComponentConstructor,
@@ -9,7 +10,6 @@ import {
 	type DefaultOptionOptions,
 	type JsonOptionOptions,
 	type NemesiaApp,
-	type NemesiaNamespace,
 	type NumberOptionOptions,
 	type OptionParser,
 	type OptionValidator,
@@ -33,7 +33,7 @@ const customOptions: DefaultOptionOptions<number> = { default: 1 }
 const parser: OptionParser<number> = Number
 const validator: OptionValidator<number> = value => value >= 0
 
-class Typed extends Nemesia.Component('typed', concreteOptions) {
+class Typed extends Component('typed', concreteOptions) {
 	button = this.ref.button('button')
 	input = this.ref.input('input')
 	generic = this.ref.one<SVGSVGElement>('graphic')
@@ -88,7 +88,7 @@ class Typed extends Nemesia.Component('typed', concreteOptions) {
 	}
 }
 
-class Distributed extends Nemesia.DistributedComponent('distributed') {
+class Distributed extends DistributedComponent('distributed') {
 	checkTypes(): void {
 		const scope: ParentNode = this.scope
 		this.on(scope, 'nemesia-event', () => this.warn('handled'))
@@ -102,8 +102,6 @@ class Distributed extends Nemesia.DistributedComponent('distributed') {
 	}
 }
 
-const namespace: NemesiaNamespace = Nemesia
-const namedCreateApp: typeof createApp = Nemesia.createApp
 const app: NemesiaApp = createApp(options)
 const components: ComponentConstructor[] = [Typed, Distributed]
 const base: typeof BaseComponent = BaseComponent
@@ -121,13 +119,11 @@ if (false) {
 	// @ts-expect-error A form-root component rejects a div constructor root.
 	new Typed(document.createElement('div'))
 
-	class RequiredDefault extends Nemesia.Component('required-default') {
+	class RequiredDefault extends Component('required-default') {
 		// @ts-expect-error Required options reject a default they would never use.
 		value = this.option.string('value', stringOptions)
 	}
 	void RequiredDefault
 }
 
-void namespace
-void namedCreateApp
 void base

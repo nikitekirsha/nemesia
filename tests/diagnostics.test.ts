@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { Nemesia, createApp } from '../src/index.js'
+import { Component, DistributedComponent, createApp } from '../src/index.js'
 
 function root(component: string, tag = 'div'): HTMLElement {
 	const element = document.createElement(tag)
@@ -19,12 +19,12 @@ function ref(rootElement: HTMLElement, name: string, tag: string): HTMLElement {
 describe('exact warnings', () => {
 	it('warns on duplicate registration and keeps the latest constructor', () => {
 		const mounted: string[] = []
-		class Original extends Nemesia.Component('duplicate') {
+		class Original extends Component('duplicate') {
 			onMount(): void {
 				mounted.push('original')
 			}
 		}
-		class Latest extends Nemesia.Component('duplicate') {
+		class Latest extends Component('duplicate') {
 			onMount(): void {
 				mounted.push('latest')
 			}
@@ -42,13 +42,13 @@ describe('exact warnings', () => {
 	})
 
 	it('reports missing, duplicate, and wrong-helper refs with exact context', () => {
-		class Missing extends Nemesia.Component('missing-ref') {
+		class Missing extends Component('missing-ref') {
 			value = this.ref.button('submit')
 		}
-		class Duplicate extends Nemesia.Component('duplicate-ref') {
+		class Duplicate extends Component('duplicate-ref') {
 			value = this.ref.button('action')
 		}
-		class WrongHelper extends Nemesia.Component('wrong-helper') {
+		class WrongHelper extends Component('wrong-helper') {
 			value = this.ref.button('submit')
 		}
 		const missing = root('missing-ref')
@@ -99,10 +99,10 @@ describe('exact warnings', () => {
 	})
 
 	it('reports missing and invalid options with exact attribute details', () => {
-		class Required extends Nemesia.Component('required-option') {
+		class Required extends Component('required-option') {
 			value = this.option.number('duration')
 		}
-		class Invalid extends Nemesia.Component('invalid-option') {
+		class Invalid extends Component('invalid-option') {
 			value = this.option.number('duration')
 		}
 		const required = root('required-option')
@@ -140,8 +140,8 @@ describe('exact warnings', () => {
 	})
 
 	it('reports invalid root tags and singleton duplicates with the skipped root', () => {
-		class FormOnly extends Nemesia.Component('form-only', { root: 'form' }) {}
-		class Singleton extends Nemesia.Component('singleton', {
+		class FormOnly extends Component('form-only', { root: 'form' }) {}
+		class Singleton extends Component('singleton', {
 			multiple: false
 		}) {}
 		const invalid = root('form-only')
@@ -170,7 +170,7 @@ describe('exact warnings', () => {
 		const replacementScope = document.createDocumentFragment()
 		const mounted = vi.fn()
 		const destroyed = vi.fn()
-		class Concrete extends Nemesia.Component('user-concrete') {
+		class Concrete extends Component('user-concrete') {
 			onMount(): void {
 				this.warn('plain warning', { detail: 1 })
 				this.warn('merged warning', {
@@ -184,7 +184,7 @@ describe('exact warnings', () => {
 				destroyed()
 			}
 		}
-		class Distributed extends Nemesia.DistributedComponent('user-distributed') {
+		class Distributed extends DistributedComponent('user-distributed') {
 			onMount(): void {
 				this.warn('distributed warning', { detail: 2 })
 				this.warn('distributed merge', {
@@ -238,17 +238,17 @@ describe('exact unexpected error diagnostics', () => {
 		const constructionError = new Error('construction failed')
 		const mountError = new Error('mount failed')
 		const destroyError = new Error('destroy failed')
-		class Construction extends Nemesia.Component('construction-error') {
+		class Construction extends Component('construction-error') {
 			failure = (() => {
 				throw constructionError
 			})()
 		}
-		class Mount extends Nemesia.Component('mount-error') {
+		class Mount extends Component('mount-error') {
 			onMount(): void {
 				throw mountError
 			}
 		}
-		class Destroy extends Nemesia.Component('destroy-error') {
+		class Destroy extends Component('destroy-error') {
 			onDestroy(): void {
 				throw destroyError
 			}
@@ -284,17 +284,17 @@ describe('exact unexpected error diagnostics', () => {
 		const constructionError = new Error('distributed construction failed')
 		const mountError = new Error('distributed mount failed')
 		const destroyError = new Error('distributed destroy failed')
-		class Construction extends Nemesia.DistributedComponent('distributed-construction') {
+		class Construction extends DistributedComponent('distributed-construction') {
 			failure = (() => {
 				throw constructionError
 			})()
 		}
-		class Mount extends Nemesia.DistributedComponent('distributed-mount') {
+		class Mount extends DistributedComponent('distributed-mount') {
 			onMount(): void {
 				throw mountError
 			}
 		}
-		class Destroy extends Nemesia.DistributedComponent('distributed-destroy') {
+		class Destroy extends DistributedComponent('distributed-destroy') {
 			onDestroy(): void {
 				throw destroyError
 			}
@@ -331,22 +331,22 @@ describe('exact unexpected error diagnostics', () => {
 	it('keeps warning and error diagnostics observational when console methods throw', () => {
 		const mounted: string[] = []
 		const constructionError = new Error('broken field')
-		class Original extends Nemesia.Component('observational-duplicate') {
+		class Original extends Component('observational-duplicate') {
 			onMount(): void {
 				mounted.push('original')
 			}
 		}
-		class Latest extends Nemesia.Component('observational-duplicate') {
+		class Latest extends Component('observational-duplicate') {
 			onMount(): void {
 				mounted.push('latest')
 			}
 		}
-		class Broken extends Nemesia.Component('observational-broken') {
+		class Broken extends Component('observational-broken') {
 			failure = (() => {
 				throw constructionError
 			})()
 		}
-		class Good extends Nemesia.Component('observational-good') {
+		class Good extends Component('observational-good') {
 			onMount(): void {
 				mounted.push('good')
 			}
