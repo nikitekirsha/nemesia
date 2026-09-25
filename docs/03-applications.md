@@ -58,7 +58,7 @@ An app never mounts two component names on the same root. If code changes `data-
 app.destroy(document.body)
 ```
 
-`destroy(scope)` destroys concrete instances mounted on or below the scope, including roots already removed from it, and distributed instances associated with that exact scope. Repeated calls are safe.
+`destroy(scope)` destroys concrete instances mounted on or below the scope and distributed instances associated with that exact scope. Repeated calls are safe.
 
 Destroy does not stop observation. This is useful when a container is cleared and later receives fresh server-rendered markup.
 

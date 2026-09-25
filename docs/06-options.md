@@ -26,7 +26,7 @@ Optional helpers return `undefined` when absent:
 subtitle = this.option.optional.string('subtitle')
 ```
 
-An optional default produces a non-optional value. Defaults are available only on optional helpers:
+An optional default produces a non-optional value:
 
 ```ts
 delay = this.option.optional.number('delay', { default: 300, min: 0 })
@@ -52,7 +52,7 @@ Strings use the raw attribute value. An empty value is valid unless constrained.
 columns = this.option.number('columns', { min: 1, max: 12 })
 ```
 
-Numbers use `Number(raw)`, reject empty values and `NaN`, and apply inclusive `min` and `max` constraints.
+The value must be a number. `min` and `max` constraints are inclusive.
 
 ## Boolean
 
