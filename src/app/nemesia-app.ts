@@ -5,6 +5,7 @@ import type {
 	ConcreteMetadata,
 	CreateAppOptions,
 	DistributedMetadata,
+	FindableComponent,
 	NemesiaApp
 } from '../component/types.js'
 import {
@@ -16,8 +17,10 @@ import {
 } from '../internal/diagnostics.js'
 import { beginComponentConstruction, endComponentConstruction } from '../internal/construction.js'
 import {
+	childrenFirst,
 	deepestFirst,
 	discoverConcreteRoots,
+	documentOrder,
 	isHtmlElement,
 	isWithinScope,
 	normalizeMutationRoots,
@@ -35,8 +38,21 @@ type DistributedConstructor = (new (scope: ParentNode) => BaseDistributedCompone
 	readonly nemesia: DistributedMetadata
 }
 
+interface PendingMount {
+	readonly node: Node
+	readonly run: () => void
+}
+
 function defaultScope(): ParentNode | undefined {
 	return typeof document === 'undefined' ? undefined : (document.body ?? undefined)
+}
+
+function defaultFindScope(): ParentNode | undefined {
+	return typeof document === 'undefined' ? undefined : document
+}
+
+function componentSelector(name: string): string {
+	return `[data-nemesia="${name.replace(/["\\]/g, '\\$&')}"]`
 }
 
 function observerConstructor(scope: ParentNode): typeof MutationObserver | undefined {
@@ -76,6 +92,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	readonly #mountedRootAncestries = new WeakMap<Element, readonly Node[]>()
 	readonly #state = new ConcreteComponentState()
 	readonly #distributedInstances = new WeakMap<ParentNode, Map<string, BaseDistributedComponent>>()
+	readonly #distributedScopes = new Set<ParentNode>()
 	readonly #distributedConstructionReservations = new WeakMap<ParentNode, Set<string>>()
 	readonly #observers = new WeakMap<ParentNode, MutationObserver>()
 	readonly #observedScopes = new Set<ParentNode>()
@@ -111,8 +128,10 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 		this.#flushMutationBatch()
 		if (this.options.observe) this.#ensureObserver(scope)
-		this.#mountDistributed(scope)
-		this.#mountConcrete(scope)
+		const distributed = this.#constructDistributed(scope)
+		const concrete = this.#constructConcrete(scope)
+		this.#runMounts(childrenFirst(concrete, mount => mount.node))
+		this.#runMounts(distributed)
 		this.#refreshMountedRootAncestriesWithin([scope])
 	}
 
@@ -126,6 +145,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 		const distributedInstances = [...distributedRecords.entries()]
 		this.#distributedInstances.delete(scope)
+		this.#distributedScopes.delete(scope)
 
 		for (const [name, instance] of distributedInstances) {
 			this.#teardownDistributed(scope, name, instance)
@@ -152,6 +172,47 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			this.#observedScopeAncestries.delete(observedScope)
 		}
 		this.#observedScopes.clear()
+	}
+
+	public find<TInstance>(
+		component: FindableComponent<TInstance>,
+		within: ParentNode | undefined = defaultFindScope()
+	): TInstance | null {
+		return this.findAll(component, within)[0] ?? null
+	}
+
+	public findAll<TInstance>(
+		component: FindableComponent<TInstance>,
+		within: ParentNode | undefined = defaultFindScope()
+	): TInstance[] {
+		if (within === undefined) return []
+
+		const { kind, name } = component.nemesia
+		const found: TInstance[] = []
+
+		if (kind === 'concrete') {
+			const roots = discoverConcreteRoots(within, componentSelector(name))
+			for (const root of roots) {
+				const instance = this.#instances.get(root)?.get(name)
+				if (instance instanceof component) found.push(instance)
+			}
+			return found
+		}
+
+		const withinNode = within as Node
+		const scopes = documentOrder(
+			[...this.#distributedScopes].filter(scope => scope === within || withinNode.contains(scope as Node)),
+			scope => scope as Node
+		)
+		for (const scope of scopes) {
+			const instance = this.#distributedInstances.get(scope)?.get(name)
+			if (instance instanceof component) found.push(instance)
+		}
+		return found
+	}
+
+	#runMounts(mounts: Iterable<PendingMount>): void {
+		for (const mount of mounts) mount.run()
 	}
 
 	#destroyConcrete(scope: ParentNode): void {
@@ -231,15 +292,18 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 		this.#destroyHistoricallyRemovedConcrete(removedRoots)
 
+		const mounts: PendingMount[] = []
 		for (const scope of scopesToReconcile) {
-			this.#mountConcrete(scope, true)
+			mounts.push(...this.#constructConcrete(scope, true))
 			this.#observedScopeAncestries.set(scope, snapshotAncestry(scope as Node))
 		}
 
 		for (const root of addedRoots) {
-			if (this.#isWithinObservedScope(root)) this.#mountConcrete(root, true)
+			if (this.#isWithinObservedScope(root)) mounts.push(...this.#constructConcrete(root, true))
 		}
 
+		const nodeOf = (mount: PendingMount): Node => mount.node
+		this.#runMounts(childrenFirst(documentOrder(mounts, nodeOf), nodeOf))
 		this.#refreshMountedRootAncestriesWithin(addedRoots)
 		this.#refreshObservedScopeAncestries(addedRoots)
 	}
@@ -303,7 +367,9 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		return observerDriven ? this.#isWithinObservedScope(root) : isWithinScope(root, scope)
 	}
 
-	#mountConcrete(scope: ParentNode, observerDriven = false): void {
+	#constructConcrete(scope: ParentNode, observerDriven = false): PendingMount[] {
+		const mounts: PendingMount[] = []
+
 		for (const root of discoverConcreteRoots(scope)) {
 			if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) continue
 
@@ -329,7 +395,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			let instance: BaseComponent
 			const reservation = this.#state.reserveConstruction(root, name)
 			const constructionComponent = new Proxy(component, {})
-			const capture = beginComponentConstruction(constructionComponent, root)
+			const capture = beginComponentConstruction(constructionComponent, root, this)
 
 			try {
 				instance = new constructionComponent(root)
@@ -352,30 +418,51 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			}
 
 			this.#record(root, name, instance)
+			mounts.push({
+				node: root,
+				run: () =>
+					this.#runConcreteMount(root, name, instance, () =>
+						this.#isCurrentConcreteCandidate(root, scope, observerDriven)
+					)
+			})
+		}
 
-			let hookResult: void | Promise<void>
-			try {
-				hookResult = instance.onMount?.()
-			} catch (error) {
-				this.#failMount(root, name, instance, error)
-				continue
-			}
+		return mounts
+	}
 
-			if (hookResult !== undefined) {
-				void Promise.resolve(hookResult)
-					.catch(error => {
-						// Aborting pending work from onDestroy is expected, not a mount failure.
-						if (isAbortError(error) && this.#instances.get(root)?.get(name) !== instance) return
-						this.#failMount(root, name, instance, error)
-					})
-					.catch(() => {
-						// A throwing diagnostic must not become an unhandled rejection.
-					})
-			}
+	#runConcreteMount(root: Element, name: string, instance: BaseComponent, isCandidate: () => boolean): void {
+		// An earlier hook in the same batch may have destroyed this instance or moved its root out of scope.
+		if (this.#instances.get(root)?.get(name) !== instance) return
+		if (!isCandidate()) {
+			this.#remove(root, name, instance)
+			instance[abortComponentConstruction]()
+			return
+		}
+
+		let hookResult: void | Promise<void>
+		try {
+			hookResult = instance.onMount?.()
+		} catch (error) {
+			this.#failMount(root, name, instance, error)
+			return
+		}
+
+		if (hookResult !== undefined) {
+			void Promise.resolve(hookResult)
+				.catch(error => {
+					// Aborting pending work from onDestroy is expected, not a mount failure.
+					if (isAbortError(error) && this.#instances.get(root)?.get(name) !== instance) return
+					this.#failMount(root, name, instance, error)
+				})
+				.catch(() => {
+					// A throwing diagnostic must not become an unhandled rejection.
+				})
 		}
 	}
 
-	#mountDistributed(scope: ParentNode): void {
+	#constructDistributed(scope: ParentNode): PendingMount[] {
+		const mounts: PendingMount[] = []
+
 		for (const registration of this.#registrations.values()) {
 			if (registration.nemesia.kind !== 'distributed') continue
 
@@ -385,7 +472,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			const component = registration as DistributedConstructor
 			this.#reserveDistributedConstruction(scope, name)
 			const constructionComponent = new Proxy(component, {})
-			const capture = beginComponentConstruction(constructionComponent, scope)
+			const capture = beginComponentConstruction(constructionComponent, scope, this)
 			let instance: BaseDistributedComponent
 
 			try {
@@ -400,26 +487,34 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			}
 
 			this.#recordDistributed(scope, name, instance)
+			mounts.push({ node: scope as Node, run: () => this.#runDistributedMount(scope, name, instance) })
+		}
 
-			let hookResult: void | Promise<void>
-			try {
-				hookResult = instance.onMount?.()
-			} catch (error) {
-				this.#failDistributedMount(scope, name, instance, error)
-				continue
-			}
+		return mounts
+	}
 
-			if (hookResult !== undefined) {
-				void Promise.resolve(hookResult)
-					.catch(error => {
-						// Aborting pending work from onDestroy is expected, not a mount failure.
-						if (isAbortError(error) && this.#distributedInstances.get(scope)?.get(name) !== instance) return
-						this.#failDistributedMount(scope, name, instance, error)
-					})
-					.catch(() => {
-						// A throwing diagnostic must not become an unhandled rejection.
-					})
-			}
+	#runDistributedMount(scope: ParentNode, name: string, instance: BaseDistributedComponent): void {
+		// An earlier hook in the same batch may have destroyed this instance.
+		if (this.#distributedInstances.get(scope)?.get(name) !== instance) return
+
+		let hookResult: void | Promise<void>
+		try {
+			hookResult = instance.onMount?.()
+		} catch (error) {
+			this.#failDistributedMount(scope, name, instance, error)
+			return
+		}
+
+		if (hookResult !== undefined) {
+			void Promise.resolve(hookResult)
+				.catch(error => {
+					// Aborting pending work from onDestroy is expected, not a mount failure.
+					if (isAbortError(error) && this.#distributedInstances.get(scope)?.get(name) !== instance) return
+					this.#failDistributedMount(scope, name, instance, error)
+				})
+				.catch(() => {
+					// A throwing diagnostic must not become an unhandled rejection.
+				})
 		}
 	}
 
@@ -449,6 +544,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		if (records === undefined) {
 			records = new Map()
 			this.#distributedInstances.set(scope, records)
+			this.#distributedScopes.add(scope)
 		}
 		records.set(component, instance)
 	}
@@ -458,7 +554,10 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		if (records?.get(component) !== instance) return false
 
 		records.delete(component)
-		if (records.size === 0) this.#distributedInstances.delete(scope)
+		if (records.size === 0) {
+			this.#distributedInstances.delete(scope)
+			this.#distributedScopes.delete(scope)
+		}
 		return true
 	}
 

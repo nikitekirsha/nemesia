@@ -58,9 +58,13 @@ export function createRefApi(root: HTMLElement, componentName: string): RefApi {
 		...details
 	})
 
+	// A ref on a nested component root belongs to the component above it.
+	const owner = (element: Element): Element | null =>
+		(element.hasAttribute('data-nemesia') ? element.parentElement : element)?.closest('[data-nemesia]') ?? null
+
 	const discover = (name: string): Element[] =>
 		Array.from(root.querySelectorAll('[data-ref]')).filter(
-			element => element.getAttribute('data-ref') === name && element.closest('[data-nemesia]') === root
+			element => element.getAttribute('data-ref') === name && owner(element) === root
 		)
 
 	const fail = (reason: string, name: string, details?: DiagnosticPayload): never => {

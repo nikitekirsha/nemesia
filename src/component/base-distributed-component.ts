@@ -1,5 +1,6 @@
 import { ListenerRegistry } from '../events/listener-registry.js'
 import type { EventName, TargetEvent } from '../events/types.js'
+import type { FindableComponent, NemesiaApp } from './types.js'
 import { observeRejection, reportDestroyError, resolveComponentName, warnComponent } from '../internal/diagnostics.js'
 import { captureConstructingComponent } from '../internal/construction.js'
 import { abortComponentConstruction, teardownComponent } from '../internal/lifecycle.js'
@@ -8,6 +9,7 @@ import { abortComponentConstruction, teardownComponent } from '../internal/lifec
 export abstract class BaseDistributedComponent {
 	readonly #listeners = new ListenerRegistry()
 	readonly #componentName: string
+	readonly #app: NemesiaApp | undefined
 	#destroyed = false
 
 	/** Scope passed to `app.mount(scope)` for this distributed instance. */
@@ -15,7 +17,7 @@ export abstract class BaseDistributedComponent {
 
 	/** Creates a distributed component instance for a mounted scope. */
 	public constructor(scope: ParentNode) {
-		captureConstructingComponent(new.target, scope, this)
+		this.#app = captureConstructingComponent(new.target, scope, this)
 		this.scope = scope
 		this.#componentName = resolveComponentName(this)
 	}
@@ -59,6 +61,16 @@ export abstract class BaseDistributedComponent {
 	/** Logs a distributed component-scoped warning with optional diagnostic payload. */
 	public warn(message: string, payload?: Record<string, unknown>): void {
 		warnComponent(this.#componentName, { scope: this.scope }, message, payload)
+	}
+
+	/** Returns the first mounted instance of a component on or inside `within`, which defaults to the scope. */
+	public find<TInstance>(component: FindableComponent<TInstance>, within: ParentNode = this.scope): TInstance | null {
+		return this.findAll(component, within)[0] ?? null
+	}
+
+	/** Returns every mounted instance of a component on or inside `within`, in document order. */
+	public findAll<TInstance>(component: FindableComponent<TInstance>, within: ParentNode = this.scope): TInstance[] {
+		return (this.#app?.findAll(component, within) ?? []).filter(instance => instance !== (this as unknown))
 	}
 
 	/** @internal */

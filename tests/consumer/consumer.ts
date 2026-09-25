@@ -76,6 +76,11 @@ class Typed extends Nemesia.Component('typed', concreteOptions) {
 			void position
 		})
 
+		const nested: Typed | null = this.find(Typed)
+		const all: Typed[] = this.findAll(Typed, this.root)
+
+		void nested
+		void all
 		void root
 		void button
 		void optional
@@ -106,6 +111,10 @@ const components: ComponentConstructor[] = [Typed, Distributed]
 const base: typeof BaseComponent = BaseComponent
 
 app.register([Typed])
+const found: Typed | null = app.find(Typed)
+const distributed: Distributed[] = app.findAll(Distributed, document.body)
+void found
+void distributed
 app.register(components)
 
 if (false) {

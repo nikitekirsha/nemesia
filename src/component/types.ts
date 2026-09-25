@@ -69,6 +69,12 @@ type RegistrableConcreteComponentConstructor = (new (root: never) => BaseCompone
 	readonly nemesia: ConcreteMetadata
 }
 
+/** Component class accepted by `find(...)` and `findAll(...)`, including abstract base classes. */
+export type FindableComponent<TInstance> = (abstract new (target: never) => TInstance) & {
+	/** Runtime metadata used to locate mounted instances. */
+	readonly nemesia: ComponentMetadata
+}
+
 /** Any component constructor that can be registered in an app. */
 export type ComponentConstructor = RegistrableConcreteComponentConstructor | DistributedComponentConstructor
 
@@ -102,4 +108,10 @@ export interface NemesiaApp {
 
 	/** Stops observers for one scope, or all observers when no scope is passed. */
 	disconnect(scope?: ParentNode): void
+
+	/** Returns the first mounted instance of a component on or inside `within`. Defaults to `document`. */
+	find<TInstance>(component: FindableComponent<TInstance>, within?: ParentNode): TInstance | null
+
+	/** Returns every mounted instance of a component on or inside `within`, in document order. Defaults to `document`. */
+	findAll<TInstance>(component: FindableComponent<TInstance>, within?: ParentNode): TInstance[]
 }
