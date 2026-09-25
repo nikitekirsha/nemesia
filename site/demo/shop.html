@@ -1,0 +1,83 @@
+<div class="shop" data-nemesia="shop">
+	<div class="shop__catalog">
+		<div class="shop__grid" data-ref="grid">
+			<article
+				class="flower"
+				data-nemesia="product-card"
+				data-option-name="Lilac Dream"
+				data-option-price="4.5"
+				style="--petal: #8e7cf0"
+			>
+				<svg class="flower__art" viewBox="0 0 32 32" aria-hidden="true"><use href="#nemesia-flower" /></svg>
+				<h3 class="flower__name">Lilac Dream</h3>
+				<p class="flower__price">$4.50</p>
+				<div class="flower__stepper">
+					<button type="button" data-ref="decrease" aria-label="Fewer">−</button>
+					<span data-ref="quantity">1</span>
+					<button type="button" data-ref="increase" aria-label="More">+</button>
+				</div>
+				<button type="button" class="flower__add" data-ref="add">Add to cart</button>
+			</article>
+			<article
+				class="flower"
+				data-nemesia="product-card"
+				data-option-name="Sunset Orange"
+				data-option-price="3.9"
+				style="--petal: #f0874a"
+			>
+				<svg class="flower__art" viewBox="0 0 32 32" aria-hidden="true"><use href="#nemesia-flower" /></svg>
+				<h3 class="flower__name">Sunset Orange</h3>
+				<p class="flower__price">$3.90</p>
+				<div class="flower__stepper">
+					<button type="button" data-ref="decrease" aria-label="Fewer">−</button>
+					<span data-ref="quantity">1</span>
+					<button type="button" data-ref="increase" aria-label="More">+</button>
+				</div>
+				<button type="button" class="flower__add" data-ref="add">Add to cart</button>
+			</article>
+			<article
+				class="flower"
+				data-nemesia="product-card"
+				data-option-name="Snow Veil"
+				data-option-price="4.1"
+				style="--petal: #c3b9ec"
+			>
+				<svg class="flower__art" viewBox="0 0 32 32" aria-hidden="true"><use href="#nemesia-flower" /></svg>
+				<h3 class="flower__name">Snow Veil</h3>
+				<p class="flower__price">$4.10</p>
+				<div class="flower__stepper">
+					<button type="button" data-ref="decrease" aria-label="Fewer">−</button>
+					<span data-ref="quantity">1</span>
+					<button type="button" data-ref="increase" aria-label="More">+</button>
+				</div>
+				<button type="button" class="flower__add" data-ref="add">Add to cart</button>
+			</article>
+			<article
+				class="flower"
+				data-nemesia="product-card"
+				data-option-name="Midnight Blue"
+				data-option-price="5.2"
+				style="--petal: #3a4bc4"
+			>
+				<svg class="flower__art" viewBox="0 0 32 32" aria-hidden="true"><use href="#nemesia-flower" /></svg>
+				<h3 class="flower__name">Midnight Blue</h3>
+				<p class="flower__price">$5.20</p>
+				<div class="flower__stepper">
+					<button type="button" data-ref="decrease" aria-label="Fewer">−</button>
+					<span data-ref="quantity">1</span>
+					<button type="button" data-ref="increase" aria-label="More">+</button>
+				</div>
+				<button type="button" class="flower__add" data-ref="add">Add to cart</button>
+			</article>
+		</div>
+		<button type="button" class="shop__more" data-ref="more">Load more</button>
+	</div>
+	<aside class="cart" data-nemesia="cart" data-empty>
+		<h3 class="cart__title">Cart</h3>
+		<ul class="cart__lines" data-ref="lines"></ul>
+		<p class="cart__empty">No flowers yet.</p>
+		<p class="cart__total">Total <span data-ref="total">$0.00</span></p>
+		<button type="button" class="cart__clear" data-ref="clear">Clear</button>
+	</aside>
+	<ul class="shop__log" data-ref="log" aria-live="polite"></ul>
+</div>

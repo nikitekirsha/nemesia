@@ -62,18 +62,6 @@ app.mount(document.body)
 </div>
 ```
 
-## Documentation
+## Guide
 
-The complete guide lives in [`docs`](docs/README.md):
-
-1. [Getting started](docs/01-getting-started.md)
-2. [HTML contract](docs/02-html-contract.md)
-3. [Applications and registration](docs/03-applications.md)
-4. [Concrete components](docs/04-components.md)
-5. [Refs](docs/05-refs.md)
-6. [Options](docs/06-options.md)
-7. [Events and lifecycle](docs/07-events-and-lifecycle.md)
-8. [Dynamic DOM observation](docs/08-dynamic-dom.md)
-9. [Distributed components](docs/09-distributed-components.md)
-10. [TypeScript and diagnostics](docs/10-typescript-and-diagnostics.md)
-11. [Recipes](docs/11-recipes.md)
+The guide's available on **[the website](https://nikitekirsha.github.io/nemesia/)**.

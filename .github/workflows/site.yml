@@ -1,0 +1,82 @@
+name: Site
+
+# Pull requests only build the site; pushes to main deploy it to GitHub Pages.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - site/**
+      - docs/**
+      - src/**
+      - CHANGELOG.md
+      - package.json
+      - .github/workflows/site.yml
+  pull_request:
+    paths:
+      - site/**
+      - docs/**
+      - src/**
+      - CHANGELOG.md
+      - package.json
+      - .github/workflows/site.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push replaces a pending build, but a deployment that has started is never cancelled.
+concurrency:
+  group: site-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: site
+
+      - name: Typecheck
+        run: npm run typecheck
+        working-directory: site
+
+      - name: Build
+        run: npm run build
+        working-directory: site
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/.vitepress/dist
+
+  deploy:
+    name: Deploy
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v5

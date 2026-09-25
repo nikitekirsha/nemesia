@@ -2,3 +2,7 @@ dist
 coverage
 node_modules
 *.log
+site/.vitepress/cache
+site/.vitepress/dist
+site/guide
+site/changelog.md
