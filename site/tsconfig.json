@@ -1,0 +1,20 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"useDefineForClassFields": true,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"strict": true,
+		"noUncheckedIndexedAccess": true,
+		"exactOptionalPropertyTypes": true,
+		"noEmit": true,
+		"skipLibCheck": true,
+		"types": ["node", "vitepress/client"],
+		"paths": {
+			"nemesia": ["../src/index.ts"]
+		}
+	},
+	"include": [".vitepress/**/*.ts", ".vitepress/**/*.vue", "demo/**/*.ts"],
+	"exclude": [".vitepress/cache", ".vitepress/dist"]
+}

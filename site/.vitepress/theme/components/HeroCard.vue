@@ -25,8 +25,6 @@ function type() {
 	const nodes: Text[] = []
 	while (walker.nextNode()) nodes.push(walker.currentNode as Text)
 
-	const chars: HTMLSpanElement[] = []
-	const times: number[] = []
 	const groups = nodes.map(node => {
 		const spans = [...node.data].map(char => {
 			const span = document.createElement('span')
@@ -35,35 +33,33 @@ function type() {
 			return span
 		})
 		node.replaceWith(...spans)
-		return spans
+		return { node, spans }
 	})
 
+	const chars: { span: HTMLSpanElement; time: number }[] = []
 	let time = 0
 	let line: Element | null = null
 	let block: Element | null = null
-	nodes.forEach((_node, i) => {
-		const first = groups[i][0]
-		const nextLine = first?.closest('.line') ?? null
-		const nextBlock = first?.closest('pre') ?? null
+	for (const { spans } of groups) {
+		const nextLine = spans[0]?.closest('.line') ?? null
+		const nextBlock = spans[0]?.closest('pre') ?? null
 		if (block !== null && nextBlock !== block) time += BLOCK
 		else if (line !== null && nextLine !== line) time += LINE
 		line = nextLine
 		block = nextBlock
 
-		for (const span of groups[i]) {
+		for (const span of spans) {
 			// A slight, repeatable unevenness keeps the rhythm from feeling mechanical.
 			time += CHAR * (0.6 + ((chars.length * 7) % 10) / 12)
-			chars.push(span)
-			times.push(time)
+			chars.push({ span, time })
 		}
-	})
+	}
 
 	restore = () => {
-		groups.forEach((spans, i) => {
-			if (spans.length === 0) return
-			spans[0].before(nodes[i])
+		for (const { node, spans } of groups) {
+			spans[0]?.before(node)
 			spans.forEach(span => span.remove())
-		})
+		}
 	}
 
 	typing.value = true
@@ -72,7 +68,11 @@ function type() {
 	let shown = 0
 	const tick = (now: number) => {
 		start ||= now
-		while (shown < chars.length && times[shown] <= now - start) chars[shown++].classList.add('is-on')
+		let next = chars[shown]
+		while (next !== undefined && next.time <= now - start) {
+			next.span.classList.add('is-on')
+			next = chars[++shown]
+		}
 
 		if (now - start < time + FADE) {
 			frame = requestAnimationFrame(tick)

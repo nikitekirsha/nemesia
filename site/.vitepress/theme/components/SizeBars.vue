@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useReveal } from '../reveal'
 
 interface Row {
@@ -16,6 +16,7 @@ const DELAY = 250
 const max = Math.max(...props.rows.map(row => row.size))
 const root = ref<HTMLElement>()
 const progress = ref(props.rows.map(() => 1))
+const bars = computed(() => props.rows.map((row, i) => ({ ...row, grow: progress.value[i] ?? 1 })))
 
 let frame = 0
 
@@ -42,10 +43,10 @@ onUnmounted(() => cancelAnimationFrame(frame))
 
 <template>
 	<div ref="root" class="nm-size">
-		<div v-for="(row, i) in rows" :key="row.name" class="nm-size__row" :class="{ 'nm-size__row--self': row.self }">
-			<span>{{ row.name }}</span>
-			<span class="nm-size__bar" :style="{ '--size': `${(row.size / max) * 100}%`, '--grow': progress[i] }" />
-			<span>{{ (row.size * progress[i]).toFixed(1) }} KB</span>
+		<div v-for="bar in bars" :key="bar.name" class="nm-size__row" :class="{ 'nm-size__row--self': bar.self }">
+			<span>{{ bar.name }}</span>
+			<span class="nm-size__bar" :style="{ '--size': `${(bar.size / max) * 100}%`, '--grow': bar.grow }" />
+			<span>{{ (bar.size * bar.grow).toFixed(1) }} KB</span>
 		</div>
 	</div>
 </template>
