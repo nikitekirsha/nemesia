@@ -109,6 +109,35 @@ class MapWidget extends Nemesia.Component('map-widget') {
 
 Nemesia owns listeners registered through `this.on`; the component owns external objects such as `map`.
 
+## Async onMount
+
+Nemesia cannot stop code that continues after an `await`. Abort pending requests in `onDestroy`, and skip work that finishes after destruction:
+
+```ts
+class ProductPrice extends Nemesia.Component('product-price') {
+	value = this.ref.element('value')
+	url = this.option.string('url')
+
+	private controller = new AbortController()
+
+	async onMount() {
+		const response = await fetch(this.url, { signal: this.controller.signal })
+		const { price } = await response.json()
+		if (this.controller.signal.aborted) return
+
+		this.value.textContent = price
+	}
+
+	onDestroy() {
+		this.controller.abort()
+	}
+}
+```
+
+When the instance is destroyed during the request, `fetch` rejects with an `AbortError`. Nemesia treats that rejection as expected and does not report it.
+
+The same check protects resources created after an `await`: if `signal.aborted` is `true`, `onDestroy` has already run and nothing will release a resource created later.
+
 ## Replacing a server fragment
 
 With observation enabled, replacing markup is enough:
