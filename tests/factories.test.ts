@@ -7,7 +7,6 @@ import {
 	type ComponentConstructor,
 	type ConcreteComponentOptions,
 	type CreateAppOptions,
-	type DistributedComponentOptions,
 	type NemesiaApp,
 	type NemesiaNamespace
 } from '../src/index.js'
@@ -106,8 +105,8 @@ describe('concrete component factory', () => {
 })
 
 describe('distributed component factory', () => {
-	it('accepts empty options, exposes metadata, and assigns scope', () => {
-		const ModalBase = Nemesia.DistributedComponent('modal', {})
+	it('exposes metadata and assigns scope', () => {
+		const ModalBase = Nemesia.DistributedComponent('modal')
 		class Modal extends ModalBase {}
 		const scope = document.createDocumentFragment()
 		const instance = new Modal(scope)
@@ -146,14 +145,12 @@ describe('public component types', () => {
 
 		const constructors: ComponentConstructor[] = [Banner, Form, Navigation]
 		const concreteOptions: ConcreteComponentOptions<'main'> = { root: 'main' }
-		const distributedOptions: DistributedComponentOptions = {}
 		const appOptions: CreateAppOptions = { observe: true }
 
 		expectTypeOf(Nemesia).toEqualTypeOf<NemesiaNamespace>()
 		expectTypeOf(Nemesia.createApp()).toEqualTypeOf<NemesiaApp>()
 		expect(constructors).toHaveLength(3)
 		expect(concreteOptions).toEqual({ root: 'main' })
-		expect(distributedOptions).toEqual({})
 		expect(appOptions).toEqual({ observe: true })
 	})
 
@@ -183,12 +180,12 @@ describe('public component types', () => {
 		expectTypeOf<HasNamedDistributedComponent>().toEqualTypeOf<false>()
 	})
 
-	it('rejects supported-looking options for distributed components', () => {
-		const invalidOptions: DistributedComponentOptions = {
-			// @ts-expect-error Distributed components have no supported options yet.
-			root: 'main'
+	it('takes no options for distributed components', () => {
+		if (false) {
+			// @ts-expect-error Distributed components take only a name.
+			Nemesia.DistributedComponent('options', {})
 		}
 
-		expect(invalidOptions).toEqual({ root: 'main' })
+		expect(Nemesia.DistributedComponent('options').nemesia).toEqual({ kind: 'distributed', name: 'options' })
 	})
 })

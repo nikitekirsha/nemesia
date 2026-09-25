@@ -16,9 +16,6 @@ export interface ConcreteComponentOptions<TTag extends keyof HTMLElementTagNameM
 	multiple?: boolean
 }
 
-/** Reserved options object for distributed components. */
-export type DistributedComponentOptions = Record<string, never>
-
 /** Runtime metadata attached to every concrete component constructor. */
 export interface ConcreteMetadata {
 	/** Metadata kind for concrete components. */

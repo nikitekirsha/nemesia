@@ -4,13 +4,7 @@ import { createApp } from './app/create-app.js'
 export { BaseComponent } from './component/base-component.js'
 export { BaseDistributedComponent } from './component/base-distributed-component.js'
 export { createApp } from './app/create-app.js'
-export type {
-	ComponentConstructor,
-	ConcreteComponentOptions,
-	CreateAppOptions,
-	DistributedComponentOptions,
-	NemesiaApp
-} from './component/types.js'
+export type { ComponentConstructor, ConcreteComponentOptions, CreateAppOptions, NemesiaApp } from './component/types.js'
 export type {
 	BooleanOptionOptions,
 	DefaultOptionOptions,

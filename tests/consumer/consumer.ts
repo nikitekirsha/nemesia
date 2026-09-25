@@ -7,7 +7,6 @@ import {
 	type ConcreteComponentOptions,
 	type CreateAppOptions,
 	type DefaultOptionOptions,
-	type DistributedComponentOptions,
 	type JsonOptionOptions,
 	type NemesiaApp,
 	type NemesiaNamespace,
@@ -21,7 +20,6 @@ const options: CreateAppOptions = { observe: true }
 const concreteOptions: ConcreteComponentOptions<'form'> & { root: 'form' } = {
 	root: 'form'
 }
-const distributedOptions: DistributedComponentOptions = {}
 const stringOptions: StringOptionOptions = { default: 'fallback' }
 const numberOptions: NumberOptionOptions & { default: number } = {
 	default: 1,
@@ -133,4 +131,3 @@ if (false) {
 void namespace
 void namedCreateApp
 void base
-void distributedOptions
