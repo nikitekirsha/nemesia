@@ -23,7 +23,7 @@ this.on(this.button, 'click', handler, {
 
 ## Event types
 
-Known DOM events are typed from the target and event name, the same way `addEventListener` types them:
+Known DOM events are typed from the target and event name:
 
 ```ts
 this.on(this.button, 'click', event => event.clientX) // PointerEvent
@@ -31,15 +31,13 @@ this.on(this.input, 'keydown', event => event.key) // KeyboardEvent
 this.on(window, 'resize', event => event.view) // UIEvent
 ```
 
-Any other name is treated as a custom event and its listener receives a plain `Event`. To type a custom event, annotate the listener parameter:
+Other event names receive `Event`. Annotate the listener parameter to type a custom event:
 
 ```ts
 this.on(this.root, 'cart:update', (event: CustomEvent<{ count: number }>) => {
-	this.count.textContent = String(event.detail.count)
+	console.log(event.detail.count)
 })
 ```
-
-No declarations are needed. Event names are not validated, so a misspelled name such as `'clik'` is accepted as a custom event.
 
 ## Arrays of targets
 
@@ -69,8 +67,6 @@ Nemesia records the instance before calling the hook, so recursive calls to `mou
 If the hook throws, the partial mounted instance is destroyed and other components continue. A returned promise is observed, but `mount()` remains synchronous and does not await it.
 
 If an asynchronous `onMount` later rejects, Nemesia reports the error and destroys that instance. Singleton candidates skipped while it was pending are not retried automatically; call `mount()` again if needed.
-
-A rejection with an `AbortError` after the instance was already destroyed is not reported: it is the expected result of aborting pending work in `onDestroy`. See [Async onMount](11-recipes.md#async-onmount).
 
 ## `onDestroy`
 
