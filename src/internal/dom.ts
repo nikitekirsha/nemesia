@@ -42,7 +42,7 @@ function collectMutationRoots(node: Node, roots: Element[]): void {
 	}
 }
 
-function distinctMutationRoots(nodes: Iterable<Node>): Element[] {
+export function distinctMutationRoots(nodes: Iterable<Node>): Element[] {
 	const roots: Element[] = []
 	const seen = new Set<Element>()
 
@@ -58,10 +58,6 @@ function distinctMutationRoots(nodes: Iterable<Node>): Element[] {
 	}
 
 	return roots
-}
-
-export function normalizeRemovedMutationRoots(nodes: Iterable<Node>): Element[] {
-	return distinctMutationRoots(nodes)
 }
 
 export function normalizeMutationRoots(nodes: Iterable<Node>): Element[] {

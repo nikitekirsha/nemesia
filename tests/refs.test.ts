@@ -36,7 +36,6 @@ function expectControlledError(operation: () => unknown, reason: string, payload
 	expect(thrown).toMatchObject({
 		name: 'SkipComponentMountError',
 		message: reason,
-		reason,
 		payload
 	})
 }

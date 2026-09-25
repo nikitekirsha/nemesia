@@ -13,10 +13,10 @@ function changeCount(counts: Map<string, number>, component: string, change: 1 |
 export class ConcreteComponentState {
 	readonly #activeCounts = new Map<string, number>()
 	readonly #constructionCounts = new Map<string, number>()
-	readonly #rootReservations = new WeakMap<Element, Set<string>>()
+	readonly #constructingRoots = new Set<Element>()
 
 	public isRootConstructing(root: Element): boolean {
-		return (this.#rootReservations.get(root)?.size ?? 0) > 0
+		return this.#constructingRoots.has(root)
 	}
 
 	public hasActiveOrConstructing(component: string): boolean {
@@ -24,13 +24,7 @@ export class ConcreteComponentState {
 	}
 
 	public reserveConstruction(root: Element, component: string): ConstructionReservation {
-		let components = this.#rootReservations.get(root)
-		if (components === undefined) {
-			components = new Set()
-			this.#rootReservations.set(root, components)
-		}
-
-		components.add(component)
+		this.#constructingRoots.add(root)
 		changeCount(this.#constructionCounts, component, 1)
 		return { root, component, released: false }
 	}
@@ -39,9 +33,7 @@ export class ConcreteComponentState {
 		if (reservation.released) return
 		reservation.released = true
 
-		const components = this.#rootReservations.get(reservation.root)
-		components?.delete(reservation.component)
-		if (components?.size === 0) this.#rootReservations.delete(reservation.root)
+		this.#constructingRoots.delete(reservation.root)
 		changeCount(this.#constructionCounts, reservation.component, -1)
 	}
 

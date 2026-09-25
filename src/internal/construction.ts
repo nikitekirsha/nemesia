@@ -1,8 +1,7 @@
-import type { BaseComponent } from '../component/base-component.js'
-import type { BaseDistributedComponent } from '../component/base-distributed-component.js'
+import type { ComponentCore } from '../component/component-core.js'
 import type { NemesiaApp } from '../component/types.js'
 
-type ConstructingComponent = BaseComponent | BaseDistributedComponent
+type ConstructingComponent = ComponentCore
 
 export interface ComponentConstructionCapture {
 	readonly expectedConstructor: Function

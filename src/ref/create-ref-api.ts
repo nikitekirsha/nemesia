@@ -1,4 +1,5 @@
 import type { DiagnosticPayload } from '../internal/diagnostics.js'
+import { isHtmlElement } from '../internal/dom.js'
 import { SkipComponentMountError } from '../internal/errors.js'
 import type { RefApi } from './types.js'
 
@@ -13,37 +14,21 @@ interface ResolveOptions<TElement extends Element> {
 	readonly expected: ExpectedType<TElement> | undefined
 }
 
-const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml'
-
 const htmlElementType: ExpectedType<HTMLElement> = {
 	name: 'HTMLElement',
-	accepts: element => element.namespaceURI === HTML_NAMESPACE
+	accepts: isHtmlElement
 }
 
-const buttonType: ExpectedType<HTMLButtonElement> = {
-	name: 'HTMLButtonElement',
-	accepts: element => element.namespaceURI === HTML_NAMESPACE && element.localName === 'button'
-}
+const tagType = <TElement extends HTMLElement>(name: string, localName: string): ExpectedType<TElement> => ({
+	name,
+	accepts: element => isHtmlElement(element) && element.localName === localName
+})
 
-const inputType: ExpectedType<HTMLInputElement> = {
-	name: 'HTMLInputElement',
-	accepts: element => element.namespaceURI === HTML_NAMESPACE && element.localName === 'input'
-}
-
-const textareaType: ExpectedType<HTMLTextAreaElement> = {
-	name: 'HTMLTextAreaElement',
-	accepts: element => element.namespaceURI === HTML_NAMESPACE && element.localName === 'textarea'
-}
-
-const selectType: ExpectedType<HTMLSelectElement> = {
-	name: 'HTMLSelectElement',
-	accepts: element => element.namespaceURI === HTML_NAMESPACE && element.localName === 'select'
-}
-
-const formType: ExpectedType<HTMLFormElement> = {
-	name: 'HTMLFormElement',
-	accepts: element => element.namespaceURI === HTML_NAMESPACE && element.localName === 'form'
-}
+const buttonType = tagType<HTMLButtonElement>('HTMLButtonElement', 'button')
+const inputType = tagType<HTMLInputElement>('HTMLInputElement', 'input')
+const textareaType = tagType<HTMLTextAreaElement>('HTMLTextAreaElement', 'textarea')
+const selectType = tagType<HTMLSelectElement>('HTMLSelectElement', 'select')
+const formType = tagType<HTMLFormElement>('HTMLFormElement', 'form')
 
 function receivedType(element: Element): string {
 	return `<${element.localName}> in namespace "${element.namespaceURI ?? 'null'}"`
