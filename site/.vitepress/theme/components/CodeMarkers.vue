@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
+import { reveal } from '../reveal'
 
 interface Note {
 	line: number
@@ -11,14 +12,20 @@ interface Note {
 defineProps<{ notes: Note[] }>()
 
 const GAP = 8
+const STEP = 180
 
 const root = ref<HTMLElement>()
 const markers = ref<HTMLButtonElement[]>([])
 const positions = ref<{ top: string; left: string }[]>([])
 const gutter = ref(false)
 const open = ref<number>()
+const placed = ref(false)
+const armed = ref(false)
+const shown = ref(0)
 
 let observer: ResizeObserver | undefined
+let stop: (() => void) | undefined
+const timers: number[] = []
 
 // Each marker stands after the code line it names. When a line has no room left,
 // all markers move to the gutter before the code.
@@ -35,6 +42,23 @@ function place() {
 		if (box === undefined) return { top: '0', left: '0' }
 		const left = gutter.value ? box.left - size / 2 - 2 : box.right + GAP + size / 2
 		return { top: `${box.top - origin.top + box.height / 2}px`, left: `${left - origin.left}px` }
+	})
+	placed.value = true
+}
+
+// Markers come out one by one, each briefly lighting up its line.
+function showMarkers() {
+	const lines = root.value!.querySelectorAll('.line')
+
+	markers.value.forEach((marker, i) => {
+		const line = lines[Number(marker.dataset.line) - 1]
+		timers.push(
+			window.setTimeout(() => {
+				shown.value = i + 1
+				line?.classList.add('is-lit')
+			}, i * STEP),
+			window.setTimeout(() => line?.classList.remove('is-lit'), i * STEP + 700)
+		)
 	})
 }
 
@@ -58,17 +82,21 @@ onMounted(() => {
 	void document.fonts.ready.then(place)
 	document.addEventListener('click', closeOutside)
 	document.addEventListener('keydown', closeOnEscape)
+	stop = reveal(root.value!, showMarkers)
+	armed.value = stop !== undefined
 })
 
 onUnmounted(() => {
 	observer?.disconnect()
+	stop?.()
+	timers.forEach(timer => window.clearTimeout(timer))
 	document.removeEventListener('click', closeOutside)
 	document.removeEventListener('keydown', closeOnEscape)
 })
 </script>
 
 <template>
-	<div ref="root" class="nm-markers">
+	<div ref="root" class="nm-markers" :class="{ 'is-placed': placed }">
 		<slot />
 		<button
 			v-for="(note, i) in notes"
@@ -76,7 +104,7 @@ onUnmounted(() => {
 			ref="markers"
 			type="button"
 			class="nm-marker"
-			:class="{ 'is-open': open === i, 'is-gutter': gutter }"
+			:class="{ 'is-open': open === i, 'is-gutter': gutter, 'is-hidden': armed && shown <= i }"
 			:style="positions[i]"
 			:data-line="note.line"
 			:aria-label="note.label"

@@ -34,6 +34,12 @@ export default defineConfig({
 	head: [
 		['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}logo.svg` }],
 		['meta', { name: 'theme-color', content: '#6356D8' }],
+		// Hides the hero code before the first paint so it can type itself in; see HeroCard.vue.
+		[
+			'script',
+			{},
+			"try{matchMedia('(prefers-reduced-motion: reduce)').matches||sessionStorage.getItem('nm-typed')!==null||document.documentElement.classList.add('nm-type')}catch{}"
+		],
 		['meta', { property: 'og:title', content: 'Nemesia' }],
 		['meta', { property: 'og:description', content: 'Components for the HTML your server already sends.' }]
 	],

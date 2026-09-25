@@ -81,16 +81,9 @@ const notes = [
 </div>
 <div class="nm-hero__visual">
 
-<svg class="nm-hero__watermark" viewBox="0 0 256 256" aria-hidden="true">
-	<path d="M114.1 126.6C136.3 116.7 145.5 89.1 134.7 64.9C124 40.6 97.2 29 75 38.9C52.8 48.8 43.6 76.4 54.3 100.7C65.1 124.9 91.9 136.5 114.1 126.6Z" />
-	<path d="M180.4 40C158.7 29 131.4 39.1 119.4 62.8C107.3 86.4 115.1 114.5 136.7 125.5C158.4 136.6 185.7 126.4 197.7 102.8C209.8 79.1 202 51 180.4 40Z" />
-	<path d="M70.6 98C96.8 101.7 115.4 123.8 112.1 147.4C108.8 171.1 84.8 187.2 58.5 183.5C32.3 179.8 13.7 157.7 17 134.1C20.3 110.4 44.3 94.3 70.6 98Z" />
-	<path d="M183.2 186.2C210.2 190.4 235.2 174 238.9 149.8C242.6 125.5 223.7 102.4 196.6 98.3C169.6 94.1 144.6 110.5 140.9 134.7C137.2 159 156.1 182.1 183.2 186.2Z" />
-	<path d="M126.5 236C156.4 236 180.5 214.8 180.5 188.8C180.5 162.7 156.4 141.6 126.5 141.6C96.7 141.6 72.5 162.7 72.5 188.8C72.5 214.8 96.7 236 126.5 236Z" />
-	<path d="M113 141C122.3 126.3 131.7 126.3 141 141C131.7 151.7 122.3 151.7 113 141Z" />
-</svg>
+<HeroFlower />
 
-<div class="nm-card vp-doc">
+<HeroCard>
 
 ```html
 <div data-nemesia="counter" data-option-initial="10">
@@ -99,27 +92,9 @@ const notes = [
 </div>
 ```
 
-```ts
-class Counter extends Component('counter') {
-	button = this.ref.button('button')
-	value = this.ref.element('value')
-	count = this.option.number('initial')
+<<< @/demo/counter.ts#class
 
-	onMount() {
-		this.render()
-		this.on(this.button, 'click', () => {
-			this.count += 1
-			this.render()
-		})
-	}
-
-	render() {
-		this.value.textContent = String(this.count)
-	}
-}
-```
-
-</div>
+</HeroCard>
 </div>
 </section>
 
@@ -127,7 +102,7 @@ class Counter extends Component('counter') {
 
 <p class="nm-label">The problem</p>
 
-<h2 class="nm-title">The tabs you've written a hundred times.</h2>
+<RevealTitle text="The tabs you've written a hundred times." />
 
 <NmTabs kind="compare" :tabs="{ before: 'Before', after: 'After' }">
 <template v-slot:before>
@@ -191,9 +166,9 @@ class Tabs extends Component('tabs') {
 
 <p class="nm-label">Features</p>
 
-<h2 class="nm-title">Structure, without a framework.</h2>
+<RevealTitle text="Structure, without a framework." />
 
-<div class="nm-features">
+<Spotlight>
 	<article>
 		<h3>Behavior lives in the class</h3>
 		<p>Components are found by <code>data-nemesia</code>. The elements and options they need are defined in the class.</p>
@@ -218,7 +193,7 @@ class Tabs extends Component('tabs') {
 		<h3>Components that work together</h3>
 		<p>Build a page from small parts that know about each other, instead of one script that knows everything.</p>
 	</article>
-</div>
+</Spotlight>
 
 </section>
 
@@ -226,7 +201,7 @@ class Tabs extends Component('tabs') {
 
 <p class="nm-label">Try it</p>
 
-<h2 class="nm-title">A little flower shop.</h2>
+<RevealTitle text="A little flower shop." />
 
 <p class="nm-lead">Plain server HTML, four small components. Add a few flowers, then load more from the “server”.</p>
 
@@ -273,14 +248,9 @@ class Tabs extends Component('tabs') {
 
 <p class="nm-label">Size</p>
 
-<h2 class="nm-title">Small enough to forget about.</h2>
+<RevealTitle text="Small enough to forget about." />
 
-<div class="nm-size">
-	<div class="nm-size__row nm-size__row--self"><span>nemesia</span><span class="nm-size__bar" style="--size: 27%"></span><span>5.4 KB</span></div>
-	<div class="nm-size__row"><span>petite-vue</span><span class="nm-size__bar" style="--size: 37%"></span><span>7.3 KB</span></div>
-	<div class="nm-size__row"><span>Stimulus</span><span class="nm-size__bar" style="--size: 57%"></span><span>11.3 KB</span></div>
-	<div class="nm-size__row"><span>Alpine</span><span class="nm-size__bar" style="--size: 100%"></span><span>19.9 KB</span></div>
-</div>
+<SizeBars :rows="[{ name: 'nemesia', size: 5.4, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
 
 <p class="nm-note">Published browser builds, minified and gzipped.</p>
 
@@ -290,7 +260,7 @@ class Tabs extends Component('tabs') {
 
 <p class="nm-label">FAQ</p>
 
-<h2 class="nm-title">Why not just…?</h2>
+<RevealTitle text="Why not just…?" />
 
 <dl class="nm-faq">
 	<div>
