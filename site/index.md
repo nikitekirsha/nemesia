@@ -268,7 +268,7 @@ class Tabs extends Component('tabs') {
 
 <RevealTitle label="FAQ" text="Why not just…?" />
 
-<Reveal>
+<Reveal stagger>
 
 <dl class="nm-faq">
 	<div>
