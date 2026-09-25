@@ -299,13 +299,13 @@ html:has(.nm-landing) .VPLocalNav {
 	content: '\200b';
 }
 
-.nm-caret {
-	display: inline-block;
-	width: 2px;
-	height: 1.15em;
-	margin-left: 1px;
-	vertical-align: -0.2em;
-	background: var(--nm-accent);
+.nm-char {
+	opacity: 0;
+	transition: opacity 0.4s ease;
+}
+
+.nm-char.is-on {
+	opacity: 1;
 }
 
 .nm-card__result {
