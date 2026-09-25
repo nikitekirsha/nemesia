@@ -1,11 +1,13 @@
 import type { BaseComponent } from '../component/base-component.js'
 import type { BaseDistributedComponent } from '../component/base-distributed-component.js'
+import type { NemesiaApp } from '../component/types.js'
 
 type ConstructingComponent = BaseComponent | BaseDistributedComponent
 
 export interface ComponentConstructionCapture {
 	readonly expectedConstructor: Function
 	readonly expectedTarget: ParentNode
+	readonly app: NemesiaApp
 	instance: ConstructingComponent | undefined
 }
 
@@ -13,11 +15,13 @@ const captures: ComponentConstructionCapture[] = []
 
 export function beginComponentConstruction(
 	expectedConstructor: Function,
-	expectedTarget: ParentNode
+	expectedTarget: ParentNode,
+	app: NemesiaApp
 ): ComponentConstructionCapture {
 	const capture: ComponentConstructionCapture = {
 		expectedConstructor,
 		expectedTarget,
+		app,
 		instance: undefined
 	}
 	captures.push(capture)
@@ -28,7 +32,7 @@ export function captureConstructingComponent(
 	actualConstructor: Function,
 	actualTarget: ParentNode,
 	instance: ConstructingComponent
-): void {
+): NemesiaApp | undefined {
 	for (let index = captures.length - 1; index >= 0; index -= 1) {
 		const capture = captures[index]
 		if (capture === undefined) continue
@@ -38,9 +42,10 @@ export function captureConstructingComponent(
 			capture.expectedTarget === actualTarget
 		) {
 			capture.instance = instance
-			return
+			return capture.app
 		}
 	}
+	return undefined
 }
 
 export function endComponentConstruction(capture: ComponentConstructionCapture): void {

@@ -1,5 +1,6 @@
 import { ListenerRegistry } from '../events/listener-registry.js'
 import type { EventName, TargetEvent } from '../events/types.js'
+import type { FindableComponent, NemesiaApp } from './types.js'
 import { observeRejection, reportDestroyError, resolveComponentName, warnComponent } from '../internal/diagnostics.js'
 import { captureConstructingComponent } from '../internal/construction.js'
 import { abortComponentConstruction, teardownComponent } from '../internal/lifecycle.js'
@@ -12,6 +13,7 @@ import type { RefApi } from '../ref/types.js'
 export abstract class BaseComponent<TRoot extends HTMLElement = HTMLElement> {
 	readonly #listeners = new ListenerRegistry()
 	readonly #componentName: string
+	readonly #app: NemesiaApp | undefined
 	#destroyed = false
 
 	/** Root element matched by `data-nemesia`. */
@@ -25,7 +27,7 @@ export abstract class BaseComponent<TRoot extends HTMLElement = HTMLElement> {
 
 	/** Creates a component instance for a matched root element. */
 	public constructor(root: TRoot) {
-		captureConstructingComponent(new.target, root, this)
+		this.#app = captureConstructingComponent(new.target, root, this)
 		this.root = root
 		this.#componentName = resolveComponentName(this)
 		this.ref = createRefApi(root, this.#componentName)
@@ -71,6 +73,16 @@ export abstract class BaseComponent<TRoot extends HTMLElement = HTMLElement> {
 	/** Logs a component-scoped warning with optional diagnostic payload. */
 	public warn(message: string, payload?: Record<string, unknown>): void {
 		warnComponent(this.#componentName, { root: this.root }, message, payload)
+	}
+
+	/** Returns the first mounted instance of a component on or inside `within`, which defaults to the component root. */
+	public find<TInstance>(component: FindableComponent<TInstance>, within: ParentNode = this.root): TInstance | null {
+		return this.findAll(component, within)[0] ?? null
+	}
+
+	/** Returns every mounted instance of a component on or inside `within`, in document order. */
+	public findAll<TInstance>(component: FindableComponent<TInstance>, within: ParentNode = this.root): TInstance[] {
+		return (this.#app?.findAll(component, within) ?? []).filter(instance => instance !== (this as unknown))
 	}
 
 	/** @internal */

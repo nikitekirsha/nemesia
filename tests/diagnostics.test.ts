@@ -207,21 +207,21 @@ describe('exact warnings', () => {
 		app.mount(scope)
 		app.mount(scope)
 
-		expect(warn).toHaveBeenNthCalledWith(1, '[Nemesia] Component "user-distributed": distributed warning', {
+		expect(warn).toHaveBeenNthCalledWith(3, '[Nemesia] Component "user-distributed": distributed warning', {
 			component: 'user-distributed',
 			scope,
 			detail: 2
 		})
-		expect(warn).toHaveBeenNthCalledWith(2, '[Nemesia] Component "user-distributed": distributed merge', {
+		expect(warn).toHaveBeenNthCalledWith(4, '[Nemesia] Component "user-distributed": distributed merge', {
 			component: 'payload-distributed',
 			scope: replacementScope
 		})
-		expect(warn).toHaveBeenNthCalledWith(3, '[Nemesia] Component "user-concrete": plain warning', {
+		expect(warn).toHaveBeenNthCalledWith(1, '[Nemesia] Component "user-concrete": plain warning', {
 			component: 'user-concrete',
 			root: concreteRoot,
 			detail: 1
 		})
-		expect(warn).toHaveBeenNthCalledWith(4, '[Nemesia] Component "user-concrete": merged warning', {
+		expect(warn).toHaveBeenNthCalledWith(2, '[Nemesia] Component "user-concrete": merged warning', {
 			component: 'payload-component',
 			root: replacementRoot
 		})

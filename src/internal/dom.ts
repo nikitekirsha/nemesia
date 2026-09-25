@@ -4,14 +4,14 @@ function isElement(value: ParentNode): value is Element & ParentNode {
 	return value.nodeType === 1
 }
 
-export function discoverConcreteRoots(scope: ParentNode): Element[] {
+export function discoverConcreteRoots(scope: ParentNode, selector = '[data-nemesia]'): Element[] {
 	const roots: Element[] = []
 
-	if (isElement(scope) && scope.hasAttribute('data-nemesia')) {
+	if (isElement(scope) && scope.matches(selector)) {
 		roots.push(scope)
 	}
 
-	roots.push(...scope.querySelectorAll('[data-nemesia]'))
+	roots.push(...scope.querySelectorAll(selector))
 	return roots
 }
 
@@ -94,4 +94,26 @@ function nodeDepth(node: Node): number {
 
 export function deepestFirst(roots: Iterable<Element>): Element[] {
 	return [...roots].sort((left, right) => nodeDepth(right) - nodeDepth(left))
+}
+
+export function documentOrder<T>(items: Iterable<T>, nodeOf: (item: T) => Node): T[] {
+	return [...items].sort((left, right) =>
+		nodeOf(left).compareDocumentPosition(nodeOf(right)) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1
+	)
+}
+
+// Reorders items given in document order so every node comes after its descendants.
+export function childrenFirst<T>(items: Iterable<T>, nodeOf: (item: T) => Node): T[] {
+	const ordered: T[] = []
+	const open: T[] = []
+
+	for (const item of items) {
+		while (open.length > 0 && !nodeOf(open[open.length - 1] as T).contains(nodeOf(item))) {
+			ordered.push(open.pop() as T)
+		}
+		open.push(item)
+	}
+
+	while (open.length > 0) ordered.push(open.pop() as T)
+	return ordered
 }

@@ -65,7 +65,7 @@ describe('automatic concrete mounting', () => {
 		scope.append(wrapper)
 		await flushMutations()
 
-		expect(mounted).toEqual([scope, existing, scope.children[1], nested])
+		expect(mounted).toEqual([existing, scope, scope.children[1], nested])
 		expect(distributedScopes).toEqual([scope])
 	})
 
@@ -90,7 +90,7 @@ describe('automatic concrete mounting', () => {
 		parent.append(child)
 		await flushMutations()
 
-		expect(mounted).toEqual([parent, child])
+		expect(mounted).toEqual([child, parent])
 	})
 
 	it('uses normal controlled validation and continues mounting valid roots', async () => {

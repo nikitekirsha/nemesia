@@ -108,7 +108,7 @@ describe('concrete root discovery', () => {
 		expect(mounted).not.toContain(alternative)
 	})
 
-	it('includes an element scope itself and discovers descendants in document order', () => {
+	it('includes an element scope itself and mounts nested roots before their parents', () => {
 		const mounted: Element[] = []
 		class Ordered extends Nemesia.Component('ordered') {
 			onMount(): void {
@@ -124,7 +124,7 @@ describe('concrete root discovery', () => {
 
 		createApp().register([Ordered]).mount(scope)
 
-		expect(mounted).toEqual([scope, first, second])
+		expect(mounted).toEqual([first, second, scope])
 	})
 
 	it('mounts an explicitly passed detached root by exact scope identity', () => {
@@ -144,7 +144,7 @@ describe('concrete root discovery', () => {
 		expect(mounted).toHaveBeenCalledWith(target)
 	})
 
-	it('rechecks explicit candidates before constructing a later singleton', () => {
+	it('aborts a constructed candidate that an earlier hook moved out of scope', () => {
 		const constructed: Element[] = []
 		const mounted: Element[] = []
 		const listened: Element[] = []
@@ -181,7 +181,7 @@ describe('concrete root discovery', () => {
 		app.mount(scope)
 		target.dispatchEvent(new Event('change'))
 
-		expect(constructed).toEqual([])
+		expect(constructed).toEqual([stale])
 		expect(mounted).toEqual([])
 		expect(listened).toEqual([])
 
@@ -191,7 +191,7 @@ describe('concrete root discovery', () => {
 		app.mount(scope)
 		target.dispatchEvent(new Event('change'))
 
-		expect(constructed).toEqual([replacement])
+		expect(constructed).toEqual([stale, replacement])
 		expect(mounted).toEqual([replacement])
 		expect(listened).toEqual([replacement])
 	})
@@ -307,7 +307,7 @@ describe('concrete root discovery', () => {
 		expect(mounted).toEqual(['first', 'second'])
 	})
 
-	it('mounts nested component roots independently', () => {
+	it('mounts nested component roots before their parents', () => {
 		const calls: string[] = []
 		class Parent extends Nemesia.Component('parent') {
 			onMount(): void {
@@ -326,7 +326,7 @@ describe('concrete root discovery', () => {
 
 		createApp().register([Parent, Child]).mount(parent)
 
-		expect(calls).toEqual(['parent', 'child'])
+		expect(calls).toEqual(['child', 'parent'])
 	})
 
 	it('supports detached DocumentFragment subtrees', () => {
@@ -352,7 +352,7 @@ describe('concrete root discovery', () => {
 		app.mount(fragment)
 		app.destroy(fragment)
 
-		expect(mounted).toEqual([outer, inner])
+		expect(mounted).toEqual([inner, outer])
 		expect(destroyed).toEqual([inner, outer])
 	})
 
@@ -790,7 +790,7 @@ describe('mount validation and lifecycle', () => {
 		expect(mounted).toEqual([first, second])
 	})
 
-	it('lets the next singleton candidate mount after a synchronous onMount failure', () => {
+	it('mounts the next singleton candidate on a later mount after a synchronous onMount failure', () => {
 		const error = new Error('mount failed')
 		const mounted: Element[] = []
 		let attempt = 0
@@ -806,14 +806,27 @@ describe('mount validation and lifecycle', () => {
 		const first = root('sync-singleton')
 		const second = root('sync-singleton')
 		const report = vi.spyOn(console, 'error').mockImplementation(() => {})
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		const app = createApp().register([Singleton])
 
-		createApp().register([Singleton]).mount()
+		app.mount()
 
 		expect(report).toHaveBeenCalledWith('[Nemesia] Component "sync-singleton" failed during onMount.', {
 			component: 'sync-singleton',
 			root: first,
 			error
 		})
+		expect(warn).toHaveBeenCalledWith(
+			'[Nemesia] Component "sync-singleton" skipped: only one instance may be mounted.',
+			{
+				component: 'sync-singleton',
+				root: second
+			}
+		)
+		expect(mounted).toEqual([])
+
+		app.mount()
+
 		expect(mounted).toEqual([second])
 	})
 

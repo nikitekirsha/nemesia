@@ -82,7 +82,7 @@ describe('distributed mounting', () => {
 		expect(instance).not.toHaveProperty('option')
 	})
 
-	it('mounts distributed components before discovering concrete roots', () => {
+	it('constructs distributed components first and mounts them after concrete components', () => {
 		const order: string[] = []
 		class Distributed extends Nemesia.DistributedComponent('order-distributed') {
 			onMount(): void {
@@ -100,7 +100,7 @@ describe('distributed mounting', () => {
 
 		createApp().register([Concrete, Distributed]).mount(document.body)
 
-		expect(order).toEqual(['distributed', 'concrete'])
+		expect(order).toEqual(['concrete', 'distributed'])
 	})
 
 	it('reserves an exact scope during constructor-time recursive mounting', () => {
