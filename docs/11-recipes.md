@@ -111,7 +111,7 @@ Nemesia owns listeners registered through `this.on`; the component owns external
 
 ## Async onMount
 
-Nemesia cannot stop code that continues after an `await`. Abort pending requests in `onDestroy`, and skip work that finishes after destruction:
+Abort pending work in `onDestroy` and stop after an `await` when the component was destroyed:
 
 ```ts
 class ProductPrice extends Nemesia.Component('product-price') {
@@ -134,9 +134,7 @@ class ProductPrice extends Nemesia.Component('product-price') {
 }
 ```
 
-When the instance is destroyed during the request, `fetch` rejects with an `AbortError`. Nemesia treats that rejection as expected and does not report it.
-
-The same check protects resources created after an `await`: if `signal.aborted` is `true`, `onDestroy` has already run and nothing will release a resource created later.
+An `onMount` rejection with an `AbortError` after destroy is not reported.
 
 ## Replacing a server fragment
 

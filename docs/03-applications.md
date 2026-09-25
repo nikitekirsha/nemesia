@@ -58,15 +58,7 @@ An app never mounts two component names on the same root. If code changes `data-
 app.destroy(document.body)
 ```
 
-`destroy(scope)` destroys concrete instances on or below the scope and distributed instances associated with that exact scope. Repeated calls are safe.
-
-Roots that were already removed from the document are still destroyed through the scope they were mounted in, so replacing markup before calling `destroy` does not leak the old instances:
-
-```ts
-container.innerHTML = freshHtml
-app.destroy(container) // destroys instances from the previous markup
-app.mount(container)
-```
+`destroy(scope)` destroys concrete instances mounted on or below the scope, including roots already removed from it, and distributed instances associated with that exact scope. Repeated calls are safe.
 
 Destroy does not stop observation. This is useful when a container is cleared and later receives fresh server-rendered markup.
 
@@ -77,7 +69,7 @@ app.disconnect(container) // one exact observed scope
 app.disconnect() // all observers owned by the app
 ```
 
-Disconnecting only stops observation. It does not destroy existing instances or remove their listeners. DOM changes made before `disconnect` are still processed first, so roots removed just before disconnecting are destroyed.
+Disconnecting only stops observation. It does not destroy existing instances or remove their listeners.
 
 ## Multiple apps
 
