@@ -148,9 +148,20 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	}
 
 	#destroyConcrete(scope: ParentNode): void {
-		const roots = deepestFirst([...this.#mountedRoots].filter(root => isWithinScope(root, scope)))
+		const roots = deepestFirst([...this.#mountedRoots].filter(root => this.#belongsToScope(root, scope)))
 
 		this.#destroyConcreteRoots(roots)
+	}
+
+	#belongsToScope(root: Element, scope: ParentNode): boolean {
+		if (isWithinScope(root, scope)) return true
+
+		// A root detached from the scope's tree is still owned by the scope it was last mounted in.
+		const scopeNode = scope as Node
+		return (
+			root.getRootNode() !== scopeNode.getRootNode() &&
+			(this.#mountedRootAncestries.get(root)?.includes(scopeNode) ?? false)
+		)
 	}
 
 	#destroyConcreteRoots(roots: Iterable<Element>): void {
@@ -183,18 +194,26 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	}
 
 	#queueMutations(records: MutationRecord[]): void {
-		for (const record of records) {
-			this.#pendingAddedNodes.push(...record.addedNodes)
-			this.#pendingRemovedNodes.push(...record.removedNodes)
-		}
+		this.#collectMutations(records)
 
 		if (this.#mutationFlushScheduled) return
 		this.#mutationFlushScheduled = true
 		queueMicrotask(() => this.#flushMutationBatch())
 	}
 
+	#collectMutations(records: Iterable<MutationRecord>): void {
+		for (const record of records) {
+			this.#pendingAddedNodes.push(...record.addedNodes)
+			this.#pendingRemovedNodes.push(...record.removedNodes)
+		}
+	}
+
 	#flushMutationBatch(): void {
 		this.#mutationFlushScheduled = false
+		for (const scope of this.#observedScopes) {
+			const records = this.#observers.get(scope)?.takeRecords()
+			if (records !== undefined) this.#collectMutations(records)
+		}
 		if (this.#pendingRemovedNodes.length === 0 && this.#pendingAddedNodes.length === 0) return
 
 		const removedRoots = normalizeRemovedMutationRoots(this.#pendingRemovedNodes.splice(0))
