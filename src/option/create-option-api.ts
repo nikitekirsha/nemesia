@@ -14,20 +14,13 @@ import type {
 	StringOptionOptions
 } from './types.js'
 
-interface ParseResult<T> {
-	readonly valid: boolean
-	readonly value?: T
-	readonly expected?: string
-}
+type ParseResult<T> = { readonly valid: true; readonly value: T } | { readonly valid: false }
 
 type ParseOption<T> = (raw: string) => ParseResult<T>
 
 const valid = <T>(value: T): ParseResult<T> => ({ valid: true, value })
 
-const invalid = <T>(expected?: string): ParseResult<T> => ({
-	valid: false,
-	...(expected === undefined ? {} : { expected })
-})
+const invalid = <T>(): ParseResult<T> => ({ valid: false })
 
 const hasDefault = <T>(options: { default?: T } | undefined): options is { default: T } =>
 	options !== undefined && 'default' in options
@@ -95,10 +88,10 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 		}
 
 		if (!result.valid) {
-			return fail(`invalid option "${name}"`, name, attribute, result.expected ?? expected, raw)
+			return fail(`invalid option "${name}"`, name, attribute, expected, raw)
 		}
 
-		return result.value as T
+		return result.value
 	}
 
 	const string = (required: boolean, name: string, options?: StringOptionOptions): string | undefined =>
@@ -225,7 +218,7 @@ export function createOptionApi(root: HTMLElement, componentName: string): Optio
 						return invalid()
 					}
 
-					parsed = booleanResult.value as boolean
+					parsed = booleanResult.value
 				}
 
 				return Object.is(parsed, literalValue) ? valid(literalValue) : invalid()
