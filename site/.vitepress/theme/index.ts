@@ -2,22 +2,18 @@ import '@fontsource-variable/inter'
 import '@fontsource-variable/jetbrains-mono'
 import type { Theme } from 'vitepress'
 import DefaultTheme from 'vitepress/theme'
-import { defineComponent, h, onMounted } from 'vue'
+import CodeMarkers from './components/CodeMarkers.vue'
+import CopyCommand from './components/CopyCommand.vue'
+import NemesiaDemo from './components/NemesiaDemo.vue'
+import NmTabs from './components/NmTabs.vue'
 import './style.css'
-
-// Vue renders the VitePress shell; Nemesia runs every interactive part of the pages.
-// It is mounted once, in the browser, after Vue has hydrated the server-rendered HTML.
-const Layout = defineComponent({
-	setup() {
-		onMounted(async () => {
-			const { mountSite } = await import('../../components/app')
-			mountSite()
-		})
-		return () => h(DefaultTheme.Layout)
-	}
-})
 
 export default {
 	extends: DefaultTheme,
-	Layout
+	enhanceApp({ app }) {
+		app.component('CodeMarkers', CodeMarkers)
+		app.component('CopyCommand', CopyCommand)
+		app.component('NemesiaDemo', NemesiaDemo)
+		app.component('NmTabs', NmTabs)
+	}
 } satisfies Theme

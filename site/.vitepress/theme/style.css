@@ -160,18 +160,11 @@ html:has(.nm-landing) .VPLocalNav {
 	border-radius: 6px;
 	background: var(--nm-soft);
 	color: var(--nm-text-2);
+	font-family: var(--vp-font-family-base);
 	font-size: 12px;
 	transition:
 		color 0.2s,
 		background 0.2s;
-}
-
-.nm-install__copy::before {
-	content: 'Copy';
-}
-
-.nm-install__copy[data-copied]::before {
-	content: 'Copied';
 }
 
 .nm-install__copy:hover {
@@ -320,18 +313,23 @@ html:has(.nm-landing) .VPLocalNav {
 	gap: 24px;
 }
 
-.nm-switch {
+.nm-compare__bar {
 	display: none;
 }
 
-.nm-compare__panel {
-	position: relative;
+.nm-compare__panel,
+.nm-compare__panel > div {
 	display: flex;
+	flex: 1;
 	flex-direction: column;
 }
 
 .nm-compare__panel div[class*='language-'] {
 	flex: 1;
+}
+
+.nm-markers {
+	position: relative;
 }
 
 .nm-compare__panel div[class*='language-'] code {
@@ -510,8 +508,7 @@ html:has(.nm-landing) .VPLocalNav {
 	background: var(--nm-surface);
 }
 
-.nm-demo__bar,
-.nm-files__bar {
+.nm-demo__bar {
 	display: flex;
 	align-items: center;
 	gap: 4px;
@@ -535,8 +532,7 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-demo__bar button,
-.nm-files__bar button,
-.nm-switch button {
+.nm-compare__bar button {
 	flex: none;
 	padding: 12px 10px;
 	border-bottom: 2px solid transparent;
@@ -546,34 +542,37 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-demo__bar button:hover,
-.nm-files__bar button:hover,
-.nm-switch button:hover {
+.nm-compare__bar button:hover {
 	color: var(--nm-text);
 }
 
 .nm-demo__bar button.is-active,
-.nm-files__bar button.is-active,
-.nm-switch button.is-active {
+.nm-compare__bar button.is-active {
 	border-bottom-color: var(--nm-accent);
 	color: var(--nm-text);
 }
 
-.nm-files__bar {
-	background: var(--nm-surface);
-}
-
-.nm-demo__panel,
-.nm-files__panel {
+.nm-demo__panel {
 	display: none;
 }
 
-.nm-demo__panel.is-active,
-.nm-files__panel.is-active {
+.nm-demo__panel.is-active {
 	display: block;
 }
 
-.nm-demo__panel div[class*='language-'],
-.nm-files__panel div[class*='language-'] {
+.nm-demo .vp-code-group {
+	margin: 0;
+}
+
+.nm-demo .vp-code-group .tabs {
+	margin: 0;
+	border-bottom: 1px solid var(--nm-line);
+	border-radius: 0;
+	background: var(--nm-surface);
+	box-shadow: none;
+}
+
+.nm-demo__panel div[class*='language-'] {
 	max-height: 560px;
 	overflow: auto;
 	border-radius: 0 !important;
@@ -967,7 +966,7 @@ html:has(.nm-landing) .VPLocalNav {
 		gap: 0;
 	}
 
-	.nm-switch {
+	.nm-compare__bar {
 		display: flex;
 		gap: 8px;
 		margin-bottom: 12px;

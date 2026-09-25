@@ -4,6 +4,35 @@ title: Components for the HTML your server already sends
 titleTemplate: Nemesia
 ---
 
+<script setup>
+const notes = [
+	{
+		line: 2,
+		label: 'Global selectors',
+		problem: 'A global selector grabs every tab on the page. Add a second tab group and the two switch each other.',
+		fix: 'Nemesia: each instance sees only its own elements.'
+	},
+	{
+		line: 3,
+		label: 'Classes as hooks',
+		problem: 'Styling classes double as JavaScript hooks. Rename one for CSS and the logic breaks.',
+		fix: 'Nemesia: behavior hooks live in <code>data-</code> attributes.'
+	},
+	{
+		line: 10,
+		label: 'Missing panel',
+		problem: 'One panel short? It throws on click, long after the page has loaded.',
+		fix: 'Nemesia: a missing panel is reported on load.'
+	},
+	{
+		line: 15,
+		label: 'Markup loaded later',
+		problem: 'Markup loaded later stays dead until the setup runs again, and listeners can double.',
+		fix: 'Nemesia: new markup mounts itself.'
+	},
+]
+</script>
+
 <svg class="nm-sprite" aria-hidden="true">
 	<symbol id="nemesia-flower" viewBox="0 0 256 256">
 		<path d="M114.1 126.6C136.3 116.7 145.5 89.1 134.7 64.9C124 40.6 97.2 29 75 38.9C52.8 48.8 43.6 76.4 54.3 100.7C65.1 124.9 91.9 136.5 114.1 126.6Z" style="fill: color-mix(in srgb, var(--petal) 18%, #fff)" />
@@ -40,10 +69,7 @@ titleTemplate: Nemesia
 
 <p class="nm-hero__lead">Nemesia finds components in your markup, checks the elements and options they need, and cleans up after them. No virtual DOM, no templates, no build step required.</p>
 
-<div class="nm-install" data-nemesia="copy-command">
-	<code data-ref="command">npm install nemesia</code>
-	<button type="button" class="nm-install__copy" data-ref="button" aria-label="Copy install command"></button>
-</div>
+<CopyCommand command="npm install nemesia" />
 
 <div class="nm-hero__actions">
 	<a class="nm-button nm-button--primary" href="./guide/01-getting-started">Get started</a>
@@ -103,29 +129,10 @@ class Counter extends Component('counter') {
 
 <h2 class="nm-title">The tabs you've written a hundred times.</h2>
 
-<div class="nm-compare" data-nemesia="tabs">
-	<div class="nm-switch" role="tablist">
-		<button type="button" class="is-active" data-ref="tab" role="tab" aria-selected="true">Before</button>
-		<button type="button" data-ref="tab" role="tab" aria-selected="false">After</button>
-	</div>
-	<div class="nm-compare__panel nm-compare__panel--before is-active vp-doc" data-ref="panel" data-nemesia="code-markers">
-		<p class="nm-file">vanilla.js</p>
-		<button type="button" class="nm-marker" data-ref="marker" data-line="2" aria-label="Global selectors" aria-describedby="nm-note-1">
-			1
-			<span class="nm-marker__note" id="nm-note-1" role="tooltip">A global selector grabs every tab on the page. Add a second tab group and the two switch each other.<span class="nm-marker__fix">Nemesia: each instance sees only its own elements.</span></span>
-		</button>
-		<button type="button" class="nm-marker" data-ref="marker" data-line="3" aria-label="Classes as hooks" aria-describedby="nm-note-2">
-			2
-			<span class="nm-marker__note" id="nm-note-2" role="tooltip">Styling classes double as JavaScript hooks. Rename one for CSS and the logic breaks.<span class="nm-marker__fix">Nemesia: behavior hooks live in <code>data-</code> attributes.</span></span>
-		</button>
-		<button type="button" class="nm-marker" data-ref="marker" data-line="10" aria-label="Missing panel" aria-describedby="nm-note-3">
-			3
-			<span class="nm-marker__note" id="nm-note-3" role="tooltip">One panel short? It throws on click, long after the page has loaded.<span class="nm-marker__fix">Nemesia: a missing panel is reported on load.</span></span>
-		</button>
-		<button type="button" class="nm-marker" data-ref="marker" data-line="15" aria-label="Markup loaded later" aria-describedby="nm-note-4">
-			4
-			<span class="nm-marker__note" id="nm-note-4" role="tooltip">Markup loaded later stays dead until the setup runs again, and listeners can double.<span class="nm-marker__fix">Nemesia: new markup mounts itself.</span></span>
-		</button>
+<NmTabs kind="compare" :tabs="{ before: 'Before', after: 'After' }">
+<template v-slot:before>
+<CodeMarkers class="vp-doc" :notes="notes">
+<p class="nm-file">vanilla.js</p>
 
 ```js
 document.addEventListener('DOMContentLoaded', () => {
@@ -146,9 +153,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // and call it again… hoping the listeners don't double.
 ```
 
-</div>
-	<div class="nm-compare__panel vp-doc" data-ref="panel">
-		<p class="nm-file">tabs.ts</p>
+</CodeMarkers>
+</template>
+<template v-slot:after>
+<div class="vp-doc">
+<p class="nm-file">tabs.ts</p>
 
 ```ts
 class Tabs extends Component('tabs') {
@@ -173,7 +182,8 @@ class Tabs extends Component('tabs') {
 ```
 
 </div>
-</div>
+</template>
+</NmTabs>
 
 </section>
 
@@ -220,54 +230,42 @@ class Tabs extends Component('tabs') {
 
 <p class="nm-lead">Plain server HTML, four small components. Add a few flowers, then load more from the “server”.</p>
 
-<div class="nm-demo" data-nemesia="tabs">
-	<div class="nm-demo__bar" role="tablist">
-		<span class="nm-demo__dots" aria-hidden="true"><i></i><i></i><i></i></span>
-		<button type="button" class="is-active" data-ref="tab" role="tab" aria-selected="true">Result</button>
-		<button type="button" data-ref="tab" role="tab" aria-selected="false">HTML</button>
-		<button type="button" data-ref="tab" role="tab" aria-selected="false">Components</button>
-	</div>
-	<div class="nm-demo__panel nm-demo__panel--result is-active" data-ref="panel">
+<NmTabs kind="demo" :tabs="{ result: 'Result', html: 'HTML', components: 'Components' }">
+<template v-slot:bar>
+<span class="nm-demo__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+</template>
+<template v-slot:result>
+<NemesiaDemo>
 
 <!--@include: ./demo/shop.html-->
 
-</div>
-	<div class="nm-demo__panel vp-doc" data-ref="panel">
+</NemesiaDemo>
+</template>
+<template v-slot:html>
+<div class="vp-doc">
 
 <<< @/demo/shop.html
 
 </div>
-	<div class="nm-demo__panel" data-ref="panel">
-		<div class="nm-files" data-nemesia="tabs">
-			<div class="nm-files__bar" role="tablist">
-				<button type="button" class="is-active" data-ref="tab" role="tab" aria-selected="true">shop.ts</button>
-				<button type="button" data-ref="tab" role="tab" aria-selected="false">product-card.ts</button>
-				<button type="button" data-ref="tab" role="tab" aria-selected="false">cart.ts</button>
-				<button type="button" data-ref="tab" role="tab" aria-selected="false">toast.ts</button>
-			</div>
-			<div class="nm-files__panel is-active vp-doc" data-ref="panel">
+</template>
+<template v-slot:components>
+<div class="vp-doc">
+
+::: code-group
 
 <<< @/demo/shop.ts
 
-</div>
-			<div class="nm-files__panel vp-doc" data-ref="panel">
-
 <<< @/demo/product-card.ts
-
-</div>
-			<div class="nm-files__panel vp-doc" data-ref="panel">
 
 <<< @/demo/cart.ts
 
-</div>
-			<div class="nm-files__panel vp-doc" data-ref="panel">
-
 <<< @/demo/toast.ts
 
+:::
+
 </div>
-		</div>
-	</div>
-</div>
+</template>
+</NmTabs>
 
 </section>
 
@@ -332,7 +330,6 @@ class Tabs extends Component('tabs') {
 		<a href="https://github.com/nikitekirsha/nemesia">GitHub</a>
 		<a href="https://www.npmjs.com/package/nemesia">npm</a>
 	</p>
-	<p class="nm-footer__note">Interactive parts of this page are Nemesia components. <a href="https://github.com/nikitekirsha/nemesia/tree/main/site">See the source.</a></p>
 	<p class="nm-footer__copy">MIT © nikitekirsha</p>
 </footer>
 
