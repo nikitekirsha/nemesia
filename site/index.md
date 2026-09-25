@@ -100,9 +100,9 @@ const notes = [
 
 <section class="nm-section">
 
-<p class="nm-label">The problem</p>
+<RevealTitle label="The problem" text="The tabs you've written a hundred times." />
 
-<RevealTitle text="The tabs you've written a hundred times." />
+<Reveal>
 
 <NmTabs kind="compare" :tabs="{ before: 'Before', after: 'After' }">
 <template v-slot:before>
@@ -160,13 +160,15 @@ class Tabs extends Component('tabs') {
 </template>
 </NmTabs>
 
+</Reveal>
+
 </section>
 
 <section class="nm-section">
 
-<p class="nm-label">Features</p>
+<RevealTitle label="Features" text="Structure, without a framework." />
 
-<RevealTitle text="Structure, without a framework." />
+<Reveal>
 
 <Spotlight>
 	<article>
@@ -195,13 +197,15 @@ class Tabs extends Component('tabs') {
 	</article>
 </Spotlight>
 
+</Reveal>
+
 </section>
 
 <section class="nm-section">
 
-<p class="nm-label">Try it</p>
+<RevealTitle label="Try it" text="A little flower shop." />
 
-<RevealTitle text="A little flower shop." />
+<Reveal>
 
 <p class="nm-lead">Plain server HTML, four small components. Add a few flowers, then load more from the “server”.</p>
 
@@ -242,25 +246,29 @@ class Tabs extends Component('tabs') {
 </template>
 </NmTabs>
 
+</Reveal>
+
 </section>
 
 <section class="nm-section">
 
-<p class="nm-label">Size</p>
+<RevealTitle label="Size" text="Small enough to forget about." />
 
-<RevealTitle text="Small enough to forget about." />
+<Reveal>
 
 <SizeBars :rows="[{ name: 'nemesia', size: 5.4, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
 
 <p class="nm-note">Published browser builds, minified and gzipped.</p>
 
+</Reveal>
+
 </section>
 
 <section class="nm-section">
 
-<p class="nm-label">FAQ</p>
+<RevealTitle label="FAQ" text="Why not just…?" />
 
-<RevealTitle text="Why not just…?" />
+<Reveal>
 
 <dl class="nm-faq">
 	<div>
@@ -288,6 +296,8 @@ class Tabs extends Component('tabs') {
 		<dd>No. A bundler works, and so does a single <code>&lt;script&gt;</code> tag.</dd>
 	</div>
 </dl>
+
+</Reveal>
 
 </section>
 

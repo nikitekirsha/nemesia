@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue'
-
-const TYPED = 'nm-typed'
+import { reveal } from '../reveal'
 
 const root = ref<HTMLElement>()
 const typing = ref(false)
@@ -10,8 +9,7 @@ const done = ref(false)
 let frame = 0
 let restore: (() => void) | undefined
 
-// The code types itself once per tab. A script in the page head hides it before the first paint
-// by adding the nm-type class, which this component removes when typing ends.
+// The code types itself in when the card comes into view.
 function type() {
 	const walker = document.createTreeWalker(root.value!, NodeFilter.SHOW_TEXT, {
 		acceptNode: node => (node.parentElement?.closest('.line') ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT)
@@ -59,18 +57,17 @@ function finish() {
 	restore = undefined
 	typing.value = false
 	done.value = true
-	document.documentElement.classList.remove('nm-type')
-	try {
-		sessionStorage.setItem(TYPED, '')
-	} catch {}
 }
 
+let stop: (() => void) | undefined
+
 onMounted(() => {
-	if (document.documentElement.classList.contains('nm-type')) type()
-	else done.value = true
+	stop = reveal(root.value!, type)
+	if (stop === undefined) done.value = true
 })
 
 onUnmounted(() => {
+	stop?.()
 	cancelAnimationFrame(frame)
 	if (restore !== undefined) finish()
 })

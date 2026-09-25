@@ -13,6 +13,8 @@ defineProps<{ notes: Note[] }>()
 
 const GAP = 8
 const STEP = 180
+// Lets the code fade in before the first marker.
+const DELAY = 600
 
 const root = ref<HTMLElement>()
 const markers = ref<HTMLButtonElement[]>([])
@@ -53,11 +55,14 @@ function showMarkers() {
 	markers.value.forEach((marker, i) => {
 		const line = lines[Number(marker.dataset.line) - 1]
 		timers.push(
-			window.setTimeout(() => {
-				shown.value = i + 1
-				line?.classList.add('is-lit')
-			}, i * STEP),
-			window.setTimeout(() => line?.classList.remove('is-lit'), i * STEP + 700)
+			window.setTimeout(
+				() => {
+					shown.value = i + 1
+					line?.classList.add('is-lit')
+				},
+				DELAY + i * STEP
+			),
+			window.setTimeout(() => line?.classList.remove('is-lit'), DELAY + i * STEP + 700)
 		)
 	})
 }
