@@ -111,15 +111,19 @@ class Counter extends Component('counter') {
 	<div class="nm-compare__panel nm-compare__panel--before is-active vp-doc" data-ref="panel" data-nemesia="code-markers">
 		<p class="nm-file">vanilla.js</p>
 		<button type="button" class="nm-marker" data-ref="marker" data-line="2" aria-label="Global selectors" aria-describedby="nm-note-1">
+			1
 			<span class="nm-marker__note" id="nm-note-1" role="tooltip">A global selector grabs every tab on the page. Add a second tab group and the two switch each other.<span class="nm-marker__fix">Nemesia: each instance sees only its own elements.</span></span>
 		</button>
 		<button type="button" class="nm-marker" data-ref="marker" data-line="3" aria-label="Classes as hooks" aria-describedby="nm-note-2">
+			2
 			<span class="nm-marker__note" id="nm-note-2" role="tooltip">Styling classes double as JavaScript hooks. Rename one for CSS and the logic breaks.<span class="nm-marker__fix">Nemesia: behavior hooks live in <code>data-</code> attributes.</span></span>
 		</button>
 		<button type="button" class="nm-marker" data-ref="marker" data-line="10" aria-label="Missing panel" aria-describedby="nm-note-3">
+			3
 			<span class="nm-marker__note" id="nm-note-3" role="tooltip">One panel short? It throws on click, long after the page has loaded.<span class="nm-marker__fix">Nemesia: a missing panel is reported on load.</span></span>
 		</button>
 		<button type="button" class="nm-marker" data-ref="marker" data-line="15" aria-label="Markup loaded later" aria-describedby="nm-note-4">
+			4
 			<span class="nm-marker__note" id="nm-note-4" role="tooltip">Markup loaded later stays dead until the setup runs again, and listeners can double.<span class="nm-marker__fix">Nemesia: new markup mounts itself.</span></span>
 		</button>
 
@@ -181,15 +185,15 @@ class Tabs extends Component('tabs') {
 
 <div class="nm-features">
 	<article>
-		<h3>Markup is the contract</h3>
-		<p>Components are found by <code>data-nemesia</code>. The elements and options they need are declared as class fields.</p>
+		<h3>Behavior lives in the class</h3>
+		<p>Components are found by <code>data-nemesia</code>. The elements and options they need are defined in the class.</p>
 	</article>
 	<article>
 		<h3>Broken markup can't break the page</h3>
 		<p>A missing, duplicated or mistyped element skips only that instance, with a warning pointing at the element.</p>
 	</article>
 	<article>
-		<h3>Typed without casts</h3>
+		<h3>Auto-typed</h3>
 		<p><code>this.ref.button('save')</code> is an <code>HTMLButtonElement</code>. <code>this.option.number('delay')</code> is a number.</p>
 	</article>
 	<article>
@@ -202,7 +206,7 @@ class Tabs extends Component('tabs') {
 	</article>
 	<article>
 		<h3>Components that work together</h3>
-		<p>A parent reads its children with <code>find</code> and <code>findAll</code>; children report back with events.</p>
+		<p>Build a page from small parts that know about each other, instead of one script that knows everything.</p>
 	</article>
 </div>
 
@@ -280,7 +284,7 @@ class Tabs extends Component('tabs') {
 	<div class="nm-size__row"><span>Alpine</span><span class="nm-size__bar" style="--size: 100%"></span><span>19.9 KB</span></div>
 </div>
 
-<p class="nm-note">Published browser builds, minified with esbuild and compressed with gzip -9.</p>
+<p class="nm-note">Published browser builds, minified and gzipped.</p>
 
 </section>
 
@@ -293,7 +297,7 @@ class Tabs extends Component('tabs') {
 <dl class="nm-faq">
 	<div>
 		<dt>Vue or React?</dt>
-		<dd>They render the page. Nemesia doesn't: your server already did. If you need client-side templates, routing or reactive state, use them.</dd>
+		<dd>They render the page. Nemesia does not: your server already did. If you need client-side templates, routing or reactive state, use them instead.</dd>
 	</div>
 	<div>
 		<dt>Alpine?</dt>
@@ -309,7 +313,7 @@ class Tabs extends Component('tabs') {
 	</div>
 	<div>
 		<dt>When is Nemesia the wrong choice?</dt>
-		<dd>Single-page apps, or interfaces where most of the DOM is rendered in the browser.</dd>
+		<dd>Single-page apps, or interfaces where most of the DOM is rendered on the client.</dd>
 	</div>
 	<div>
 		<dt>Does it need a build step?</dt>

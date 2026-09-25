@@ -302,8 +302,7 @@ html:has(.nm-landing) .VPLocalNav {
 
 .nm-file {
 	margin: 0 0 10px;
-	font-family: var(--vp-font-family-mono);
-	font-size: 12px;
+	font-size: 13px;
 	color: var(--nm-text-3);
 }
 
@@ -349,30 +348,45 @@ html:has(.nm-landing) .VPLocalNav {
 	z-index: 2;
 	top: 0;
 	left: 0;
-	width: 22px;
-	height: 22px;
+	display: grid;
+	place-items: center;
+	width: 18px;
+	height: 18px;
 	padding: 0;
+	border: 1.5px solid var(--nm-accent);
 	border-radius: 50%;
+	background: var(--vp-code-block-bg);
+	font-family: var(--vp-font-family-base);
+	font-size: 10.5px;
+	font-weight: 600;
+	line-height: 1;
+	color: var(--nm-accent);
 	transform: translate(-50%, -50%);
 	cursor: help;
+	transition:
+		color 0.15s,
+		background 0.15s;
 }
 
-.nm-marker::before,
 .nm-marker::after {
 	content: '';
 	position: absolute;
-	inset: 6px;
+	inset: -1.5px;
+	border: 1.5px solid var(--nm-accent);
 	border-radius: 50%;
-	background: var(--nm-accent);
-}
-
-.nm-marker::after {
 	opacity: 0;
 	animation: nm-pulse 2.4s ease-out infinite;
 }
 
 .nm-marker:nth-of-type(even)::after {
 	animation-delay: 1.2s;
+}
+
+.nm-marker:hover,
+.nm-marker:focus-visible,
+.nm-marker.is-open {
+	background: var(--nm-accent);
+	color: var(--nm-bg);
 }
 
 .nm-marker:hover,
@@ -394,14 +408,14 @@ html:has(.nm-landing) .VPLocalNav {
 
 @keyframes nm-pulse {
 	0% {
-		opacity: 0.5;
+		opacity: 0.6;
 		transform: scale(1);
 	}
 
 	70%,
 	100% {
 		opacity: 0;
-		transform: scale(2.6);
+		transform: scale(1.9);
 	}
 }
 
@@ -421,8 +435,8 @@ html:has(.nm-landing) .VPLocalNav {
 	border-radius: 10px;
 	background: var(--nm-surface);
 	box-shadow: 0 12px 32px rgb(0 0 0 / 0.1);
-	font-family: var(--vp-font-family-base);
 	font-size: 14px;
+	font-weight: 400;
 	line-height: 1.5;
 	text-align: left;
 	color: var(--nm-text);
@@ -475,8 +489,7 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-features h3 {
-	font-family: var(--vp-font-family-mono);
-	font-size: 14px;
+	font-size: 16px;
 	font-weight: 600;
 	letter-spacing: -0.01em;
 }
@@ -527,8 +540,7 @@ html:has(.nm-landing) .VPLocalNav {
 	flex: none;
 	padding: 12px 10px;
 	border-bottom: 2px solid transparent;
-	font-family: var(--vp-font-family-mono);
-	font-size: 13px;
+	font-size: 14px;
 	color: var(--nm-text-3);
 	transition: color 0.2s;
 }
@@ -611,7 +623,7 @@ html:has(.nm-landing) .VPLocalNav {
 
 .flower__price {
 	margin: 0 !important;
-	font-family: var(--vp-font-family-mono);
+	font-variant-numeric: tabular-nums;
 	font-size: 13px;
 	color: var(--nm-text-2);
 }
@@ -623,7 +635,7 @@ html:has(.nm-landing) .VPLocalNav {
 	margin-top: 6px;
 	border: 1px solid var(--nm-line);
 	border-radius: 8px;
-	font-family: var(--vp-font-family-mono);
+	font-variant-numeric: tabular-nums;
 	font-size: 14px;
 }
 
@@ -721,7 +733,7 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .cart__total span {
-	font-family: var(--vp-font-family-mono);
+	font-variant-numeric: tabular-nums;
 }
 
 .cart__clear {
@@ -746,8 +758,7 @@ html:has(.nm-landing) .VPLocalNav {
 	border-top: 1px solid var(--nm-line);
 	background: var(--nm-soft);
 	list-style: none !important;
-	font-family: var(--vp-font-family-mono);
-	font-size: 12px;
+	font-size: 13px;
 	line-height: 1.8;
 	color: var(--nm-text-3);
 }
@@ -804,7 +815,7 @@ html:has(.nm-landing) .VPLocalNav {
 	grid-template-columns: 110px minmax(0, 1fr) 72px;
 	gap: 16px;
 	align-items: center;
-	font-family: var(--vp-font-family-mono);
+	font-variant-numeric: tabular-nums;
 	font-size: 14px;
 	color: var(--nm-text-2);
 }
@@ -871,8 +882,7 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-footer__checks {
-	font-family: var(--vp-font-family-mono);
-	font-size: 13px;
+	font-size: 14px;
 	color: var(--nm-text-2);
 }
 
@@ -916,6 +926,14 @@ html:has(.nm-landing) .VPLocalNav {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 48px;
 		padding: 56px 0 72px;
+	}
+
+	/* The card spans the full width here, so the flower sits to the right of the buttons and reaches past the hero. */
+	.nm-hero__watermark {
+		top: -325px;
+		left: 150px;
+		width: 1048px;
+		transform: none;
 	}
 
 	.nm-features {
