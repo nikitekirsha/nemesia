@@ -60,6 +60,15 @@ class Typed extends Nemesia.Component('typed', concreteOptions) {
 		const count: number = this.count
 		const mode: 'light' | 'dark' = this.mode
 
+		this.on(this.button, 'click', event => {
+			const x: number = event.clientX
+			void x
+		})
+		this.on(this.root, 'cart:update', (event: CustomEvent<{ count: number }>) => {
+			const itemCount: number = event.detail.count
+			void itemCount
+		})
+
 		this.on(this.optionalMany, 'change', (_event, input, index) => {
 			const target: HTMLInputElement = input
 			const position: number = index

@@ -51,6 +51,8 @@ label // string | undefined
 columns // number
 ```
 
+Listeners registered with `this.on` receive the DOM event type for known event names, for example `PointerEvent` for `click`. Custom event names produce `Event` unless the listener parameter is annotated. See [Events and lifecycle](07-events-and-lifecycle.md#event-types).
+
 ## Contract warnings
 
 Invalid HTML contracts produce `console.warn` messages prefixed with `[Nemesia]`. Typical causes include:

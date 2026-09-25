@@ -1,4 +1,5 @@
 import { ListenerRegistry } from '../events/listener-registry.js'
+import type { EventName, TargetEvent } from '../events/types.js'
 import { observeRejection, reportDestroyError, resolveComponentName, warnComponent } from '../internal/diagnostics.js'
 import { captureConstructingComponent } from '../internal/construction.js'
 import { abortComponentConstruction, teardownComponent } from '../internal/lifecycle.js'
@@ -19,23 +20,26 @@ export abstract class BaseDistributedComponent {
 		this.#componentName = resolveComponentName(this)
 	}
 
-	/** Registers an event listener that is removed automatically on destroy. */
-	public on<TTarget extends EventTarget, TEvent extends string>(
+	/**
+	 * Registers an event listener that is removed automatically on destroy.
+	 * Known DOM events are typed from the target; custom events are `Event` unless the listener parameter is annotated.
+	 */
+	public on<TTarget extends EventTarget, TName extends EventName<TTarget>, TEvent extends Event = Event>(
 		target: TTarget,
-		eventName: TEvent,
-		listener: (event: Event) => void,
+		eventName: TName,
+		listener: (event: TargetEvent<TTarget, TName, TEvent>) => void,
 		options?: AddEventListenerOptions
 	): void
 	/** Registers the same event listener for every target in the array. */
-	public on<TTarget extends EventTarget, TEvent extends string>(
+	public on<TTarget extends EventTarget, TName extends EventName<TTarget>, TEvent extends Event = Event>(
 		targets: readonly TTarget[],
-		eventName: TEvent,
-		listener: (event: Event, target: TTarget, index: number) => void,
+		eventName: TName,
+		listener: (event: TargetEvent<TTarget, TName, TEvent>, target: TTarget, index: number) => void,
 		options?: AddEventListenerOptions
 	): void
-	public on<TTarget extends EventTarget, TEvent extends string>(
+	public on<TTarget extends EventTarget>(
 		targetOrTargets: TTarget | readonly TTarget[],
-		eventName: TEvent,
+		eventName: string,
 		listener: ((event: Event) => void) | ((event: Event, target: TTarget, index: number) => void),
 		options?: AddEventListenerOptions
 	): void {
