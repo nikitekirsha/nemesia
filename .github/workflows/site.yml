@@ -1,23 +1,34 @@
 name: Site
 
+# Pull requests only build the site; pushes to main deploy it to GitHub Pages.
 on:
+  push:
+    branches:
+      - main
+    paths:
+      - site/**
+      - docs/**
+      - src/**
+      - CHANGELOG.md
+      - package.json
+      - .github/workflows/site.yml
   pull_request:
     paths:
       - site/**
       - docs/**
       - src/**
       - CHANGELOG.md
+      - package.json
       - .github/workflows/site.yml
-  release:
-    types: [published]
   workflow_dispatch:
 
 permissions:
   contents: read
 
+# A newer push replaces a pending build, but a deployment that has started is never cancelled.
 concurrency:
   group: site-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
