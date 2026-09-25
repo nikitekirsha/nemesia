@@ -57,28 +57,38 @@ export type OptionValidator<T> = (value: T) => boolean
 
 type RequiredDefault<T> = { default: T }
 
+// Required options never fall back, so a `default` would be silently ignored.
+type WithoutDefault<T> = Omit<T, 'default'> & { default?: never }
+
+type RequiredStringOptionOptions = WithoutDefault<StringOptionOptions>
+
+type RequiredNumberOptionOptions = WithoutDefault<NumberOptionOptions>
+
+/** Options accepted by the required `option.json(...)` helper. */
+export type RequiredJsonOptionOptions<T> = WithoutDefault<JsonOptionOptions<T>>
+
 /** Required option lookup API available as `this.option`. */
 export interface RequiredOptionApi {
 	/** Reads a required string option. */
-	string(name: string, options?: StringOptionOptions): string
+	string(name: string, options?: RequiredStringOptionOptions): string
 
 	/** Reads a required number option. */
-	number(name: string, options?: NumberOptionOptions): number
+	number(name: string, options?: RequiredNumberOptionOptions): number
 
 	/** Reads a required boolean option. */
-	boolean(name: string, options?: BooleanOptionOptions): boolean
+	boolean(name: string): boolean
 
 	/** Reads a required JSON option. */
-	json<T>(name: string, options?: JsonOptionOptions<T>): T
+	json<T>(name: string, options?: RequiredJsonOptionOptions<T>): T
 
 	/** Reads a required string option constrained to one of the provided values. */
-	enum<T extends readonly string[]>(name: string, values: T, options?: DefaultOptionOptions<T[number]>): T[number]
+	enum<T extends readonly string[]>(name: string, values: T): T[number]
 
 	/** Reads a required option that must equal one exact primitive value. */
-	literal<T extends OptionLiteral>(name: string, value: T, options?: DefaultOptionOptions<T>): T
+	literal<T extends OptionLiteral>(name: string, value: T): T
 
 	/** Reads a required option using custom parsing and optional validation. */
-	custom<T>(name: string, parser: OptionParser<T>, validator?: OptionValidator<T>, options?: DefaultOptionOptions<T>): T
+	custom<T>(name: string, parser: OptionParser<T>, validator?: OptionValidator<T>): T
 }
 
 /** Optional option lookup API available as `this.option.optional`. */

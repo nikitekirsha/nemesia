@@ -194,6 +194,35 @@ describe('public TypeScript contracts', () => {
 		expectTypeOf<InstanceType<typeof TypedOptions>['defaultCustom']>().toEqualTypeOf<{ value: number }>()
 	})
 
+	it('rejects defaults on required option helpers', () => {
+		class RequiredDefaults extends Nemesia.Component('required-defaults') {
+			check(): void {
+				// @ts-expect-error Required strings never use a default.
+				this.option.string('string', { default: 'unused' })
+				// @ts-expect-error Required numbers never use a default.
+				this.option.number('number', { default: 1, min: 0 })
+				// @ts-expect-error Required booleans never use a default.
+				this.option.boolean('boolean', { default: true })
+				// @ts-expect-error Required JSON never uses a default.
+				this.option.json<{ ok: boolean }>('json', { default: { ok: true } })
+				// @ts-expect-error Required enums never use a default.
+				this.option.enum('enum', ['light', 'dark'] as const, { default: 'light' })
+				// @ts-expect-error Required literals never use a default.
+				this.option.literal('literal', 3, { default: 3 })
+				// @ts-expect-error Required custom options never use a default.
+				this.option.custom('custom', Number, undefined, { default: 1 })
+
+				this.option.string('string', { minLength: 1, maxLength: 2, pattern: /./ })
+				this.option.number('number', { min: 0, max: 1 })
+				this.option.json<{ ok: boolean }>('json', {
+					validate: (value): value is { ok: boolean } => typeof value === 'object'
+				})
+			}
+		}
+
+		expectTypeOf<InstanceType<typeof RequiredDefaults>['check']>().toBeFunction()
+	})
+
 	it('infers single and readonly-array event listener arguments', () => {
 		class EventTypes extends Nemesia.Component('event-types') {
 			check(target: HTMLButtonElement, targets: readonly HTMLInputElement[]): void {
