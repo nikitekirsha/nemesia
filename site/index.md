@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Components for the HTML your server already sends
+title: Nemesia - components for the HTML your server already sends
 titleTemplate: Nemesia
 ---
 
