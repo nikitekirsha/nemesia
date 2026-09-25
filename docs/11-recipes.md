@@ -134,6 +134,55 @@ class ProductPrice extends Nemesia.Component('product-price') {
 }
 ```
 
+## Coordinating components
+
+A parent component reads nested components with `findAll`. Nested components report changes with bubbling events:
+
+```html
+<div data-nemesia="cart">
+	<div data-nemesia="cart-item" data-option-price="10">
+		<input data-ref="quantity" type="number" value="1" />
+	</div>
+	<div data-nemesia="cart-item" data-option-price="25">
+		<input data-ref="quantity" type="number" value="2" />
+	</div>
+	<span data-ref="total"></span>
+</div>
+```
+
+```ts
+class CartItem extends Nemesia.Component('cart-item') {
+	quantity = this.ref.input('quantity')
+	price = this.option.number('price')
+
+	get subtotal() {
+		return this.price * Number(this.quantity.value)
+	}
+
+	onMount() {
+		this.on(this.quantity, 'change', () => {
+			this.root.dispatchEvent(new CustomEvent('cart:change', { bubbles: true }))
+		})
+	}
+}
+
+class Cart extends Nemesia.Component('cart') {
+	total = this.ref.element('total')
+
+	onMount() {
+		this.render()
+		this.on(this.root, 'cart:change', () => this.render())
+	}
+
+	private render() {
+		const total = this.findAll(CartItem).reduce((sum, item) => sum + item.subtotal, 0)
+		this.total.textContent = String(total)
+	}
+}
+```
+
+The cart owns the calculation; items only report that something changed.
+
 ## Replacing a server fragment
 
 With observation enabled, replacing markup is enough:
