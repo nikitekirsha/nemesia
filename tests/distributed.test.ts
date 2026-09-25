@@ -557,6 +557,31 @@ describe('distributed construction and mount failures', () => {
 		app.destroy(scope)
 		expect(destroyed).toEqual([1, 2])
 	})
+
+	it('does not report an AbortError from onMount after the distributed instance was destroyed', async () => {
+		class Loader extends Nemesia.DistributedComponent('abortable-distributed') {
+			private controller = new AbortController()
+
+			onMount(): Promise<void> {
+				return new Promise((_resolve, reject) => {
+					this.controller.signal.addEventListener('abort', () => reject(this.controller.signal.reason))
+				})
+			}
+
+			onDestroy(): void {
+				this.controller.abort()
+			}
+		}
+		const scope = document.createDocumentFragment()
+		const report = vi.spyOn(console, 'error').mockImplementation(() => {})
+		const app = createApp().register([Loader])
+
+		app.mount(scope)
+		app.destroy(scope)
+		await flushMicrotasks()
+
+		expect(report).not.toHaveBeenCalled()
+	})
 })
 
 describe('distributed observer boundary', () => {
