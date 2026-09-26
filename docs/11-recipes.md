@@ -181,7 +181,38 @@ class Cart extends Component('cart') {
 }
 ```
 
-The cart owns the calculation; items only report that something changed.
+When an event carries data, export its name and type from the component that sends it, so both sides share one definition:
+
+```ts
+export const CART_ADD = 'cart:add'
+export type CartAddEvent = CustomEvent<{ name: string; count: number }>
+
+class Product extends Component('product') {
+	add = this.ref.button('add')
+	name = this.option.string('name')
+
+	onMount() {
+		this.on(this.add, 'click', () => {
+			const event: CartAddEvent = new CustomEvent(CART_ADD, {
+				bubbles: true,
+				detail: { name: this.name, count: 1 }
+			})
+			this.root.dispatchEvent(event)
+		})
+	}
+}
+
+class Catalog extends Component('catalog') {
+	onMount() {
+		this.on(this.root, CART_ADD, (event: CartAddEvent) => {
+			const { name, count } = event.detail
+			const product = this.find(Product, event.target as Element) // Product | null
+		})
+	}
+}
+```
+
+`event.target` is the root of the sending component, so `find` returns its instance when the listener needs more than the event data.
 
 ## Replacing a server fragment
 
