@@ -7,6 +7,7 @@ All notable changes to Nemesia are documented here.
 ### Fixed
 
 - With observation, `find` and `findAll` include markup inserted earlier in the same task and exclude roots removed in it.
+- With observation, `destroy(scope)` also destroys roots inserted into the scope earlier in the same task.
 
 ## 2.2.0 — 2026-09-25
 

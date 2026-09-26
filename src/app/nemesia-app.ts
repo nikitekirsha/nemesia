@@ -137,6 +137,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	public destroy(scope: ParentNode | undefined = defaultScope()): void {
 		if (scope === undefined) return
 
+		this.#flushMutationBatch()
 		this.#destroyConcrete(scope)
 
 		const records = this.#scopes.get(scope)

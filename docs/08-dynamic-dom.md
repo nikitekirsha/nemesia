@@ -36,7 +36,7 @@ Mutation records are batched. Removals are processed before additions, which mak
 
 ## Timing
 
-Changes are processed in a microtask after the code that made them. `find`, `findAll` and `mount` process pending changes first, so a component can insert markup and use the new instances right away:
+Changes are processed in a microtask after the code that made them. App methods and `find` and `findAll` on components process pending changes first, so a component can insert markup and use the new instances right away:
 
 ```ts
 class List extends Component('list') {
