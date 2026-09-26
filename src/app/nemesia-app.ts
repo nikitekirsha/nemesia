@@ -137,6 +137,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	public destroy(scope: ParentNode | undefined = defaultScope()): void {
 		if (scope === undefined) return
 
+		this.#flushMutationBatch()
 		this.#destroyConcrete(scope)
 
 		const records = this.#scopes.get(scope)
@@ -170,6 +171,9 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		within: ParentNode | undefined = defaultFindScope()
 	): TInstance[] {
 		if (within === undefined) return []
+
+		// Markup inserted earlier in the same task is mounted before the lookup, not in a later microtask.
+		this.#flushMutationBatch()
 
 		const { kind, name } = component.nemesia
 		const found: TInstance[] = []

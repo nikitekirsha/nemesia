@@ -41,7 +41,7 @@
 	"bugs": {
 		"url": "https://github.com/nikitekirsha/nemesia/issues"
 	},
-	"homepage": "https://github.com/nikitekirsha/nemesia#readme",
+	"homepage": "https://nikitekirsha.github.io/nemesia/",
 	"scripts": {
 		"format": "prettier --write .",
 		"format:check": "prettier --check .",

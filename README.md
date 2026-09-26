@@ -64,4 +64,4 @@ app.mount(document.body)
 
 ## Guide
 
-The guide's available on **[the website](https://nikitekirsha.github.io/nemesia/)**.
+The guide's available on the **[website](https://nikitekirsha.github.io/nemesia/guide/01-getting-started)**.

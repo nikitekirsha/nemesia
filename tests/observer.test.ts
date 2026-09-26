@@ -819,6 +819,34 @@ describe('observer lifecycle', () => {
 
 		expect(lifecycle).toEqual(['mount', 'destroy', 'mount'])
 	})
+
+	it('destroys roots inserted earlier in the same task instead of mounting them afterwards', async () => {
+		const lifecycle: string[] = []
+		class Inserted extends Component('inserted-before-destroy') {
+			onMount(): void {
+				lifecycle.push(`mount ${this.root.id}`)
+			}
+			onDestroy(): void {
+				lifecycle.push(`destroy ${this.root.id}`)
+			}
+		}
+		const scope = document.createElement('main')
+		const existing = componentRoot('inserted-before-destroy')
+		existing.id = 'existing'
+		scope.append(existing)
+		document.body.append(scope)
+		const app = createApp({ observe: true }).register([Inserted])
+		app.mount(scope)
+
+		const inserted = componentRoot('inserted-before-destroy')
+		inserted.id = 'inserted'
+		scope.append(inserted)
+		app.destroy(scope)
+		await flushMutations()
+
+		expect(lifecycle).toEqual(['mount existing', 'mount inserted', 'destroy existing', 'destroy inserted'])
+		expect(app.findAll(Inserted)).toEqual([])
+	})
 })
 
 describe('distributed observer boundary', () => {

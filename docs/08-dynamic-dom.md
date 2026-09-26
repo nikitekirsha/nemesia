@@ -34,6 +34,21 @@ Removing a mounted root or an ancestor subtree destroys every mounted concrete c
 
 Mutation records are batched. Removals are processed before additions, which makes moving a root within an observed scope behave as destroy followed by a clean remount.
 
+## Timing
+
+Changes are processed in a microtask after the code that made them. App methods and `find` and `findAll` on components process pending changes first, so a component can insert markup and use the new instances right away:
+
+```ts
+class List extends Component('list') {
+	items = this.ref.element('items')
+
+	add(html: string) {
+		this.items.insertAdjacentHTML('beforeend', html)
+		return this.findAll(Item) // includes the inserted items
+	}
+}
+```
+
 ## Multiple observed scopes
 
 Calling `mount` for another scope observes that exact scope as well. Nested or overlapping observed scopes remain idempotent: a concrete root still has one instance per app.
