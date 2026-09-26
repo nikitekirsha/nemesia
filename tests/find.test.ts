@@ -192,6 +192,97 @@ describe('finding component instances', () => {
 	})
 })
 
+describe('finding after DOM changes in the same task', () => {
+	it('mounts markup inserted earlier in the same task before finding', () => {
+		class Item extends Component('pending-item') {}
+		let list!: List
+		class List extends Component('pending-list') {
+			grid = this.ref.element('grid')
+
+			onMount(): void {
+				list = this
+			}
+
+			add(): Item[] {
+				this.grid.insertAdjacentHTML('beforeend', '<div data-nemesia="pending-item" id="added"></div>')
+				return this.findAll(Item)
+			}
+		}
+		html(
+			'<div data-nemesia="pending-list"><div data-ref="grid"><div data-nemesia="pending-item" id="first"></div></div></div>'
+		)
+		createApp({ observe: true }).register([List, Item]).mount()
+
+		expect(list.add().map(item => item.root.id)).toEqual(['first', 'added'])
+	})
+
+	it('destroys removed roots before finding', () => {
+		const destroyed: string[] = []
+		class Item extends Component('pending-removed-item') {
+			onDestroy(): void {
+				destroyed.push(this.root.id)
+			}
+		}
+		const scope = html(
+			'<div data-nemesia="pending-removed-item" id="kept"></div><div data-nemesia="pending-removed-item" id="removed"></div>'
+		)
+		const app = createApp({ observe: true }).register([Item])
+		app.mount(scope)
+
+		scope.querySelector('#removed')?.remove()
+
+		expect(app.findAll(Item).map(item => item.root.id)).toEqual(['kept'])
+		expect(destroyed).toEqual(['removed'])
+	})
+
+	it('does not return inserted markup that fails validation', () => {
+		vi.spyOn(console, 'warn').mockImplementation(() => {})
+		class Item extends Component('pending-invalid-item') {
+			label = this.ref.element('label')
+		}
+		const scope = html('')
+		const app = createApp({ observe: true }).register([Item])
+		app.mount(scope)
+
+		scope.insertAdjacentHTML('beforeend', '<div data-nemesia="pending-invalid-item"></div>')
+
+		expect(app.findAll(Item)).toEqual([])
+	})
+
+	it('mounts each inserted root once when a hook searches during the same flush', async () => {
+		const mounted: string[] = []
+		class Item extends Component('pending-reentrant-item') {
+			onMount(): void {
+				mounted.push(this.root.id)
+				this.findAll(Item, document)
+			}
+		}
+		const scope = html('')
+		const app = createApp({ observe: true }).register([Item])
+		app.mount(scope)
+
+		scope.insertAdjacentHTML(
+			'beforeend',
+			'<div data-nemesia="pending-reentrant-item" id="one"></div><div data-nemesia="pending-reentrant-item" id="two"></div>'
+		)
+		expect(app.findAll(Item)).toHaveLength(2)
+		await flushMutations()
+
+		expect(mounted).toEqual(['one', 'two'])
+	})
+
+	it('leaves unobserved inserted markup unmounted', () => {
+		class Item extends Component('pending-unobserved-item') {}
+		const scope = html('')
+		const app = createApp().register([Item])
+		app.mount(scope)
+
+		scope.insertAdjacentHTML('beforeend', '<div data-nemesia="pending-unobserved-item"></div>')
+
+		expect(app.findAll(Item)).toEqual([])
+	})
+})
+
 describe('mount order', () => {
 	it('mounts nested components before parents and distributed components last', () => {
 		const order: string[] = []

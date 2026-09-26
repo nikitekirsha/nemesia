@@ -2,6 +2,12 @@
 
 All notable changes to Nemesia are documented here.
 
+## Unreleased
+
+### Fixed
+
+- With observation, `find` and `findAll` include markup inserted earlier in the same task and exclude roots removed in it.
+
 ## 2.2.0 — 2026-09-25
 
 ### Added

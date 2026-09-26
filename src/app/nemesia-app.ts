@@ -171,6 +171,9 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	): TInstance[] {
 		if (within === undefined) return []
 
+		// Markup inserted earlier in the same task is mounted before the lookup, not in a later microtask.
+		this.#flushMutationBatch()
+
 		const { kind, name } = component.nemesia
 		const found: TInstance[] = []
 
