@@ -22,6 +22,11 @@ This guide explains Nemesia from first mount to production cleanup. It is writte
 10. [TypeScript and diagnostics](10-typescript-and-diagnostics.md) — public exports, warnings, errors, and bundles.
 11. [Recipes](11-recipes.md) — practical patterns for common website interactions.
 
+## Reference
+
+12. [API reference](12-api-reference.md) — every export, method, and attribute on one page.
+13. [Migrating from v1](13-migrating-from-v1.md) — what replaced each v1 concept.
+
 ## Mental model
 
 Nemesia has deliberately narrow responsibilities:

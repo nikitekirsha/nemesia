@@ -104,7 +104,7 @@ const notes = [
 
 <Reveal>
 
-<Tabs kind="compare" :tabs="{ before: 'Before', after: 'After' }">
+<Tabs kind="compare" label="Tabs without and with Nemesia" :tabs="{ before: 'Before', after: 'After' }">
 <template v-slot:before>
 <CodeMarkers class="vp-doc" :notes="notes">
 <p class="nm-file">vanilla.js</p>
@@ -209,7 +209,7 @@ class Tabs extends Component('tabs') {
 
 <p class="nm-lead">Plain server HTML, four small components. Add a few flowers, then load more from the “server”.</p>
 
-<Tabs kind="demo" :tabs="{ result: 'Result', html: 'HTML', components: 'Components' }">
+<Tabs kind="demo" label="Flower shop demo" :tabs="{ result: 'Result', html: 'HTML', components: 'Components' }">
 <template v-slot:bar>
 <span class="nm-demo__dots" aria-hidden="true"><i></i><i></i><i></i></span>
 </template>
@@ -306,6 +306,7 @@ class Tabs extends Component('tabs') {
 	<p class="nm-footer__links">
 		<a href="./guide/01-getting-started">Guide</a>
 		<a href="./guide/11-recipes">Recipes</a>
+		<a href="./guide/12-api-reference">API</a>
 		<a href="./changelog">Changelog</a>
 		<a href="https://github.com/nikitekirsha/nemesia">GitHub</a>
 		<a href="https://www.npmjs.com/package/nemesia">npm</a>

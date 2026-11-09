@@ -1,0 +1,97 @@
+<!doctype html>
+<!--
+	Source of public/og.png, the image shown in link previews. After editing, render it again from site/:
+
+	"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+		--force-device-scale-factor=1 --window-size=1200,630 --screenshot=public/og.png og/og.html
+-->
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<title>Nemesia link preview</title>
+		<style>
+			@font-face {
+				font-family: 'Inter Variable';
+				font-weight: 100 900;
+				src: url('../node_modules/@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2');
+			}
+
+			@font-face {
+				font-family: 'JetBrains Mono Variable';
+				font-weight: 100 800;
+				src: url('../node_modules/@fontsource-variable/jetbrains-mono/files/jetbrains-mono-latin-wght-normal.woff2')
+					format('woff2');
+			}
+
+			* {
+				box-sizing: border-box;
+				margin: 0;
+			}
+
+			body {
+				position: relative;
+				display: flex;
+				flex-direction: column;
+				justify-content: space-between;
+				width: 1200px;
+				height: 630px;
+				padding: 64px 72px;
+				overflow: hidden;
+				background: #faf9f6;
+				color: #1b1a18;
+				font-family: 'Inter Variable', sans-serif;
+			}
+
+			.brand {
+				display: flex;
+				gap: 14px;
+				align-items: center;
+				font-size: 30px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+
+			.brand img {
+				width: 48px;
+				height: 48px;
+			}
+
+			h1 {
+				max-width: 720px;
+				font-size: 74px;
+				font-weight: 650;
+				line-height: 1.04;
+				letter-spacing: -0.035em;
+			}
+
+			.install {
+				align-self: flex-start;
+				padding: 14px 22px;
+				border: 1px solid #e5e2da;
+				border-radius: 12px;
+				background: #ffffff;
+				font-family: 'JetBrains Mono Variable', monospace;
+				font-size: 24px;
+			}
+
+			.install span {
+				color: #8a857c;
+			}
+
+			.flower {
+				position: absolute;
+				top: 50%;
+				right: -70px;
+				width: 520px;
+				height: 520px;
+				transform: translateY(-50%) rotate(-8deg);
+			}
+		</style>
+	</head>
+	<body>
+		<p class="brand"><img src="../public/logo.svg" alt="" />nemesia</p>
+		<h1>Components for the HTML your server already sends.</h1>
+		<p class="install"><span>$</span> npm install nemesia</p>
+		<img class="flower" src="../public/logo.svg" alt="" />
+	</body>
+</html>

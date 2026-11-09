@@ -1,9 +1,13 @@
 import assert from 'node:assert/strict'
-import { readFile, unlink, writeFile } from 'node:fs/promises'
+import { mkdtemp, readFile, rm, unlink, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { spawnSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
+import { gzipSync } from 'node:zlib'
+
+import { verifyStatedSize } from './verify-build-lib.mjs'
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const verifierPath = join(projectRoot, 'scripts/verify-build.mjs')
@@ -184,5 +188,53 @@ test('rejects a malformed source map for a referenced declaration', async () => 
 			assert.notEqual(result.status, 0)
 			assert.match(outputOf(result), /dist[/\\]component[/\\]factories\.d\.ts\.map/)
 		}
+	)
+})
+
+async function withStatedSize(page, verify) {
+	const directory = await mkdtemp(join(tmpdir(), 'nemesia-size-'))
+	const bundlePath = join(directory, 'bundle.js')
+	const pagePath = join(directory, 'index.md')
+	const bundle = Buffer.from(Array.from({ length: 4000 }, (_, index) => (index * 7919) % 251))
+
+	try {
+		await writeFile(bundlePath, bundle)
+		const kilobytes = gzipSync(bundle, { level: 9 }).length / 1000
+		await writeFile(pagePath, page(kilobytes))
+		await verify(() => verifyStatedSize({ bundlePath, pagePath, projectRoot: directory }))
+	} finally {
+		await rm(directory, { recursive: true, force: true })
+	}
+}
+
+const sizePage = (compared, rounded) =>
+	`<span>~${rounded} KB gzip</span>\n<SizeBars :rows="[{ name: 'nemesia', size: ${compared}, self: true }]" />\n`
+
+test('accepts a landing page that states the size of the built bundle', async () => {
+	await withStatedSize(
+		kilobytes => sizePage(kilobytes.toFixed(1), Math.round(kilobytes)),
+		run => assert.doesNotReject(run)
+	)
+})
+
+test('rejects a landing page with a stale size in the comparison', async () => {
+	await withStatedSize(
+		kilobytes => sizePage((kilobytes + 0.4).toFixed(1), Math.round(kilobytes)),
+		run =>
+			assert.rejects(run, /\[verify-build\] index\.md lists nemesia as .* KB in the size comparison, but bundle\.js is/)
+	)
+})
+
+test('rejects a landing page with a stale rounded size', async () => {
+	await withStatedSize(
+		kilobytes => sizePage(kilobytes.toFixed(1), Math.round(kilobytes) + 1),
+		run => assert.rejects(run, /\[verify-build\] index\.md states ~\d+ KB gzip, but bundle\.js is/)
+	)
+})
+
+test('rejects a landing page that no longer states the size', async () => {
+	await withStatedSize(
+		() => '<p>No numbers here.</p>\n',
+		run => assert.rejects(run, /no longer lists nemesia in the size comparison/)
 	)
 })

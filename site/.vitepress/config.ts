@@ -4,6 +4,9 @@ import { defineConfig } from 'vitepress'
 
 const repository = 'https://github.com/nikitekirsha/nemesia'
 const base = '/nemesia/'
+const origin = 'https://nikitekirsha.github.io'
+const siteUrl = `${origin}${base}`
+const description = 'Components for the HTML your server already sends.'
 const root = (path: string): string => fileURLToPath(new URL(`../../${path}`, import.meta.url))
 const site = (path: string): string => fileURLToPath(new URL(`../${path}`, import.meta.url))
 const { version } = JSON.parse(readFileSync(root('package.json'), 'utf8')) as { version: string }
@@ -25,13 +28,14 @@ if (process.argv.includes('dev')) {
 export default defineConfig({
 	title: 'Nemesia',
 	titleTemplate: ':title · Nemesia',
-	description: 'Components for the HTML your server already sends.',
+	description,
 	base,
 	cleanUrls: true,
 	lastUpdated: false,
 	rewrites: {
 		'guide/README.md': 'guide/index.md'
 	},
+	sitemap: { hostname: siteUrl },
 	head: [
 		['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}logo.svg` }],
 		['meta', { name: 'theme-color', content: '#6356D8' }],
@@ -41,15 +45,35 @@ export default defineConfig({
 			{},
 			"matchMedia('(prefers-reduced-motion: reduce)').matches||document.documentElement.classList.add('nm-motion')"
 		],
-		['meta', { property: 'og:title', content: 'Nemesia' }],
-		['meta', { property: 'og:description', content: 'Components for the HTML your server already sends.' }]
+		['meta', { property: 'og:type', content: 'website' }],
+		['meta', { property: 'og:site_name', content: 'Nemesia' }],
+		// Link previews need an absolute URL and a raster image; the source is site/og/og.html.
+		['meta', { property: 'og:image', content: `${siteUrl}og.png` }],
+		['meta', { property: 'og:image:width', content: '1200' }],
+		['meta', { property: 'og:image:height', content: '630' }],
+		['meta', { property: 'og:image:alt', content: `Nemesia: ${description}` }],
+		['meta', { name: 'twitter:card', content: 'summary_large_image' }]
 	],
+	// Every page names its own address, so a preview or a search result never points at a duplicate URL.
+	transformHead({ pageData, title, description: pageDescription }) {
+		if (pageData.isNotFound) return []
+
+		const path = pageData.relativePath.replace(/(^|\/)index\.md$/, '$1').replace(/\.md$/, '')
+		const url = `${siteUrl}${path}`
+		return [
+			['link', { rel: 'canonical', href: url }],
+			['meta', { property: 'og:url', content: url }],
+			['meta', { property: 'og:title', content: title }],
+			['meta', { property: 'og:description', content: pageDescription }]
+		]
+	},
 	themeConfig: {
 		logo: '/logo.svg',
 		siteTitle: 'nemesia',
 		nav: [
 			{ text: 'Guide', link: '/guide/01-getting-started', activeMatch: '^/guide/' },
 			{ text: 'Recipes', link: '/guide/11-recipes' },
+			{ text: 'API', link: '/guide/12-api-reference' },
 			{ text: 'Changelog', link: '/changelog' },
 			{ text: `v${version}`, link: 'https://www.npmjs.com/package/nemesia' }
 		],
@@ -79,6 +103,13 @@ export default defineConfig({
 						{ text: 'Distributed components', link: '/guide/09-distributed-components' },
 						{ text: 'TypeScript and diagnostics', link: '/guide/10-typescript-and-diagnostics' },
 						{ text: 'Recipes', link: '/guide/11-recipes' }
+					]
+				},
+				{
+					text: 'Reference',
+					items: [
+						{ text: 'API reference', link: '/guide/12-api-reference' },
+						{ text: 'Migrating from v1', link: '/guide/13-migrating-from-v1' }
 					]
 				}
 			]

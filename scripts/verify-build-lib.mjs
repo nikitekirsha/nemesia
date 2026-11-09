@@ -1,5 +1,6 @@
 import { readFile, stat } from 'node:fs/promises'
 import { basename, dirname, isAbsolute, relative, resolve, sep } from 'node:path'
+import { gzipSync } from 'node:zlib'
 import ts from 'typescript'
 
 export function check(condition, message) {
@@ -162,4 +163,26 @@ export async function verifyDeclarationGraph({ distDirectory, entryPath, project
 	}
 
 	check(visited.size > 1, 'dist/index.d.ts does not reference any emitted declarations')
+}
+
+// The landing page states how much the browser build weighs. Both numbers must describe the bundle that was just built.
+export async function verifyStatedSize({ bundlePath, pagePath, projectRoot }) {
+	await requireFile(projectRoot, bundlePath)
+	await requireFile(projectRoot, pagePath)
+
+	const [bundle, page] = await Promise.all([readFile(bundlePath), readFile(pagePath, 'utf8')])
+	const kilobytes = gzipSync(bundle, { level: 9 }).length / 1000
+	const actual = `${displayPath(projectRoot, bundlePath)} is ${kilobytes.toFixed(1)} KB gzipped`
+	const label = displayPath(projectRoot, pagePath)
+
+	const compared = page.match(/name: 'nemesia', size: (\d+(?:\.\d+)?)/)?.[1]
+	check(compared !== undefined, `${label} no longer lists nemesia in the size comparison`)
+	check(
+		Number(compared).toFixed(1) === kilobytes.toFixed(1),
+		`${label} lists nemesia as ${compared} KB in the size comparison, but ${actual}`
+	)
+
+	const rounded = page.match(/~(\d+) KB gzip/)?.[1]
+	check(rounded !== undefined, `${label} no longer states the rounded gzip size`)
+	check(Number(rounded) === Math.round(kilobytes), `${label} states ~${rounded} KB gzip, but ${actual}`)
 }

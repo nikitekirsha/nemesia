@@ -41,6 +41,22 @@ this.on(this.root, 'cart:update', (event: CustomEvent<{ count: number }>) => {
 })
 ```
 
+To type a custom event once for the whole project, add it to the DOM's own event map from any module. `this.on` reads that map, so listeners need no annotation:
+
+```ts
+declare global {
+	interface HTMLElementEventMap {
+		'cart:update': CustomEvent<{ count: number }>
+	}
+}
+
+this.on(this.root, 'cart:update', event => {
+	console.log(event.detail.count)
+})
+```
+
+Use `DocumentEventMap` and `WindowEventMap` for events listened to on `document` and `window`.
+
 ## Arrays of targets
 
 Refs returned by `ref.many` can be registered together:

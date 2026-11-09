@@ -106,6 +106,6 @@ The UMD file is `dist/nemesia.umd.js`. When copied to a public asset path and lo
 
 ## Environment support
 
-The runtime targets modern browsers with standard DOM APIs. `MutationObserver` is needed only when observation is enabled. Installing the package places no requirement on the Node.js version; only working on Nemesia itself needs Node.js `^20.19.0 || >=22.12.0`.
+The published bundles are built for Chrome 107, Edge 107, Firefox 104, and Safari 16 or newer. They use standard DOM APIs only, and `MutationObserver` is needed only when observation is enabled. Installing the package places no requirement on the Node.js version; only working on Nemesia itself needs Node.js `^20.19.0 || >=22.12.0`.
 
 [Previous: Distributed components](09-distributed-components.md) · [Guide index](README.md) · [Next: Recipes](11-recipes.md)

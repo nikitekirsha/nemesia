@@ -3,7 +3,7 @@ import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import vm from 'node:vm'
 
-import { check, verifyDeclarationGraph, verifySourceMap } from './verify-build-lib.mjs'
+import { check, verifyDeclarationGraph, verifySourceMap, verifyStatedSize } from './verify-build-lib.mjs'
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const distDirectory = join(projectRoot, 'dist')
@@ -99,4 +99,10 @@ check(
 )
 verifyUmdApi(umdContext.Nemesia)
 
-console.log('[verify-build] ESM, UMD, and declaration artifacts verified')
+await verifyStatedSize({
+	bundlePath: umdPath,
+	pagePath: join(projectRoot, 'site/index.md'),
+	projectRoot
+})
+
+console.log('[verify-build] ESM, UMD, declaration artifacts, and the stated bundle size verified')
