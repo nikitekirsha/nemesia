@@ -56,6 +56,14 @@ export function warnDuplicateRegistration(component: string): void {
 	)
 }
 
+export function warnMissingDefaultScope(): void {
+	emitWarning(
+		'[Nemesia] app.mount() was called before document.body exists, so nothing was mounted. ' +
+			'Call it after the body is parsed or pass a scope.',
+		() => ({})
+	)
+}
+
 export function warnSkippedComponent(component: string, reason: string, payload: DiagnosticPayload): void {
 	emitWarning(`[Nemesia] Component "${component}" skipped: ${reason}.`, () => payload)
 }

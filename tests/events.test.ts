@@ -444,6 +444,128 @@ describe('component teardown', () => {
 		expect(listener).not.toHaveBeenCalled()
 	})
 
+	it('releases a once listener when it fires instead of holding it until destroy', () => {
+		const listener = vi.fn()
+		const target = new EventTarget()
+		const removeSpy = vi.spyOn(target, 'removeEventListener')
+		class FiredOnce extends Component('fired-once') {
+			attach(): void {
+				this.on(target, 'change', listener, { once: true })
+			}
+		}
+		const instance = new FiredOnce(document.createElement('section'))
+
+		instance.attach()
+		target.dispatchEvent(new Event('change'))
+		target.dispatchEvent(new Event('change'))
+		teardown(instance)
+
+		expect(listener).toHaveBeenCalledOnce()
+		expect(removeSpy).not.toHaveBeenCalled()
+	})
+
+	it('removes a once listener that never fired', () => {
+		const listener = vi.fn()
+		const target = new EventTarget()
+		class PendingOnce extends Component('pending-once') {
+			attach(): void {
+				this.on(target, 'change', listener, { once: true })
+			}
+		}
+		const instance = new PendingOnce(document.createElement('section'))
+
+		instance.attach()
+		teardown(instance)
+		target.dispatchEvent(new Event('change'))
+
+		expect(listener).not.toHaveBeenCalled()
+	})
+
+	it('releases each fired once listener of an array registration separately', () => {
+		const calls: number[] = []
+		const targets = [new EventTarget(), new EventTarget()] as const
+		const removeSpies = targets.map(target => vi.spyOn(target, 'removeEventListener'))
+		class OnceCollection extends Component('once-collection') {
+			attach(): void {
+				this.on(targets, 'change', (_event, _target, index) => calls.push(index), { once: true })
+			}
+		}
+		const instance = new OnceCollection(document.createElement('section'))
+
+		instance.attach()
+		targets[0].dispatchEvent(new Event('change'))
+		targets[0].dispatchEvent(new Event('change'))
+		teardown(instance)
+		targets[1].dispatchEvent(new Event('change'))
+
+		expect(calls).toEqual([0])
+		expect(removeSpies[0]).not.toHaveBeenCalled()
+		expect(removeSpies[1]).toHaveBeenCalledOnce()
+	})
+
+	it('releases a listener when its signal aborts instead of holding it until destroy', () => {
+		const listener = vi.fn()
+		const target = new EventTarget()
+		const controller = new AbortController()
+		const removeSpy = vi.spyOn(target, 'removeEventListener')
+		class Aborted extends Component('aborted') {
+			attach(): void {
+				this.on(target, 'change', listener, { signal: controller.signal })
+			}
+		}
+		const instance = new Aborted(document.createElement('section'))
+
+		instance.attach()
+		controller.abort()
+		target.dispatchEvent(new Event('change'))
+		teardown(instance)
+
+		expect(listener).not.toHaveBeenCalled()
+		expect(removeSpy).not.toHaveBeenCalled()
+	})
+
+	it('does not track a listener registered with an already aborted signal', () => {
+		const listener = vi.fn()
+		const target = new EventTarget()
+		const signal = AbortSignal.abort()
+		const removeSpy = vi.spyOn(target, 'removeEventListener')
+		const signalSpy = vi.spyOn(signal, 'addEventListener')
+		class AlreadyAborted extends Component('already-aborted') {
+			attach(): void {
+				this.on(target, 'change', listener, { signal })
+			}
+		}
+		const instance = new AlreadyAborted(document.createElement('section'))
+
+		instance.attach()
+		target.dispatchEvent(new Event('change'))
+		teardown(instance)
+
+		expect(listener).not.toHaveBeenCalled()
+		expect(removeSpy).not.toHaveBeenCalled()
+		expect(signalSpy).not.toHaveBeenCalled()
+	})
+
+	it('stops watching a signal that outlives the component', () => {
+		const listener = vi.fn()
+		const target = new EventTarget()
+		const controller = new AbortController()
+		const signalRemoveSpy = vi.spyOn(controller.signal, 'removeEventListener')
+		class Outlived extends Component('outlived') {
+			attach(): void {
+				this.on(target, 'change', listener, { signal: controller.signal })
+			}
+		}
+		const instance = new Outlived(document.createElement('section'))
+
+		instance.attach()
+		teardown(instance)
+		target.dispatchEvent(new Event('change'))
+
+		expect(listener).not.toHaveBeenCalled()
+		expect(signalRemoveSpy).toHaveBeenCalledWith('abort', expect.any(Function))
+	})
+
 	it('contains errors thrown by asynchronous rejection diagnostics', async () => {
 		const diagnosticError = new Error('diagnostic failed')
 

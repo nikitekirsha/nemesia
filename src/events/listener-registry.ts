@@ -74,23 +74,46 @@ export class ListenerRegistry {
 		listener: (event: Event) => void,
 		options?: AddEventListenerOptions
 	): () => void {
+		const signal = options?.signal
+		let attached = true
+
+		// A listener the browser has already removed must not stay referenced until destroy.
+		const release = (): void => {
+			attached = false
+			this.#unsubscribers.delete(unsubscribe)
+			signal?.removeEventListener('abort', release)
+		}
+		const unsubscribe = (): void => {
+			if (!attached) return
+			release()
+			target.removeEventListener(eventName, registered, options)
+		}
+		const registered =
+			options?.once === true
+				? (event: Event): void => {
+						release()
+						listener(event)
+					}
+				: listener
+
 		try {
-			target.addEventListener(eventName, listener, options)
+			target.addEventListener(eventName, registered, options)
 		} catch (error) {
 			try {
-				target.removeEventListener(eventName, listener, options)
+				target.removeEventListener(eventName, registered, options)
 			} catch {
 				// Preserve the original addEventListener error.
 			}
 			throw error
 		}
 
-		let attached = true
-		const unsubscribe = (): void => {
-			if (!attached) return
-			target.removeEventListener(eventName, listener, options)
+		// The browser ignores a listener registered with an aborted signal.
+		if (signal?.aborted === true) {
 			attached = false
+			return unsubscribe
 		}
+
+		signal?.addEventListener('abort', release, { once: true })
 		this.#unsubscribers.add(unsubscribe)
 		return unsubscribe
 	}

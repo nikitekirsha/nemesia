@@ -74,7 +74,7 @@ describe('option facade', () => {
 			maxLength: 10,
 			pattern: /^value$/
 		}
-		const numberOptions: NumberOptionOptions = { default: 2, min: 1, max: 3 }
+		const numberOptions: NumberOptionOptions = { default: 2, min: 1, max: 3, integer: true }
 		const booleanOptions: BooleanOptionOptions = { default: true }
 		const jsonOptions: JsonOptionOptions<{ enabled: boolean }> = {
 			default: { enabled: true },
@@ -181,27 +181,36 @@ describe('number and boolean options', () => {
 			minimum = this.option.number('minimum', { min: 2 })
 			maximum = this.option.number('maximum', { max: 4 })
 			hexadecimal = this.option.number('hexadecimal')
-			infinity = this.option.number('infinity')
+			fraction = this.option.number('fraction')
+			whole = this.option.number('whole', { integer: true })
+			wholeFraction = this.option.number('wholeFraction', { integer: true })
 		}
 		const instance = new Numbers(
 			createRoot('numbers', {
 				'data-option-minimum': '2',
 				'data-option-maximum': '4',
 				'data-option-hexadecimal': '0x10',
-				'data-option-infinity': 'Infinity'
+				'data-option-fraction': '1.5',
+				'data-option-whole': '-3',
+				'data-option-whole-fraction': '2.0'
 			})
 		)
 
 		expect(instance.minimum).toBe(2)
 		expect(instance.maximum).toBe(4)
 		expect(instance.hexadecimal).toBe(16)
-		expect(instance.infinity).toBe(Number.POSITIVE_INFINITY)
+		expect(instance.fraction).toBe(1.5)
+		expect(instance.whole).toBe(-3)
+		expect(instance.wholeFraction).toBe(2)
 	})
 
 	it.each([
 		['NaN', 'not-a-number', {}],
 		['an empty value', '', {}],
 		['a whitespace-only value', ' \n\t', {}],
+		['positive infinity', 'Infinity', {}],
+		['negative infinity', '-Infinity', {}],
+		['a fraction when an integer is required', '1.5', { integer: true }],
 		['minimum', '1', { min: 2 }],
 		['maximum', '5', { max: 4 }]
 	] as const)('rejects invalid numbers for %s', (_label, raw, options) => {

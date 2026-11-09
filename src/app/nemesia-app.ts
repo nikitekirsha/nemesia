@@ -15,6 +15,7 @@ import {
 	reportDestroyError,
 	reportMountError,
 	warnDuplicateRegistration,
+	warnMissingDefaultScope,
 	warnSkippedComponent
 } from '../internal/diagnostics.js'
 import { beginComponentConstruction, endComponentConstruction } from '../internal/construction.js'
@@ -57,6 +58,18 @@ function defaultScope(): ParentNode | undefined {
 
 function defaultFindScope(): ParentNode | undefined {
 	return typeof document === 'undefined' ? undefined : document
+}
+
+function isComponentConstructor(value: unknown): value is ComponentConstructor {
+	if (typeof value !== 'function') return false
+
+	const metadata = (value as { readonly nemesia?: { readonly kind?: unknown; readonly name?: unknown } }).nemesia
+	return typeof metadata?.name === 'string' && (metadata.kind === 'concrete' || metadata.kind === 'distributed')
+}
+
+function describeValue(value: unknown): string {
+	if (typeof value === 'function') return value.name === '' ? 'an anonymous function' : `"${value.name}"`
+	return value === null ? 'null' : typeof value
 }
 
 function observerConstructor(scope: ParentNode): typeof MutationObserver | undefined {
@@ -109,6 +122,16 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			throw new TypeError('[Nemesia] app.register(...) expects an array of components.')
 		}
 
+		// The whole array is checked first, so a bad entry never leaves a partial registration behind.
+		components.forEach((component: unknown, index) => {
+			if (isComponentConstructor(component)) return
+
+			throw new TypeError(
+				`[Nemesia] app.register(...) received ${describeValue(component)} at index ${index}, which is not a component class.` +
+					(component === undefined ? ' An undefined entry usually comes from a circular import.' : '')
+			)
+		})
+
 		for (const component of components) {
 			const name = component.nemesia.name
 
@@ -123,7 +146,11 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	}
 
 	public mount(scope: ParentNode | undefined = defaultScope()): void {
-		if (scope === undefined) return
+		if (scope === undefined) {
+			// Without a document there is nothing to mount; with one, the body has not been parsed yet.
+			if (typeof document !== 'undefined') warnMissingDefaultScope()
+			return
+		}
 
 		this.#flushMutationBatch()
 		if (this.options.observe) this.#ensureObserver(scope)
@@ -250,8 +277,9 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 	#collectMutations(records: Iterable<MutationRecord>): void {
 		for (const record of records) {
-			this.#pendingAddedNodes.push(...record.addedNodes)
-			this.#pendingRemovedNodes.push(...record.removedNodes)
+			// Spreading a node list into push() overflows the call stack for very large records.
+			for (const node of record.addedNodes) this.#pendingAddedNodes.push(node)
+			for (const node of record.removedNodes) this.#pendingRemovedNodes.push(node)
 		}
 	}
 

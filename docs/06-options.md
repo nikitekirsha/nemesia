@@ -52,7 +52,13 @@ Strings use the raw attribute value. An empty value is valid unless constrained.
 columns = this.option.number('columns', { min: 1, max: 12 })
 ```
 
-The value must be a number. `min` and `max` constraints are inclusive.
+The value must be a finite number, so `Infinity` and `NaN` are invalid. `min` and `max` constraints are inclusive.
+
+Add `integer: true` when a fraction makes no sense, as for a count or an index:
+
+```ts
+activeIndex = this.option.number('activeIndex', { min: 0, integer: true })
+```
 
 ## Boolean
 

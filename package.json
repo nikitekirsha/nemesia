@@ -4,8 +4,11 @@
 	"description": "DOM-first runtime for server-rendered websites",
 	"type": "module",
 	"sideEffects": false,
-	"engines": {
-		"node": "^20.19.0 || >=22.12.0"
+	"devEngines": {
+		"runtime": {
+			"name": "node",
+			"version": "^20.19.0 || >=22.12.0"
+		}
 	},
 	"main": "./dist/nemesia.js",
 	"module": "./dist/nemesia.js",

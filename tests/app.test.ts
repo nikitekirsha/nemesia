@@ -52,6 +52,42 @@ describe('app creation and registration', () => {
 		)
 	})
 
+	it('rejects an undefined entry, pointing at circular imports, without a partial registration', () => {
+		const mounted = vi.fn()
+		class Valid extends Component('valid-before-undefined') {
+			onMount(): void {
+				mounted()
+			}
+		}
+		const app = createApp()
+		const register = app.register.bind(app) as unknown as (value: unknown) => unknown
+
+		expect(() => register([Valid, undefined])).toThrow(
+			new TypeError(
+				'[Nemesia] app.register(...) received undefined at index 1, which is not a component class.' +
+					' An undefined entry usually comes from a circular import.'
+			)
+		)
+
+		root('valid-before-undefined')
+		app.mount()
+
+		expect(mounted).not.toHaveBeenCalled()
+	})
+
+	it.each([
+		['a class without component metadata', class Plain {}, '"Plain"'],
+		['an anonymous function', () => {}, 'an anonymous function'],
+		['null', null, 'null'],
+		['a string', 'counter', 'string']
+	])('rejects %s with the exact TypeError', (_label, value, description) => {
+		const register = createApp().register as unknown as (value: unknown) => unknown
+
+		expect(() => register([value])).toThrow(
+			new TypeError(`[Nemesia] app.register(...) received ${description} at index 0, which is not a component class.`)
+		)
+	})
+
 	it('warns on duplicates and mounts the latest registration', () => {
 		const mounted: string[] = []
 		class Original extends Component('duplicate') {
@@ -113,6 +149,40 @@ describe('concrete root discovery', () => {
 		expect(mounted).toEqual([exact])
 		expect(mounted).not.toContain(list)
 		expect(mounted).not.toContain(alternative)
+	})
+
+	it('warns instead of silently doing nothing when the default body does not exist yet', () => {
+		const mounted = vi.fn()
+		class Early extends Component('early') {
+			onMount(): void {
+				mounted()
+			}
+		}
+		const early = root('early')
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		const app = createApp().register([Early])
+		const body = document.body
+
+		body.remove()
+		try {
+			app.mount()
+			expect(() => app.destroy()).not.toThrow()
+		} finally {
+			document.documentElement.append(body)
+		}
+
+		expect(mounted).not.toHaveBeenCalled()
+		expect(warn).toHaveBeenCalledOnce()
+		expect(warn).toHaveBeenCalledWith(
+			'[Nemesia] app.mount() was called before document.body exists, so nothing was mounted. ' +
+				'Call it after the body is parsed or pass a scope.',
+			{}
+		)
+
+		app.mount()
+
+		expect(mounted).toHaveBeenCalledOnce()
+		expect(early.isConnected).toBe(true)
 	})
 
 	it('includes an element scope itself and mounts nested roots before their parents', () => {

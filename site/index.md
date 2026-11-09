@@ -76,7 +76,7 @@ const notes = [
 	<a class="nm-button" href="https://github.com/nikitekirsha/nemesia">GitHub</a>
 </div>
 
-<p class="nm-meta"><span>~5 KB gzip</span><span>No dependencies</span><span>TypeScript</span></p>
+<p class="nm-meta"><span>~6 KB gzip</span><span>No dependencies</span><span>TypeScript</span></p>
 
 </div>
 <div class="nm-hero__visual">
@@ -256,7 +256,7 @@ class Tabs extends Component('tabs') {
 
 <Reveal>
 
-<SizeBars :rows="[{ name: 'nemesia', size: 5.4, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
+<SizeBars :rows="[{ name: 'nemesia', size: 5.8, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
 
 <p class="nm-note">Published browser builds, minified and gzipped.</p>
 

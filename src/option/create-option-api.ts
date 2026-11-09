@@ -89,11 +89,15 @@ class OptionReader {
 	public number(name: string, options?: NumberOptionOptions): number | undefined {
 		return this.#resolve(
 			name,
-			'number',
+			options?.integer === true ? 'integer' : 'number',
 			raw => {
 				const value = parseNumber(raw)
 
-				if (Number.isNaN(value)) {
+				if (!Number.isFinite(value)) {
+					return invalid()
+				}
+
+				if (options?.integer === true && !Number.isInteger(value)) {
 					return invalid()
 				}
 

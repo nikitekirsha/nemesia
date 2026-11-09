@@ -42,7 +42,8 @@ class Tabs extends Component('tabs') {
 	panel = this.ref.element('panel')
 	initial = this.option.optional.number('activeIndex', {
 		default: 0,
-		min: 0
+		min: 0,
+		integer: true
 	})
 
 	onMount() {

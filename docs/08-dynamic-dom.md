@@ -75,6 +75,19 @@ app.disconnect()
 
 Stops all observers owned by the app. Calling `mount(scope)` later creates a fresh observer when observation remains enabled.
 
+## Scopes that leave the document
+
+A scope passed to `mount` stays owned by the app after it is removed from the document. Its concrete components are destroyed and mounted again inside the detached tree, and its distributed instances and observer stay alive.
+
+Release such a scope explicitly before discarding it:
+
+```ts
+app.destroy(fragment)
+app.disconnect(fragment)
+```
+
+Markup inserted into an already observed scope needs neither call, and neither does it need its own `mount`.
+
 ## What is observed
 
 Nemesia watches child-list changes and subtrees. Changing option, ref, or component attributes in place is not an update mechanism. Destroy and remount the relevant root when its contract needs to be re-evaluated.

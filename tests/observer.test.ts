@@ -770,6 +770,27 @@ describe('observer lifecycle', () => {
 		expect(parentNode.mock.calls.length).toBeLessThan(200)
 	})
 
+	it('collects a mutation record with more nodes than a call can take as arguments', () => {
+		const mounted = vi.fn()
+		class Needle extends Component('needle') {
+			onMount(): void {
+				mounted()
+			}
+		}
+		const scope = document.createElement('main')
+		document.body.append(scope)
+		const app = createApp({ observe: true }).register([Needle])
+		app.mount(scope)
+		const fragment = document.createDocumentFragment()
+		for (let index = 0; index < 200_000; index += 1) fragment.appendChild(document.createTextNode(''))
+		fragment.appendChild(componentRoot('needle'))
+
+		scope.append(fragment)
+
+		expect(app.findAll(Needle, scope)).toHaveLength(1)
+		expect(mounted).toHaveBeenCalledOnce()
+	})
+
 	it('disconnects every scope without destroying instances', async () => {
 		const lifecycle: string[] = []
 		class Global extends Component('global-observer') {

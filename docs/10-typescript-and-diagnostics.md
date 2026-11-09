@@ -58,7 +58,8 @@ Invalid HTML contracts produce `console.warn` messages prefixed with `[Nemesia]`
 - missing or invalid options;
 - a root with the wrong HTML tag;
 - a second root for `multiple: false`;
-- duplicate component registration.
+- duplicate component registration;
+- `mount()` called before `document.body` exists.
 
 Warnings include structured context such as the component name, root element, ref name, option name, attribute, expected value, and received value where applicable.
 
@@ -105,6 +106,6 @@ The UMD file is `dist/nemesia.umd.js`. When copied to a public asset path and lo
 
 ## Environment support
 
-The runtime targets modern browsers with standard DOM APIs. `MutationObserver` is needed only when observation is enabled. The package declares Node.js `^20.19.0 || >=22.12.0` for development and package tooling.
+The runtime targets modern browsers with standard DOM APIs. `MutationObserver` is needed only when observation is enabled. Installing the package places no requirement on the Node.js version; only working on Nemesia itself needs Node.js `^20.19.0 || >=22.12.0`.
 
 [Previous: Distributed components](09-distributed-components.md) · [Guide index](README.md) · [Next: Recipes](11-recipes.md)

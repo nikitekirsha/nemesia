@@ -2,6 +2,24 @@
 
 All notable changes to Nemesia are documented here.
 
+## Unreleased
+
+### Added
+
+- `integer` constraint for number options.
+
+### Changed
+
+- Number options reject `Infinity` and `-Infinity`.
+- The Node.js range needed to work on Nemesia is declared in `devEngines`. Installing the package no longer warns or fails on other Node.js versions.
+
+### Fixed
+
+- A listener registered with `once` or `signal` is released when it fires or the signal aborts. It used to stay referenced, together with its target, until the component was destroyed.
+- `register` throws a descriptive error for an entry that is not a component class, and names circular imports for an `undefined` entry.
+- `mount()` warns when `document.body` does not exist yet instead of silently mounting nothing.
+- A mutation record with more than about a hundred thousand nodes no longer overflows the call stack.
+
 ## 2.2.2 — 2026-09-26
 
 ### Fixed

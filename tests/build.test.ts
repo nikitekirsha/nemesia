@@ -8,6 +8,7 @@ interface PackageJson {
 	type?: string
 	sideEffects?: boolean
 	engines?: Record<string, string>
+	devEngines?: { runtime?: { name?: string; version?: string } }
 	main?: string
 	module?: string
 	types?: string
@@ -50,11 +51,13 @@ describe('package build contract', () => {
 		})
 	})
 
-	test('ships only release files and declares the Node version required by Vite', async () => {
+	test('ships only release files and requires the Node version of Vite from contributors only', async () => {
 		const packageJson = await readPackageJson()
 
 		expect(packageJson.files).toEqual(expect.arrayContaining(['dist', 'docs', 'README.md']))
-		expect(packageJson.engines?.node).toBe('^20.19.0 || >=22.12.0')
+		// The runtime is browser code, so the toolchain's Node range must not restrict who can install the package.
+		expect(packageJson.engines).toBeUndefined()
+		expect(packageJson.devEngines?.runtime).toEqual({ name: 'node', version: '^20.19.0 || >=22.12.0' })
 	})
 
 	test('builds bundles and declarations before checking consumers and artifacts', async () => {

@@ -21,6 +21,8 @@ this.on(this.button, 'click', handler, {
 
 `capture`, `once`, `passive`, and `signal` are supported through `AddEventListenerOptions`.
 
+A listener registered with `once` or `signal` is released as soon as it fires or the signal aborts. It does not keep its target alive until the component is destroyed.
+
 ## Event types
 
 Known DOM events are typed from the target and event name:

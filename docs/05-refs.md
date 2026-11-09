@@ -66,6 +66,18 @@ No matches return an empty array. Present elements are still validated.
 graphics = this.ref.optional.many.of<SVGElement>('graphic')
 ```
 
+## Refs after construction
+
+A field reads the DOM once, during construction. When markup inside the root is replaced later, request the ref again from a getter:
+
+```ts
+get rows() {
+	return this.ref.optional.many.element('row')
+}
+```
+
+Use the optional helpers for these lookups. After construction a failed lookup can no longer skip the component, so a missing required ref, a duplicate, or a wrong tag throws to the caller instead.
+
 ## Summary
 
 | Request         | No matches | Multiple matches | Wrong tag            |

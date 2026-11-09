@@ -23,6 +23,9 @@ export interface NumberOptionOptions {
 
 	/** Maximum accepted number. */
 	max?: number
+
+	/** Accept whole numbers only. */
+	integer?: boolean
 }
 
 /** Options for boolean options read from `data-option-*` attributes. */

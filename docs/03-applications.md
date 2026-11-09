@@ -30,6 +30,8 @@ app.register([CookieBanner])
 
 Passing a constructor directly is rejected by TypeScript and throws an error in JavaScript.
 
+An entry that is not a component class also throws, and nothing from that array is registered. An `undefined` entry usually comes from a circular import between component modules.
+
 Names are unique within an app. Registering another constructor with the same name logs a warning and replaces the registration for future mounts. Existing instances are not replaced automatically.
 
 ## Mounting
@@ -46,7 +48,7 @@ app.mount(document.body)
 - mounts distributed components once for that exact scope;
 - starts an observer when `observe: true`.
 
-When omitted, the scope defaults to `document.body` if it exists.
+When omitted, the scope defaults to `document.body`. Calling `mount()` before the body is parsed, for example from a script in `<head>`, mounts nothing and logs a warning.
 
 An app never mounts two component names on the same root. If code changes `data-nemesia` while an instance is active, the new component waits until the old instance is destroyed.
 
