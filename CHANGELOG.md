@@ -2,7 +2,7 @@
 
 All notable changes to Nemesia are documented here.
 
-## Unreleased
+## 2.4.0 — 2026-11-10
 
 ### Added
 
@@ -11,6 +11,10 @@ All notable changes to Nemesia are documented here.
 - `this.ref.tag(tag, name)` in every ref family: typed from the HTML tag and checked at runtime.
 - `this.channel<T>()`: a typed stream of values that a component emits and others listen to with `this.on(channel, listener)`. Both sides are cleaned up automatically.
 - `lazy(name, load)`: a component whose module is loaded the first time its root appears. Components found together load in parallel and mount together, children before parents.
+
+### Changed
+
+- `signal` and `channel` are now members of every component. A subclass that defines its own member with either name has to rename it.
 
 ## 2.3.0 — 2026-11-10
 
