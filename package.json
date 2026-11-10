@@ -50,20 +50,27 @@
 		"format:check": "prettier --check .",
 		"test": "vitest run",
 		"test:watch": "vitest",
+		"test:coverage": "vitest run --coverage",
+		"test:browser": "vitest run --config vitest.browser.config.ts",
+		"bench": "vitest bench --run",
+		"bench:browser": "vitest bench --run --config vitest.browser.config.ts",
 		"typecheck": "tsc --noEmit",
 		"build": "vite build && vite build --config vite.umd.config.ts && tsc -p tsconfig.build.json && tsc -p tests/consumer/tsconfig.json && node --test scripts/verify-build.test.mjs && node scripts/verify-build.mjs",
-		"precommit": "npm run format:check && npm run typecheck && npm test",
-		"verify": "npm run format:check && npm run typecheck && npm test && npm run build && npm pack --dry-run --ignore-scripts",
-		"prepack": "npm run format:check && npm test && npm run typecheck && npm run build",
+		"precommit": "npm run format:check && npm run typecheck && npm run test:coverage",
+		"verify": "npm run format:check && npm run typecheck && npm run test:coverage && npm run build && npm pack --dry-run --ignore-scripts",
+		"prepack": "npm run format:check && npm run test:coverage && npm run typecheck && npm run build",
 		"prepare": "husky"
 	},
 	"devDependencies": {
 		"@types/node": "^24.0.0",
+		"@vitest/browser-playwright": "^4.1.12",
+		"@vitest/coverage-v8": "^4.1.12",
 		"husky": "^9.1.7",
 		"jsdom": "^26.1.0",
+		"playwright": "^1.65.0",
 		"prettier": "^3.9.5",
 		"typescript": "^5.8.3",
 		"vite": "^7.0.0",
-		"vitest": "^3.2.4"
+		"vitest": "^4.1.12"
 	}
 }

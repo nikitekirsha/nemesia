@@ -518,16 +518,20 @@ describe('component teardown', () => {
 		instance.attach()
 		controller.abort()
 		target.dispatchEvent(new Event('change'))
-		teardown(instance)
 
 		expect(listener).not.toHaveBeenCalled()
-		expect(removeSpy).not.toHaveBeenCalled()
+		expect(removeSpy).toHaveBeenCalledOnce()
+
+		teardown(instance)
+
+		expect(removeSpy).toHaveBeenCalledOnce()
 	})
 
 	it('does not track a listener registered with an already aborted signal', () => {
 		const listener = vi.fn()
 		const target = new EventTarget()
 		const signal = AbortSignal.abort()
+		const addSpy = vi.spyOn(target, 'addEventListener')
 		const removeSpy = vi.spyOn(target, 'removeEventListener')
 		const signalSpy = vi.spyOn(signal, 'addEventListener')
 		class AlreadyAborted extends Component('already-aborted') {
@@ -542,6 +546,7 @@ describe('component teardown', () => {
 		teardown(instance)
 
 		expect(listener).not.toHaveBeenCalled()
+		expect(addSpy).not.toHaveBeenCalled()
 		expect(removeSpy).not.toHaveBeenCalled()
 		expect(signalSpy).not.toHaveBeenCalled()
 	})

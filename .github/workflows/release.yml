@@ -1,0 +1,55 @@
+name: Release
+
+# Publishes the version named by a pushed tag, with provenance that links the package to this commit.
+# npm authenticates the workflow itself (trusted publishing), so the repository holds no npm token.
+on:
+  push:
+    tags:
+      - v*
+
+permissions:
+  contents: read
+
+# Two releases never run at once, and a release that has started is never cancelled.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Publish to npm
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          registry-url: https://registry.npmjs.org
+          # A release installs everything fresh, so a poisoned cache can never end up in the package.
+          package-manager-cache: false
+
+      - name: Check that the tag matches package.json
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $version"
+            exit 1
+          fi
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Trusted publishing needs npm 11.5.1 or newer.
+      - name: Update npm
+        run: npm install -g npm@latest
+
+      # `prepack` checks formatting, runs the tests, and builds before anything is uploaded.
+      - name: Publish
+        run: npm publish --provenance --access public

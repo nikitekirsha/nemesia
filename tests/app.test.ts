@@ -1298,3 +1298,87 @@ describe('destroy and disconnect', () => {
 		expect(mounts).toBe(4)
 	})
 })
+
+describe('traversal edge cases', () => {
+	it('skips a discovered root that an earlier constructor removed from the scope', () => {
+		const constructed = vi.fn()
+		class Remover extends Component('constructor-remover') {
+			constructor(componentRoot: HTMLElement) {
+				super(componentRoot)
+				document.querySelector('[data-nemesia="constructor-removed"]')?.remove()
+			}
+		}
+		class Removed extends Component('constructor-removed') {
+			constructor(componentRoot: HTMLElement) {
+				super(componentRoot)
+				constructed()
+			}
+		}
+		root('constructor-remover')
+		const removed = root('constructor-removed')
+
+		createApp().register([Remover, Removed]).mount()
+
+		expect(removed.isConnected).toBe(false)
+		expect(constructed).not.toHaveBeenCalled()
+	})
+
+	it('skips a root that an onDestroy hook already destroyed during the same traversal', () => {
+		const destroyed: string[] = []
+		const app = createApp()
+		class Victim extends Component('traversal-victim') {
+			onDestroy(): void {
+				destroyed.push('victim')
+			}
+		}
+		class Destroyer extends Component('traversal-destroyer') {
+			onDestroy(): void {
+				destroyed.push('destroyer')
+				app.destroy(victim)
+			}
+		}
+		const victim = root('traversal-victim')
+		const wrapper = document.createElement('div')
+		const destroyer = document.createElement('div')
+		destroyer.setAttribute('data-nemesia', 'traversal-destroyer')
+		wrapper.append(destroyer)
+		document.body.append(wrapper)
+		app.register([Victim, Destroyer]).mount()
+
+		app.destroy()
+
+		expect(destroyed).toEqual(['destroyer', 'victim'])
+	})
+
+	it('reports and destroys an instance whose rejection value refuses to be inspected', async () => {
+		const onDestroy = vi.fn()
+		const hostile = {
+			get name(): string {
+				throw new Error('inspection failed')
+			}
+		}
+		class Hostile extends Component('hostile-rejection') {
+			onMount(): Promise<void> {
+				return Promise.reject(hostile)
+			}
+
+			onDestroy(): void {
+				onDestroy()
+			}
+		}
+		const componentRoot = root('hostile-rejection')
+		const report = vi.spyOn(console, 'error').mockImplementation(() => {})
+		const app = createApp().register([Hostile])
+
+		app.mount()
+		await flushMicrotasks()
+
+		expect(report).toHaveBeenCalledWith('[Nemesia] Component "hostile-rejection" failed during onMount.', {
+			component: 'hostile-rejection',
+			root: componentRoot,
+			error: hostile
+		})
+		expect(onDestroy).toHaveBeenCalledOnce()
+		expect(app.find(Hostile)).toBeNull()
+	})
+})

@@ -33,8 +33,7 @@ export function captureConstructingComponent(
 	instance: ConstructingComponent
 ): NemesiaApp | undefined {
 	for (let index = captures.length - 1; index >= 0; index -= 1) {
-		const capture = captures[index]
-		if (capture === undefined) continue
+		const capture = captures[index] as ComponentConstructionCapture
 		if (
 			capture.instance === undefined &&
 			capture.expectedConstructor === actualConstructor &&
@@ -48,6 +47,5 @@ export function captureConstructingComponent(
 }
 
 export function endComponentConstruction(capture: ComponentConstructionCapture): void {
-	const index = captures.lastIndexOf(capture)
-	if (index !== -1) captures.splice(index, 1)
+	captures.splice(captures.lastIndexOf(capture), 1)
 }

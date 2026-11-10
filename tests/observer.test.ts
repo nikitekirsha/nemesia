@@ -770,7 +770,11 @@ describe('observer lifecycle', () => {
 		expect(parentNode.mock.calls.length).toBeLessThan(200)
 	})
 
-	it('collects a mutation record with more nodes than a call can take as arguments', () => {
+	// WebKit needs over a minute just to build a parent with this many children, with or without Nemesia.
+	// The guarded code is plain JavaScript, so the other engines are enough.
+	const isWebKit = /Version\/\S+ Safari\//.test(navigator.userAgent)
+
+	it.skipIf(isWebKit)('collects a mutation record with more nodes than a call can take as arguments', () => {
 		const mounted = vi.fn()
 		class Needle extends Component('needle') {
 			onMount(): void {
@@ -911,5 +915,28 @@ describe('distributed observer boundary', () => {
 		expect(distributedDestroys).toEqual([wrapper])
 		app.destroy(scope)
 		expect(distributedDestroys).toEqual([wrapper, scope])
+	})
+})
+
+describe('observer realms', () => {
+	it('observes a scope whose document has no window', () => {
+		const mounted = vi.fn()
+		class Card extends Component('windowless') {
+			onMount(): void {
+				mounted()
+			}
+		}
+		const windowless = document.implementation.createHTMLDocument('')
+		const app = createApp({ observe: true }).register([Card])
+		app.mount(windowless.body)
+
+		expect(windowless.defaultView).toBeNull()
+
+		windowless.body.append(windowless.importNode(componentRoot('windowless')))
+
+		expect(app.findAll(Card, windowless.body)).toHaveLength(1)
+		expect(mounted).toHaveBeenCalledOnce()
+
+		app.disconnect(windowless.body)
 	})
 })

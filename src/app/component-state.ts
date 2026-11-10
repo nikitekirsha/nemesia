@@ -1,7 +1,6 @@
 interface ConstructionReservation {
 	readonly root: Element
 	readonly component: string
-	released: boolean
 }
 
 function changeCount(counts: Map<string, number>, component: string, change: 1 | -1): void {
@@ -26,13 +25,10 @@ export class ConcreteComponentState {
 	public reserveConstruction(root: Element, component: string): ConstructionReservation {
 		this.#constructingRoots.add(root)
 		changeCount(this.#constructionCounts, component, 1)
-		return { root, component, released: false }
+		return { root, component }
 	}
 
 	public releaseConstruction(reservation: ConstructionReservation): void {
-		if (reservation.released) return
-		reservation.released = true
-
 		this.#constructingRoots.delete(reservation.root)
 		changeCount(this.#constructionCounts, reservation.component, -1)
 	}

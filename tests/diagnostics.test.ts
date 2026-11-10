@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 
-import { Component, DistributedComponent, createApp } from '../src/index.js'
+import { BaseComponent, Component, DistributedComponent, createApp } from '../src/index.js'
 
 function root(component: string, tag = 'div'): HTMLElement {
 	const element = document.createElement(tag)
@@ -363,5 +363,20 @@ describe('exact unexpected error diagnostics', () => {
 
 		expect(() => createApp().register([Original, Latest, Broken, Good]).mount(document.body)).not.toThrow()
 		expect(mounted).toEqual(['latest', 'good'])
+	})
+})
+
+describe('component names', () => {
+	it('names a component that extends BaseComponent directly after its class', () => {
+		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+		class Direct extends BaseComponent {}
+		const directRoot = document.createElement('section')
+
+		new Direct(directRoot).warn('careful')
+
+		expect(warn).toHaveBeenCalledWith('[Nemesia] Component "Direct": careful', {
+			component: 'Direct',
+			root: directRoot
+		})
 	})
 })

@@ -9,6 +9,7 @@ expect.addEqualityTesters([
 ])
 
 afterEach(() => {
-	document.body.replaceChildren()
+	// Files that opt into the node environment have no document to reset.
+	if (typeof document !== 'undefined') document.body.replaceChildren()
 	vi.restoreAllMocks()
 })

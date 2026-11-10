@@ -11,6 +11,14 @@
 		"noEmit": true,
 		"types": ["vitest/globals", "node"]
 	},
-	"include": ["src", "tests", "vite.config.ts", "vite.umd.config.ts", "vitest.config.ts"],
+	"include": [
+		"src",
+		"tests",
+		"bench",
+		"vite.config.ts",
+		"vite.umd.config.ts",
+		"vitest.config.ts",
+		"vitest.browser.config.ts"
+	],
 	"exclude": ["tests/consumer"]
 }

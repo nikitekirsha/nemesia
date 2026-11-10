@@ -106,7 +106,9 @@ function refSelector(name: string): string {
 
 // A ref on a nested component root belongs to the component above it.
 function owner(element: Element): Element | null {
-	return (element.hasAttribute('data-nemesia') ? element.parentElement : element)?.closest('[data-nemesia]') ?? null
+	// The element was found below a root, so a nested root always has a parent element.
+	const start = element.hasAttribute('data-nemesia') ? (element.parentElement as Element) : element
+	return start.closest('[data-nemesia]')
 }
 
 // One lookup family, such as `ref`, `ref.optional`, `ref.many`, or `ref.optional.many`.

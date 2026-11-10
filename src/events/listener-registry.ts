@@ -20,9 +20,10 @@ export class ListenerRegistry {
 		listener: ((event: Event) => void) | ((event: Event, target: TTarget, index: number) => void),
 		options?: AddEventListenerOptions
 	): void {
-		if (this.#closed) return
-
 		const registrationOptions = snapshotOptions(options)
+
+		// The browser ignores a listener registered with an aborted signal, so there is nothing to attach or own.
+		if (this.#closed || registrationOptions?.signal?.aborted === true) return
 
 		if (Array.isArray(targetOrTargets)) {
 			const attachments: Array<() => void> = []
@@ -75,16 +76,13 @@ export class ListenerRegistry {
 		options?: AddEventListenerOptions
 	): () => void {
 		const signal = options?.signal
-		let attached = true
 
-		// A listener the browser has already removed must not stay referenced until destroy.
+		// A listener that is gone must not stay referenced until destroy.
 		const release = (): void => {
-			attached = false
 			this.#unsubscribers.delete(unsubscribe)
-			signal?.removeEventListener('abort', release)
+			signal?.removeEventListener('abort', unsubscribe)
 		}
 		const unsubscribe = (): void => {
-			if (!attached) return
 			release()
 			target.removeEventListener(eventName, registered, options)
 		}
@@ -107,13 +105,8 @@ export class ListenerRegistry {
 			throw error
 		}
 
-		// The browser ignores a listener registered with an aborted signal.
-		if (signal?.aborted === true) {
-			attached = false
-			return unsubscribe
-		}
-
-		signal?.addEventListener('abort', release, { once: true })
+		// Removing the listener here as well keeps cleanup independent of how the target treats the signal.
+		signal?.addEventListener('abort', unsubscribe, { once: true })
 		this.#unsubscribers.add(unsubscribe)
 		return unsubscribe
 	}

@@ -341,3 +341,23 @@ describe('BaseComponent ref initialization', () => {
 		expect(instance.ref.button('submit')).toBe(button)
 	})
 })
+
+describe('elements outside any namespace', () => {
+	it('reports an element without a namespace as received', () => {
+		const root = createRoot('bare')
+		appendRef(root, document.createElementNS(null, 'thing'), 'item')
+
+		expectControlledError(
+			() => createRefApi(root, 'bare').element('item'),
+			'invalid ref "item": expected HTMLElement, received <thing> in namespace "null"',
+			{
+				component: 'bare',
+				root,
+				ref: 'item',
+				selector: '[data-ref="item"]',
+				expected: 'HTMLElement',
+				received: '<thing> in namespace "null"'
+			}
+		)
+	})
+})

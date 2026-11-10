@@ -10,9 +10,7 @@ import type {
 	NemesiaApp
 } from '../component/types.js'
 import {
-	type ComponentDiagnosticContext,
 	reportConstructionError,
-	reportDestroyError,
 	reportMountError,
 	warnDuplicateRegistration,
 	warnMissingDefaultScope,
@@ -72,13 +70,12 @@ function describeValue(value: unknown): string {
 	return value === null ? 'null' : typeof value
 }
 
-function observerConstructor(scope: ParentNode): typeof MutationObserver | undefined {
+// A scope from another window is observed with that window's observer; a document without a window uses ours.
+function observerConstructor(scope: ParentNode): typeof MutationObserver {
 	const node = scope as Node
-	const ownerDocument = node.nodeType === 9 ? (node as Document) : node.ownerDocument
-	const realmConstructor = ownerDocument?.defaultView?.MutationObserver
+	const ownerDocument = node.nodeType === 9 ? (node as Document) : (node.ownerDocument as Document)
 
-	if (realmConstructor !== undefined) return realmConstructor
-	return typeof MutationObserver === 'undefined' ? undefined : MutationObserver
+	return ownerDocument.defaultView?.MutationObserver ?? MutationObserver
 }
 
 function hasAncestorIn(node: Node, ancestors: ReadonlySet<Node>): boolean {
@@ -171,8 +168,8 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		if (records === undefined) return
 
 		this.#scopes.delete(scope)
-		for (const [name, instance] of records) {
-			this.#teardown(instance, name, { scope })
+		for (const instance of records.values()) {
+			instance[teardownComponent]()
 		}
 	}
 
@@ -230,19 +227,20 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	}
 
 	#destroyConcrete(scope: ParentNode): void {
-		const roots = deepestFirst([...this.#roots.keys()].filter(root => this.#belongsToScope(root, scope)))
+		const roots: Element[] = []
+		for (const [root, record] of this.#roots) {
+			if (this.#belongsToScope(root, record, scope)) roots.push(root)
+		}
 
-		this.#destroyConcreteRoots(roots)
+		this.#destroyConcreteRoots(deepestFirst(roots))
 	}
 
-	#belongsToScope(root: Element, scope: ParentNode): boolean {
+	#belongsToScope(root: Element, record: MountedRoot, scope: ParentNode): boolean {
 		if (isWithinScope(root, scope)) return true
 
 		// A root detached from the scope's tree is still owned by the scope it was last mounted in.
 		const scopeNode = scope as Node
-		return (
-			root.getRootNode() !== scopeNode.getRootNode() && (this.#roots.get(root)?.ancestry.includes(scopeNode) ?? false)
-		)
+		return root.getRootNode() !== scopeNode.getRootNode() && record.ancestry.includes(scopeNode)
 	}
 
 	#destroyConcreteRoots(roots: Iterable<Element>): void {
@@ -251,7 +249,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			if (record === undefined) continue
 
 			this.#remove(root, record.instance)
-			this.#teardown(record.instance, record.name, { root })
+			record.instance[teardownComponent]()
 		}
 	}
 
@@ -259,8 +257,6 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		if (this.#observed.has(scope)) return
 
 		const Observer = observerConstructor(scope)
-		if (Observer === undefined) return
-
 		const observer = new Observer(records => this.#queueMutations(records))
 
 		observer.observe(scope, { childList: true, subtree: true })
@@ -431,7 +427,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 						error => {
 							reportMountError(name, { root }, error)
 							this.#remove(root, instance)
-							this.#teardown(instance, name, { root })
+							instance[teardownComponent]()
 						}
 					)
 				}
@@ -485,10 +481,9 @@ export class NemesiaAppImplementation implements NemesiaApp {
 						reportMountError(name, { scope }, error)
 						if (!isCurrent()) return
 
-						const current = this.#scopes.get(scope)
-						current?.delete(name)
-						if (current?.size === 0) this.#scopes.delete(scope)
-						this.#teardown(instance, name, { scope })
+						records.delete(name)
+						if (records.size === 0) this.#scopes.delete(scope)
+						instance[teardownComponent]()
 					})
 				}
 			})
@@ -508,15 +503,12 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 		if (hookResult === undefined) return
 
-		void Promise.resolve(hookResult)
-			.catch(error => {
-				// Aborting pending work from onDestroy is expected, not a mount failure.
-				if (isAbortError(error) && !isCurrent()) return
-				fail(error)
-			})
-			.catch(() => {
-				// A throwing diagnostic must not become an unhandled rejection.
-			})
+		// Nothing in this handler can throw, so the rejection never becomes an unhandled one.
+		void Promise.resolve(hookResult).catch(error => {
+			// Aborting pending work from onDestroy is expected, not a mount failure.
+			if (isAbortError(error) && !isCurrent()) return
+			fail(error)
+		})
 	}
 
 	#isDistributedConstructing(scope: ParentNode, component: string): boolean {
@@ -568,13 +560,5 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 		this.#roots.delete(root)
 		this.#state.deactivate(record.name)
-	}
-
-	#teardown(instance: MountedInstance, name: string, context: ComponentDiagnosticContext): void {
-		try {
-			instance[teardownComponent]()
-		} catch (error) {
-			reportDestroyError(name, context, error)
-		}
 	}
 }

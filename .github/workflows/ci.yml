@@ -38,3 +38,27 @@ jobs:
 
       - name: Verify
         run: npm run verify
+
+  browser:
+    name: Browsers
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Chromium tests run in the Google Chrome that the runner image already has.
+      - name: Install Firefox and WebKit
+        run: npx playwright install --with-deps firefox webkit
+
+      - name: Test in Chrome, Firefox, and WebKit
+        run: npm run test:browser

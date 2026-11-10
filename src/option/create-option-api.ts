@@ -209,7 +209,9 @@ class OptionReader {
 	#resolve<T>(name: string, expected: string, parser: ParseOption<T>, options?: { default?: T }): T | undefined {
 		const attribute = optionAttribute(name)
 
-		if (!this.#root.hasAttribute(attribute)) {
+		const raw = this.#root.getAttribute(attribute)
+
+		if (raw === null) {
 			if (this.#required) {
 				return this.#fail(`missing required option "${name}"`, name, attribute, expected, undefined)
 			}
@@ -217,7 +219,6 @@ class OptionReader {
 			return hasDefault(options) ? options.default : undefined
 		}
 
-		const raw = this.#root.getAttribute(attribute) ?? ''
 		let result: ParseResult<T>
 
 		try {

@@ -80,7 +80,6 @@ export abstract class ComponentCore {
 
 	/** @internal */
 	public [abortComponentConstruction](): void {
-		if (this.#destroyed) return
 		this.#destroyed = true
 		this.#listeners.clear()
 	}

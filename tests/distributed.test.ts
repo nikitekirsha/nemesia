@@ -604,3 +604,102 @@ describe('distributed observer boundary', () => {
 		expect(() => app.disconnect(document.body)).not.toThrow()
 	})
 })
+
+describe('distributed bookkeeping', () => {
+	it('reserves two distributed components of one scope at the same time', () => {
+		const order: string[] = []
+		const scope = document.createDocumentFragment()
+		const app = createApp()
+		class Outer extends DistributedComponent('reserve-outer') {
+			constructor(componentScope: ParentNode) {
+				super(componentScope)
+				app.mount(componentScope)
+				order.push('outer constructed')
+			}
+
+			onMount(): void {
+				order.push('outer mount')
+			}
+		}
+		class Inner extends DistributedComponent('reserve-inner') {
+			constructor(componentScope: ParentNode) {
+				super(componentScope)
+				order.push('inner constructed')
+			}
+
+			onMount(): void {
+				order.push('inner mount')
+			}
+		}
+
+		app.register([Outer, Inner]).mount(scope)
+
+		expect(order).toEqual(['inner constructed', 'inner mount', 'outer constructed', 'outer mount'])
+		expect(app.findAll(Outer, scope)).toHaveLength(1)
+		expect(app.findAll(Inner, scope)).toHaveLength(1)
+	})
+
+	it('skips the hook of a distributed instance destroyed by a concrete hook in the same mount', () => {
+		const order: string[] = []
+		const app = createApp()
+		class Late extends DistributedComponent('destroyed-before-hook') {
+			onMount(): void {
+				order.push('distributed mount')
+			}
+
+			onDestroy(): void {
+				order.push('distributed destroy')
+			}
+		}
+		class Killer extends Component('distributed-killer') {
+			onMount(): void {
+				order.push('killer mount')
+				app.destroy()
+			}
+		}
+		const killer = document.createElement('div')
+		killer.setAttribute('data-nemesia', 'distributed-killer')
+		document.body.append(killer)
+
+		app.register([Late, Killer]).mount()
+
+		expect(order).toEqual(['killer mount', 'distributed destroy'])
+		expect(app.find(Late)).toBeNull()
+	})
+
+	it('forgets a scope whose only distributed component failed to mount and tries again later', () => {
+		const attempts = vi.fn()
+		class Failing extends DistributedComponent('only-failing') {
+			onMount(): void {
+				attempts()
+				throw new Error('mount failed')
+			}
+		}
+		vi.spyOn(console, 'error').mockImplementation(() => {})
+		const scope = document.createDocumentFragment()
+		const app = createApp().register([Failing])
+
+		app.mount(scope)
+
+		expect(app.findAll(Failing, scope)).toEqual([])
+
+		app.mount(scope)
+
+		expect(attempts).toHaveBeenCalledTimes(2)
+	})
+
+	it('skips scopes that do not hold the requested distributed component', () => {
+		class Everywhere extends DistributedComponent('find-everywhere') {}
+		class BodyOnly extends DistributedComponent('find-body-only') {}
+		const inner = document.createElement('section')
+		document.body.append(inner)
+		const app = createApp().register([Everywhere])
+		app.mount(inner)
+
+		app.register([BodyOnly]).mount()
+
+		expect(app.findAll(Everywhere)).toHaveLength(2)
+		expect(app.findAll(BodyOnly)).toEqual([app.find(BodyOnly, document.body)])
+		expect(app.find(BodyOnly, inner)).toBeNull()
+	})
+})

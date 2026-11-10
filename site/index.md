@@ -256,7 +256,7 @@ class Tabs extends Component('tabs') {
 
 <Reveal>
 
-<SizeBars :rows="[{ name: 'nemesia', size: 5.8, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
+<SizeBars :rows="[{ name: 'nemesia', size: 5.7, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
 
 <p class="nm-note">Published browser builds, minified and gzipped.</p>
 
