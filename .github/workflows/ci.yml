@@ -39,9 +39,31 @@ jobs:
       - name: Verify
         run: npm run verify
 
+  # The browser image has to match the Playwright version in the lockfile, so the tag is read from it.
+  playwright-version:
+    name: Playwright version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.read.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Read the version from the lockfile
+        id: read
+        run: echo "version=$(node -p "require('./package-lock.json').packages['node_modules/playwright'].version")" >> "$GITHUB_OUTPUT"
+
   browser:
     name: Browsers
+    needs: playwright-version
     runs-on: ubuntu-latest
+    # Playwright's image already holds Chromium, Firefox, WebKit, and their system libraries,
+    # so a run downloads no browsers and installs nothing with apt.
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.playwright-version.outputs.version }}-noble
+      # Firefox refuses to start as root, the image's default user.
+      options: --user 1001
 
     steps:
       - name: Checkout
@@ -56,9 +78,5 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Chromium tests run in the Google Chrome that the runner image already has.
-      - name: Install Firefox and WebKit
-        run: npx playwright install --with-deps firefox webkit
-
-      - name: Test in Chrome, Firefox, and WebKit
+      - name: Test in Chromium, Firefox, and WebKit
         run: npm run test:browser

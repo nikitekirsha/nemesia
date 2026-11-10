@@ -1,6 +1,11 @@
 import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
+// Locally the installed Google Chrome stands in for Chromium, so only Firefox and WebKit are downloaded:
+// npx playwright install firefox webkit
+// CI runs inside Playwright's own image, which ships all three browsers.
+const chromium = process.env.CI ? playwright() : playwright({ launchOptions: { channel: 'chrome' } })
+
 // Runs the same tests in real browsers. jsdom stays the default because it needs nothing installed;
 // this run checks what jsdom only imitates: mutation timing, events, shadow trees, and other realms.
 export default defineConfig({
@@ -14,13 +19,7 @@ export default defineConfig({
 			headless: true,
 			screenshotFailures: false,
 			provider: playwright(),
-			instances: [
-				// Chromium tests run in the installed Google Chrome, so only Firefox and WebKit are downloaded:
-				// npx playwright install firefox webkit
-				{ browser: 'chromium', provider: playwright({ launchOptions: { channel: 'chrome' } }) },
-				{ browser: 'firefox' },
-				{ browser: 'webkit' }
-			]
+			instances: [{ browser: 'chromium', provider: chromium }, { browser: 'firefox' }, { browser: 'webkit' }]
 		}
 	}
 })
