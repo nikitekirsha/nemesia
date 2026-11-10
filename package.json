@@ -1,6 +1,6 @@
 {
 	"name": "nemesia",
-	"version": "2.3.0",
+	"version": "2.4.0",
 	"description": "DOM-first runtime for server-rendered websites",
 	"type": "module",
 	"sideEffects": false,
