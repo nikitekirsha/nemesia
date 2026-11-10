@@ -82,6 +82,43 @@ this.on(this.tabs, 'click', (event, tab, index) => {
 
 Nemesia creates one listener per target. The callback receives the event, current target, and stable array index.
 
+## Channels
+
+A channel is how a component tells other components that something happened, with a typed value and without DOM events. The component that owns the news creates the channel and emits into it:
+
+```ts
+class Counter extends Component('counter') {
+	changed = this.channel<number>()
+
+	private step(delta: number) {
+		this.value += delta
+		this.changed.emit(this.value)
+	}
+}
+```
+
+A component that cares finds the counter and listens with `this.on`:
+
+```ts
+class CartControl extends Component('cart-control') {
+	onMount() {
+		for (const counter of this.findAll(Counter)) {
+			this.on(counter.changed, value => this.setQuantity(value)) // value: number
+		}
+	}
+}
+```
+
+Nothing has to be cleaned up by hand. The listener is removed when the listening component is destroyed, the channel closes when its owner is destroyed, and `this.on` returns a function that stops listening earlier.
+
+`this.channel()` without a type is a plain notification: `this.saved.emit()`.
+
+A listener that throws is reported with `console.error` and does not stop the other listeners or the component that emitted.
+
+The owner may still emit from its `onDestroy`; the channel closes right after the hook.
+
+Code outside a component can listen with `channel.subscribe(listener)`, which returns the function that removes the listener.
+
 ## `onMount`
 
 `onMount` runs after construction and after all field initializers have resolved refs and options.

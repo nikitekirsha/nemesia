@@ -26,6 +26,7 @@ Every concrete instance exposes:
 - `option` — typed root-attribute parsing;
 - `on` — event registration with automatic cleanup;
 - `signal` — an `AbortSignal` that aborts when the component is destroyed;
+- `channel` — creates a typed channel that other components listen to;
 - `warn` — a contextual warning helper;
 - `find` and `findAll` — lookup of other mounted components;
 - optional `onMount` and `onDestroy` hooks.

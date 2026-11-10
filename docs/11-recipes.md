@@ -177,7 +177,7 @@ Work that takes no signal can check `this.signal.aborted` after an `await` inste
 
 ## Coordinating components
 
-A parent component reads nested components with `findAll`. Nested components report changes with bubbling events:
+A parent component reads nested components with `findAll`. To report a change, a nested component either offers a channel or dispatches a bubbling event.
 
 ```html
 <div data-nemesia="cart">
@@ -190,6 +190,48 @@ A parent component reads nested components with `findAll`. Nested components rep
 	<span data-ref="total"></span>
 </div>
 ```
+
+### With a channel
+
+Use a channel when the listener can find the component it listens to. The value is typed, and both sides are cleaned up automatically:
+
+```ts
+class CartItem extends Component('cart-item') {
+	quantity = this.ref.input('quantity')
+	price = this.option.number('price')
+	changed = this.channel()
+
+	get subtotal() {
+		return this.price * Number(this.quantity.value)
+	}
+
+	onMount() {
+		this.on(this.quantity, 'change', () => this.changed.emit())
+	}
+}
+
+class Cart extends Component('cart') {
+	total = this.ref.element('total')
+
+	onMount() {
+		this.render()
+		for (const item of this.findAll(CartItem)) {
+			this.on(item.changed, () => this.render())
+		}
+	}
+
+	private render() {
+		const total = this.findAll(CartItem).reduce((sum, item) => sum + item.subtotal, 0)
+		this.total.textContent = String(total)
+	}
+}
+```
+
+The cart listens to the items that exist when it mounts. Items added later are not listened to, which is where a bubbling event fits better.
+
+### With a bubbling event
+
+Use a bubbling event when the sender should not care who listens. An ancestor hears every nested component, including ones that are added later:
 
 ```ts
 class CartItem extends Component('cart-item') {

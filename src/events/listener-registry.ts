@@ -1,4 +1,4 @@
-const nothingToRemove = (): void => {}
+import { type Channel, nothingToRemove } from './channel.js'
 
 export class ListenerRegistry {
 	readonly #unsubscribers = new Set<() => void>()
@@ -55,6 +55,28 @@ export class ListenerRegistry {
 		}
 
 		return this.#attach(targetOrTargets as TTarget, eventName, listener as (event: Event) => void, registrationOptions)
+	}
+
+	// A channel listener is owned like a DOM listener: removed on destroy, and forgotten as soon as the channel closes.
+	public subscribe<TValue>(channel: Channel<TValue>, listener: (value: TValue) => void): () => void {
+		if (this.#closed) return nothingToRemove
+
+		let removeFromChannel = nothingToRemove
+		const unsubscribe = (): void => {
+			this.#unsubscribers.delete(unsubscribe)
+			removeFromChannel()
+		}
+
+		this.#unsubscribers.add(unsubscribe)
+		removeFromChannel = channel.subscribe(listener, () => this.#unsubscribers.delete(unsubscribe))
+
+		return unsubscribe
+	}
+
+	// Something that is released with the component but is not a listener, such as a channel it created.
+	public own(release: () => void): void {
+		if (this.#closed) release()
+		else this.#unsubscribers.add(release)
 	}
 
 	public clear(): readonly unknown[] {

@@ -16,6 +16,7 @@ The package exports:
 - `CreateAppOptions`
 - `ComponentConstructor`
 - `LazyComponent`
+- `Channel`
 - `ConcreteComponentOptions`
 - `StringOptionOptions`
 - `NumberOptionOptions`

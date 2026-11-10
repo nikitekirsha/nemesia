@@ -49,6 +49,14 @@ export function reportDestroyError(component: string, context: ComponentDiagnost
 	}))
 }
 
+export function reportChannelError(component: string, context: ComponentDiagnosticContext, error: unknown): void {
+	emitError(`[Nemesia] A listener of a channel of component "${component}" failed.`, () => ({
+		component,
+		...context,
+		error
+	}))
+}
+
 export function warnDuplicateRegistration(component: string): void {
 	emitWarning(
 		`[Nemesia] Component "${component}" was registered more than once. The latest registration was used.`,

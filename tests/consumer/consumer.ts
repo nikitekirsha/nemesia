@@ -5,6 +5,7 @@ import {
 	createApp,
 	lazy,
 	type BooleanOptionOptions,
+	type Channel,
 	type ComponentConstructor,
 	type ConcreteComponentOptions,
 	type CreateAppOptions,
@@ -44,6 +45,8 @@ class Typed extends Component('typed', concreteOptions) {
 	optionalMany = this.ref.optional.many.input('optionalItem')
 	dialog = this.ref.tag('dialog', 'dialog')
 	links = this.ref.optional.many.tag('a', 'link')
+	changed = this.channel<number>()
+	saved = this.channel()
 
 	title = this.option.string('title', { minLength: 1 })
 	subtitle = this.option.optional.string('subtitle', stringOptions)
@@ -67,6 +70,13 @@ class Typed extends Component('typed', concreteOptions) {
 			void x
 		})
 		const signal: AbortSignal = this.signal
+		const changed: Channel<number> = this.changed
+		const stop: () => void = this.on(changed, value => {
+			const next: number = value
+			void next
+		})
+		this.saved.emit()
+		void stop
 		const dialog: HTMLDialogElement = this.dialog
 		const links: HTMLAnchorElement[] = this.links
 		void off

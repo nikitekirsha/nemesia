@@ -1,9 +1,11 @@
+import { type Channel, ComponentChannel } from '../events/channel.js'
 import { ListenerRegistry } from '../events/listener-registry.js'
 import type { EventName, TargetEvent } from '../events/types.js'
 import { captureConstructingComponent } from '../internal/construction.js'
 import {
 	type ComponentDiagnosticContext,
 	observeRejection,
+	reportChannelError,
 	reportDestroyError,
 	resolveComponentName,
 	warnComponent
@@ -41,6 +43,24 @@ export abstract class ComponentCore {
 	}
 
 	/**
+	 * Creates a channel: a typed stream of values this component sends with `emit`.
+	 * Other components listen with `this.on(channel, listener)`. The channel closes when this component is destroyed.
+	 */
+	public channel<TValue = void>(): Channel<TValue> {
+		const channel = new ComponentChannel<TValue>(error => {
+			reportChannelError(this.#componentName, this.#context, error)
+		})
+		this.#listeners.own(() => channel.close())
+
+		return channel
+	}
+
+	/**
+	 * Listens to a channel of another component, until this component is destroyed or the channel closes.
+	 * Returns a function that stops listening earlier.
+	 */
+	public on<TValue>(channel: Channel<TValue>, listener: (value: TValue) => void): () => void
+	/**
 	 * Registers an event listener that is removed automatically on destroy, and returns a function that removes it earlier.
 	 * Known DOM events are typed from the target; custom events are `Event` unless the listener parameter is annotated.
 	 */
@@ -58,11 +78,15 @@ export abstract class ComponentCore {
 		options?: AddEventListenerOptions
 	): () => void
 	public on<TTarget extends EventTarget>(
-		targetOrTargets: TTarget | readonly TTarget[],
-		eventName: string,
-		listener: ((event: Event) => void) | ((event: Event, target: TTarget, index: number) => void),
+		targetOrTargets: TTarget | readonly TTarget[] | Channel<unknown>,
+		eventName: string | ((value: unknown) => void),
+		listener?: ((event: Event) => void) | ((event: Event, target: TTarget, index: number) => void),
 		options?: AddEventListenerOptions
 	): () => void {
+		if (typeof eventName === 'function') {
+			return this.#listeners.subscribe(targetOrTargets as Channel<unknown>, eventName)
+		}
+
 		if (Array.isArray(targetOrTargets)) {
 			return this.#listeners.on(
 				targetOrTargets,

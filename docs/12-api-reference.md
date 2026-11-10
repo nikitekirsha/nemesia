@@ -52,6 +52,8 @@ class Search extends Component('search', { root: 'form' }) {}
 | `option`                   | Option parsing from `data-option-*`; see below.                                                                   |
 | `on(target, type, fn, o?)` | Adds a listener that is removed on destroy. `target` may be an array. Returns a function that removes it earlier. |
 | `signal`                   | An `AbortSignal` that aborts when the component is destroyed.                                                     |
+| `channel<T>()`             | Creates a typed channel this component emits into. It closes when the component is destroyed.                     |
+| `on(channel, fn)`          | Listens to a channel of another component until either side is destroyed. Returns a function that stops earlier.  |
 | `warn(message, payload?)`  | Logs a warning with the component name and root attached.                                                         |
 | `find(Class, within?)`     | Like `app.find`, but `within` defaults to the root and the caller is never returned.                              |
 | `findAll(Class, within?)`  | Like `app.findAll`, with the same defaults.                                                                       |
@@ -121,18 +123,18 @@ class Analytics extends DistributedComponent('analytics') {}
 
 One instance is mounted for each exact scope passed to `app.mount`. It has no `root`, `ref`, or `option`.
 
-| Member                     | Meaning                                                        |
-| -------------------------- | -------------------------------------------------------------- |
-| `scope`                    | The node passed to `app.mount`.                                |
-| `on`, `signal`, `warn`     | The same as on a concrete component.                           |
-| `find`, `findAll`          | The same, with `within` defaulting to the scope.               |
-| `onMount()`, `onDestroy()` | The same hooks. `onMount` runs after the concrete components'. |
+| Member                            | Meaning                                                        |
+| --------------------------------- | -------------------------------------------------------------- |
+| `scope`                           | The node passed to `app.mount`.                                |
+| `on`, `signal`, `channel`, `warn` | The same as on a concrete component.                           |
+| `find`, `findAll`                 | The same, with `within` defaulting to the scope.               |
+| `onMount()`, `onDestroy()`        | The same hooks. `onMount` runs after the concrete components'. |
 
 ## Exports
 
 Runtime: `Component`, `DistributedComponent`, `createApp`, `lazy`, `BaseComponent`, `BaseDistributedComponent`.
 
-Types: `NemesiaApp`, `CreateAppOptions`, `ComponentConstructor`, `LazyComponent`, `ConcreteComponentOptions`, `StringOptionOptions`, `NumberOptionOptions`, `BooleanOptionOptions`, `JsonOptionOptions`, `DefaultOptionOptions`, `OptionParser`, `OptionValidator`.
+Types: `NemesiaApp`, `CreateAppOptions`, `ComponentConstructor`, `LazyComponent`, `Channel`, `ConcreteComponentOptions`, `StringOptionOptions`, `NumberOptionOptions`, `BooleanOptionOptions`, `JsonOptionOptions`, `DefaultOptionOptions`, `OptionParser`, `OptionValidator`.
 
 The UMD build exposes `Component`, `DistributedComponent`, `createApp`, and `lazy` on the global `Nemesia`.
 
@@ -144,6 +146,7 @@ The UMD build exposes `Component`, `DistributedComponent`, `createApp`, and `laz
 | Wrong root tag, or a second root of a `multiple: false`        | `console.warn`  | That root is skipped.            |
 | A name registered twice                                        | `console.warn`  | The latest registration is used. |
 | A lazy component whose module fails to load                    | `console.error` | Its roots stay unmounted.        |
+| A channel listener that throws                                 | `console.error` | The other listeners still run.   |
 | `mount()` before `document.body` exists                        | `console.warn`  | Nothing is mounted.              |
 | An error thrown by a constructor or `onMount`                  | `console.error` | That instance is dropped.        |
 | An error thrown by `onDestroy`                                 | `console.error` | Cleanup continues.               |

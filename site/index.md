@@ -256,7 +256,7 @@ class Tabs extends Component('tabs') {
 
 <Reveal>
 
-<SizeBars :rows="[{ name: 'nemesia', size: 6.2, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
+<SizeBars :rows="[{ name: 'nemesia', size: 6.4, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
 
 <p class="nm-note">Published browser builds, minified and gzipped.</p>
 
@@ -281,7 +281,7 @@ class Tabs extends Component('tabs') {
 	</div>
 	<div>
 		<dt>Stimulus?</dt>
-		<dd>The closest in spirit. Nemesia checks refs and options on mount, infers their types without extra declarations, and weighs about half as much.</dd>
+		<dd>The closest in spirit. Nemesia checks refs and options on mount, infers their types without extra declarations, and weighs a little over half as much.</dd>
 	</div>
 	<div>
 		<dt>jQuery?</dt>
