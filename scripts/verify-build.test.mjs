@@ -207,32 +207,54 @@ async function withStatedSize(page, verify) {
 	}
 }
 
-const sizePage = (compared, rounded) =>
-	`<span>~${rounded} KB gzip</span>\n<SizeBars :rows="[{ name: 'nemesia', size: ${compared}, self: true }]" />\n`
+const sizePage = (compared, stated) =>
+	`<span>${stated}</span>\n<SizeBars :rows="[{ name: 'nemesia', size: ${compared}, self: true }]" />\n`
 
 test('accepts a landing page that states the size of the built bundle', async () => {
 	await withStatedSize(
-		kilobytes => sizePage(kilobytes.toFixed(1), Math.round(kilobytes)),
+		kilobytes => sizePage(kilobytes.toFixed(1), `${kilobytes.toFixed(1)} KB gzip`),
+		run => assert.doesNotReject(run)
+	)
+})
+
+test('accepts the size written with a tilde and without a space', async () => {
+	await withStatedSize(
+		kilobytes => sizePage(kilobytes.toFixed(1), `~${kilobytes.toFixed(1)}kb`),
 		run => assert.doesNotReject(run)
 	)
 })
 
 test('rejects a landing page with a stale size in the comparison', async () => {
 	await withStatedSize(
-		kilobytes => sizePage((kilobytes + 0.4).toFixed(1), Math.round(kilobytes)),
+		kilobytes => sizePage((kilobytes + 0.4).toFixed(1), `${kilobytes.toFixed(1)} KB gzip`),
 		run =>
 			assert.rejects(run, /\[verify-build\] index\.md lists nemesia as .* KB in the size comparison, but bundle\.js is/)
 	)
 })
 
-test('rejects a landing page with a stale rounded size', async () => {
+test('rejects a landing page with a stale stated size', async () => {
 	await withStatedSize(
-		kilobytes => sizePage(kilobytes.toFixed(1), Math.round(kilobytes) + 1),
-		run => assert.rejects(run, /\[verify-build\] index\.md states ~\d+ KB gzip, but bundle\.js is/)
+		kilobytes => sizePage(kilobytes.toFixed(1), `${(kilobytes + 0.4).toFixed(1)} KB gzip`),
+		run => assert.rejects(run, /\[verify-build\] index\.md states [\d.]+ KB, but bundle\.js is/)
 	)
 })
 
-test('rejects a landing page that no longer states the size', async () => {
+test('rejects a landing page that states one stale size among correct ones', async () => {
+	await withStatedSize(
+		kilobytes =>
+			sizePage(kilobytes.toFixed(1), `${kilobytes.toFixed(1)} KB gzip, and also ~${(kilobytes + 1).toFixed(1)}kb`),
+		run => assert.rejects(run, /\[verify-build\] index\.md states [\d.]+ KB, but bundle\.js is/)
+	)
+})
+
+test('rejects a landing page that no longer states the size in prose', async () => {
+	await withStatedSize(
+		kilobytes => sizePage(kilobytes.toFixed(1), 'Tiny'),
+		run => assert.rejects(run, /\[verify-build\] index\.md no longer states the gzip size/)
+	)
+})
+
+test('rejects a landing page that no longer lists the size comparison', async () => {
 	await withStatedSize(
 		() => '<p>No numbers here.</p>\n',
 		run => assert.rejects(run, /no longer lists nemesia in the size comparison/)

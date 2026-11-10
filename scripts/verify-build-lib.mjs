@@ -165,7 +165,7 @@ export async function verifyDeclarationGraph({ distDirectory, entryPath, project
 	check(visited.size > 1, 'dist/index.d.ts does not reference any emitted declarations')
 }
 
-// The landing page states how much the browser build weighs. Both numbers must describe the bundle that was just built.
+// The landing page states how much the browser build weighs. Every number it gives must describe the bundle that was just built.
 export async function verifyStatedSize({ bundlePath, pagePath, projectRoot }) {
 	await requireFile(projectRoot, bundlePath)
 	await requireFile(projectRoot, pagePath)
@@ -182,7 +182,10 @@ export async function verifyStatedSize({ bundlePath, pagePath, projectRoot }) {
 		`${label} lists nemesia as ${compared} KB in the size comparison, but ${actual}`
 	)
 
-	const rounded = page.match(/~(\d+) KB gzip/)?.[1]
-	check(rounded !== undefined, `${label} no longer states the rounded gzip size`)
-	check(Number(rounded) === Math.round(kilobytes), `${label} states ~${rounded} KB gzip, but ${actual}`)
+	// Every size the page writes out in prose, such as "5.6 KB" or "~5.6kb", has to be the real one
+	const stated = [...page.matchAll(/~?(\d+(?:\.\d+)?) ?KB\b/gi)].map(match => match[1])
+	check(stated.length > 0, `${label} no longer states the gzip size`)
+	for (const figure of stated) {
+		check(Number(figure).toFixed(1) === kilobytes.toFixed(1), `${label} states ${figure} KB, but ${actual}`)
+	}
 }
