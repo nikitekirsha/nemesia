@@ -650,3 +650,90 @@ describe('component warning facade', () => {
 		expect(warnSpy).not.toHaveBeenCalled()
 	})
 })
+
+describe('removing a listener early', () => {
+	it('returns a function that removes a single listener before destroy', () => {
+		const listener = vi.fn()
+		const target = new EventTarget()
+		const removeSpy = vi.spyOn(target, 'removeEventListener')
+		class Early extends Component('early-single') {
+			attach(): () => void {
+				const off = this.on(target, 'change', listener)
+				expectTypeOf(off).toEqualTypeOf<() => void>()
+				return off
+			}
+		}
+		const instance = new Early(document.createElement('section'))
+		const off = instance.attach()
+
+		target.dispatchEvent(new Event('change'))
+		off()
+		target.dispatchEvent(new Event('change'))
+
+		expect(listener).toHaveBeenCalledOnce()
+		expect(removeSpy).toHaveBeenCalledOnce()
+
+		teardown(instance)
+
+		expect(removeSpy).toHaveBeenCalledOnce()
+	})
+
+	it('returns one function that removes every listener of an array registration', () => {
+		const calls: number[] = []
+		const targets = [new EventTarget(), new EventTarget()] as const
+		class EarlyCollection extends DistributedComponent('early-collection') {
+			attach(): () => void {
+				return this.on(targets, 'change', (_event, _target, index) => calls.push(index))
+			}
+		}
+		const instance = new EarlyCollection(document)
+		const off = instance.attach()
+
+		targets.forEach(target => target.dispatchEvent(new Event('change')))
+		off()
+		targets.forEach(target => target.dispatchEvent(new Event('change')))
+
+		expect(calls).toEqual([0, 1])
+	})
+
+	it('can be called again, and after destroy, without effect', () => {
+		const listener = vi.fn()
+		const target = new EventTarget()
+		class Repeated extends Component('early-repeated') {
+			attach(): () => void {
+				return this.on(target, 'change', listener)
+			}
+		}
+		const instance = new Repeated(document.createElement('section'))
+		const off = instance.attach()
+
+		off()
+		off()
+		teardown(instance)
+
+		expect(() => off()).not.toThrow()
+		expect(listener).not.toHaveBeenCalled()
+	})
+
+	it('returns a callable function when nothing was attached', () => {
+		const listener = vi.fn()
+		const target = new EventTarget()
+		class Nothing extends Component('early-nothing') {
+			attach(options?: AddEventListenerOptions): () => void {
+				return this.on(target, 'change', listener, options)
+			}
+		}
+		const instance = new Nothing(document.createElement('section'))
+		const aborted = instance.attach({ signal: AbortSignal.abort() })
+
+		teardown(instance)
+		const closed = instance.attach()
+
+		expect(() => {
+			aborted()
+			closed()
+		}).not.toThrow()
+		target.dispatchEvent(new Event('change'))
+		expect(listener).not.toHaveBeenCalled()
+	})
+})

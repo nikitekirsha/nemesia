@@ -5,6 +5,9 @@ interface RequiredSingleRefApi {
 	/** Returns one required HTMLElement ref by name. */
 	element(name: string): HTMLElement
 
+	/** Returns one required ref by name that must be the given HTML tag, typed from the tag. */
+	tag<TTag extends keyof HTMLElementTagNameMap>(tag: TTag, name: string): HTMLElementTagNameMap[TTag]
+
 	/** Returns one required button ref by name. */
 	button(name: string): HTMLButtonElement
 
@@ -27,6 +30,9 @@ interface OptionalSingleRefApi {
 
 	/** Returns one optional HTMLElement ref by name, or `null` when it is missing. */
 	element(name: string): HTMLElement | null
+
+	/** Returns one optional ref by name that must be the given HTML tag, or `null` when it is missing. */
+	tag<TTag extends keyof HTMLElementTagNameMap>(tag: TTag, name: string): HTMLElementTagNameMap[TTag] | null
 
 	/** Returns one optional button ref by name, or `null` when it is missing. */
 	button(name: string): HTMLButtonElement | null
@@ -54,6 +60,9 @@ interface RequiredManyRefApi {
 	/** Returns all required HTMLElement refs by name. */
 	element(name: string): HTMLElement[]
 
+	/** Returns all required refs by name; every one must be the given HTML tag. */
+	tag<TTag extends keyof HTMLElementTagNameMap>(tag: TTag, name: string): HTMLElementTagNameMap[TTag][]
+
 	/** Returns all required button refs by name. */
 	button(name: string): HTMLButtonElement[]
 
@@ -76,6 +85,9 @@ interface OptionalManyRefApi {
 
 	/** Returns all optional HTMLElement refs by name, or an empty array when none exist. */
 	element(name: string): HTMLElement[]
+
+	/** Returns all optional refs by name, or an empty array when none exist; every one must be the given HTML tag. */
+	tag<TTag extends keyof HTMLElementTagNameMap>(tag: TTag, name: string): HTMLElementTagNameMap[TTag][]
 
 	/** Returns all optional button refs by name, or an empty array when none exist. */
 	button(name: string): HTMLButtonElement[]

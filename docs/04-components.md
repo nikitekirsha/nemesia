@@ -25,6 +25,7 @@ Every concrete instance exposes:
 - `ref` — typed element lookup;
 - `option` — typed root-attribute parsing;
 - `on` — event registration with automatic cleanup;
+- `signal` — an `AbortSignal` that aborts when the component is destroyed;
 - `warn` — a contextual warning helper;
 - `find` and `findAll` — lookup of other mounted components;
 - optional `onMount` and `onDestroy` hooks.

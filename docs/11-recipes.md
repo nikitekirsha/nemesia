@@ -157,28 +157,23 @@ class MobileMenu extends Component('mobile-menu') {
 
 ## Async onMount
 
-Abort pending work in `onDestroy` and stop after an `await` when the component was destroyed:
+Pass `this.signal` to the request. If the component is destroyed while it waits, the request is aborted and nothing after the `await` runs:
 
 ```ts
 class ProductPrice extends Component('product-price') {
 	value = this.ref.element('value')
 	url = this.option.string('url')
 
-	private controller = new AbortController()
-
 	async onMount() {
-		const response = await fetch(this.url, { signal: this.controller.signal })
+		const response = await fetch(this.url, { signal: this.signal })
 		const { price } = await response.json()
-		if (this.controller.signal.aborted) return
 
 		this.value.textContent = price
 	}
-
-	onDestroy() {
-		this.controller.abort()
-	}
 }
 ```
+
+Work that takes no signal can check `this.signal.aborted` after an `await` instead.
 
 ## Coordinating components
 

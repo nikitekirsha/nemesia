@@ -18,6 +18,7 @@ export abstract class ComponentCore {
 	readonly #context: ComponentDiagnosticContext
 	readonly #target: ParentNode
 	readonly #app: NemesiaApp | undefined
+	#controller: AbortController | undefined
 	#destroyed = false
 
 	protected constructor(target: ParentNode, context: ComponentDiagnosticContext) {
@@ -28,7 +29,19 @@ export abstract class ComponentCore {
 	}
 
 	/**
-	 * Registers an event listener that is removed automatically on destroy.
+	 * A signal that aborts when the component is destroyed.
+	 * Pass it to `fetch` or to anything else that accepts a signal, and the work stops with the component.
+	 */
+	public get signal(): AbortSignal {
+		this.#controller ??= new AbortController()
+		// Asked for only after the component is gone, the signal is born aborted.
+		if (this.#destroyed) this.#controller.abort()
+
+		return this.#controller.signal
+	}
+
+	/**
+	 * Registers an event listener that is removed automatically on destroy, and returns a function that removes it earlier.
 	 * Known DOM events are typed from the target; custom events are `Event` unless the listener parameter is annotated.
 	 */
 	public on<TTarget extends EventTarget, TName extends EventName<TTarget>, TEvent extends Event = Event>(
@@ -36,31 +49,30 @@ export abstract class ComponentCore {
 		eventName: TName,
 		listener: (event: TargetEvent<TTarget, TName, TEvent>) => void,
 		options?: AddEventListenerOptions
-	): void
-	/** Registers the same event listener for every target in the array. */
+	): () => void
+	/** Registers the same event listener for every target in the array; the returned function removes all of them. */
 	public on<TTarget extends EventTarget, TName extends EventName<TTarget>, TEvent extends Event = Event>(
 		targets: readonly TTarget[],
 		eventName: TName,
 		listener: (event: TargetEvent<TTarget, TName, TEvent>, target: TTarget, index: number) => void,
 		options?: AddEventListenerOptions
-	): void
+	): () => void
 	public on<TTarget extends EventTarget>(
 		targetOrTargets: TTarget | readonly TTarget[],
 		eventName: string,
 		listener: ((event: Event) => void) | ((event: Event, target: TTarget, index: number) => void),
 		options?: AddEventListenerOptions
-	): void {
+	): () => void {
 		if (Array.isArray(targetOrTargets)) {
-			this.#listeners.on(
+			return this.#listeners.on(
 				targetOrTargets,
 				eventName,
 				listener as (event: Event, target: TTarget, index: number) => void,
 				options
 			)
-			return
 		}
 
-		this.#listeners.on(targetOrTargets as TTarget, eventName, listener as (event: Event) => void, options)
+		return this.#listeners.on(targetOrTargets as TTarget, eventName, listener as (event: Event) => void, options)
 	}
 
 	/** Logs a component-scoped warning with optional diagnostic payload. */
@@ -80,14 +92,14 @@ export abstract class ComponentCore {
 
 	/** @internal */
 	public [abortComponentConstruction](): void {
-		this.#destroyed = true
+		this.#markDestroyed()
 		this.#listeners.clear()
 	}
 
 	/** @internal */
 	public [teardownComponent](): void {
 		if (this.#destroyed) return
-		this.#destroyed = true
+		this.#markDestroyed()
 
 		let result: Promise<void> | undefined
 		let destroyError: unknown
@@ -115,6 +127,12 @@ export abstract class ComponentCore {
 		for (const error of cleanupErrors) {
 			reportDestroyError(this.#componentName, this.#context, error)
 		}
+	}
+
+	// The signal aborts the moment destruction starts, before `onDestroy` runs.
+	#markDestroyed(): void {
+		this.#destroyed = true
+		this.#controller?.abort()
 	}
 }
 

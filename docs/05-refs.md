@@ -21,7 +21,17 @@ this.ref.select(name) // HTMLSelectElement
 this.ref.form(name) // HTMLFormElement
 ```
 
-Use the generic helper for another element type:
+For any other HTML tag, name it. The result is typed from the tag, and an element with another tag skips the component like the helpers above:
+
+```ts
+modal = this.ref.tag('dialog', 'modal') // HTMLDialogElement
+link = this.ref.tag('a', 'more') // HTMLAnchorElement
+card = this.ref.tag('template', 'card') // HTMLTemplateElement
+```
+
+`tag` exists in every family: `this.ref.optional.tag`, `this.ref.many.tag`, and `this.ref.optional.many.tag`.
+
+For an element that is not HTML, such as SVG, use the generic helper:
 
 ```ts
 icon = this.ref.one<SVGSVGElement>('icon')

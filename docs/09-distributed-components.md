@@ -38,6 +38,7 @@ A distributed instance exposes:
 
 - `scope` — the exact `ParentNode` passed to `mount`;
 - `on` — listener registration with automatic cleanup;
+- `signal` — an `AbortSignal` that aborts when the instance is destroyed;
 - `warn` — contextual warnings;
 - `find` and `findAll` — lookup of mounted components, inside the scope by default;
 - optional `onMount` and `onDestroy` hooks.

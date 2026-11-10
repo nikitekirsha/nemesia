@@ -1,3 +1,5 @@
+const nothingToRemove = (): void => {}
+
 export class ListenerRegistry {
 	readonly #unsubscribers = new Set<() => void>()
 	#closed = false
@@ -7,23 +9,23 @@ export class ListenerRegistry {
 		eventName: TEvent,
 		listener: (event: Event) => void,
 		options?: AddEventListenerOptions
-	): void
+	): () => void
 	public on<TTarget extends EventTarget, TEvent extends string>(
 		targets: readonly TTarget[],
 		eventName: TEvent,
 		listener: (event: Event, target: TTarget, index: number) => void,
 		options?: AddEventListenerOptions
-	): void
+	): () => void
 	public on<TTarget extends EventTarget, TEvent extends string>(
 		targetOrTargets: TTarget | readonly TTarget[],
 		eventName: TEvent,
 		listener: ((event: Event) => void) | ((event: Event, target: TTarget, index: number) => void),
 		options?: AddEventListenerOptions
-	): void {
+	): () => void {
 		const registrationOptions = snapshotOptions(options)
 
 		// The browser ignores a listener registered with an aborted signal, so there is nothing to attach or own.
-		if (this.#closed || registrationOptions?.signal?.aborted === true) return
+		if (this.#closed || registrationOptions?.signal?.aborted === true) return nothingToRemove
 
 		if (Array.isArray(targetOrTargets)) {
 			const attachments: Array<() => void> = []
@@ -46,10 +48,13 @@ export class ListenerRegistry {
 				}
 				throw error
 			}
-			return
+
+			return () => {
+				for (const unsubscribe of attachments) unsubscribe()
+			}
 		}
 
-		this.#attach(targetOrTargets as TTarget, eventName, listener as (event: Event) => void, registrationOptions)
+		return this.#attach(targetOrTargets as TTarget, eventName, listener as (event: Event) => void, registrationOptions)
 	}
 
 	public clear(): readonly unknown[] {

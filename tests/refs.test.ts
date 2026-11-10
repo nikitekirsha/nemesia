@@ -361,3 +361,68 @@ describe('elements outside any namespace', () => {
 		)
 	})
 })
+
+describe('refs by tag name', () => {
+	it('resolves every family with the element type of the tag', () => {
+		const root = createRoot('tagged')
+		const dialog = appendRef(root, document.createElement('dialog'), 'modal')
+		const links = [
+			appendRef(root, document.createElement('a'), 'link'),
+			appendRef(root, document.createElement('a'), 'link')
+		]
+		const api = createRefApi(root, 'tagged')
+
+		const single = api.tag('dialog', 'modal')
+		const optional = api.optional.tag('template', 'missing')
+		const many = api.many.tag('a', 'link')
+		const optionalMany = api.optional.many.tag('img', 'missing')
+
+		expectTypeOf(single).toEqualTypeOf<HTMLDialogElement>()
+		expectTypeOf(optional).toEqualTypeOf<HTMLTemplateElement | null>()
+		expectTypeOf(many).toEqualTypeOf<HTMLAnchorElement[]>()
+		expectTypeOf(optionalMany).toEqualTypeOf<HTMLImageElement[]>()
+		expect(single).toBe(dialog)
+		expect(optional).toBeNull()
+		expect(many).toEqual(links)
+		expect(optionalMany).toEqual([])
+		expect(api.optional.tag('dialog', 'modal')).toBe(dialog)
+		expect(api.optional.many.tag('a', 'link')).toEqual(links)
+	})
+
+	it('rejects an element with another tag and names the expected one', () => {
+		const root = createRoot('tagged-wrong')
+		appendRef(root, document.createElement('div'), 'modal')
+
+		expectControlledError(
+			() => createRefApi(root, 'tagged-wrong').tag('dialog', 'modal'),
+			'invalid ref "modal": expected <dialog>, received <div> in namespace "http://www.w3.org/1999/xhtml"',
+			{
+				component: 'tagged-wrong',
+				root,
+				ref: 'modal',
+				selector: '[data-ref="modal"]',
+				expected: '<dialog>',
+				received: '<div> in namespace "http://www.w3.org/1999/xhtml"'
+			}
+		)
+	})
+
+	it('rejects an SVG element whose tag name matches', () => {
+		const root = createRoot('tagged-svg')
+		appendRef(root, document.createElementNS('http://www.w3.org/2000/svg', 'a'), 'link')
+
+		expect(() => createRefApi(root, 'tagged-svg').many.tag('a', 'link')).toThrow(SkipComponentMountError)
+	})
+
+	it('rejects a tag name that is not an HTML tag at compile time', () => {
+		const root = createRoot('tagged-types')
+		const api = createRefApi(root, 'tagged-types')
+
+		if (false) {
+			// @ts-expect-error Only HTML tag names are accepted.
+			api.tag('not-a-tag', 'x')
+		}
+
+		expect(api.optional.tag('dialog', 'absent')).toBeNull()
+	})
+})

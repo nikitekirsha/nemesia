@@ -23,6 +23,18 @@ this.on(this.button, 'click', handler, {
 
 A listener registered with `once` or `signal` is released as soon as it fires or the signal aborts. It does not keep its target alive until the component is destroyed.
 
+`this.on` returns a function that removes the listener before the component is destroyed. Use it for listeners that only matter for a while, such as the ones that follow a drag:
+
+```ts
+this.on(this.handle, 'pointerdown', () => {
+	const stopMoving = this.on(window, 'pointermove', event => this.moveTo(event.clientX))
+
+	this.on(window, 'pointerup', stopMoving, { once: true })
+})
+```
+
+For an array of targets, the one function removes every listener of that call.
+
 ## Event types
 
 Known DOM events are typed from the target and event name:
@@ -120,14 +132,39 @@ Removing the record first makes recursive destruction safe and allows a replacem
 
 Thrown or rejected cleanup errors are reported without preventing listener removal or cleanup of other instances.
 
+## `this.signal`
+
+Every component has an `AbortSignal` that aborts when the component is destroyed. Hand it to anything that accepts a signal, and that work ends with the component:
+
+```ts
+async onMount() {
+	const response = await fetch(this.url, { signal: this.signal })
+	this.value.textContent = await response.text()
+}
+```
+
+When the component is destroyed mid-request, `fetch` rejects with an `AbortError`. Nemesia expects that after a destroy and does not report it, and the lines after the `await` never run.
+
+The signal also ends work that has no cleanup of its own:
+
+```ts
+onMount() {
+	const timer = window.setInterval(() => this.tick(), 1000)
+
+	this.signal.addEventListener('abort', () => window.clearInterval(timer))
+}
+```
+
+The signal aborts the moment destruction starts, so `this.signal.aborted` is already `true` inside `onDestroy`. A component that is skipped during construction aborts its signal too.
+
 ## What you still own
 
-Nemesia only cleans listeners registered through `this.on`. Clean these yourself in `onDestroy`:
+Nemesia cleans the listeners registered through `this.on` and aborts `this.signal`. Everything else is yours to release, either through the signal or in `onDestroy`:
 
 - timers and animation frames;
 - custom observers;
 - third-party library instances;
 - subscriptions outside Nemesia;
-- listeners attached directly with `addEventListener`.
+- listeners attached directly with `addEventListener` without the signal.
 
 [Previous: Options](06-options.md) · [Guide index](README.md) · [Next: Dynamic DOM](08-dynamic-dom.md)

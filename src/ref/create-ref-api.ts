@@ -135,6 +135,10 @@ class RefQuery {
 		return this.#resolve(name, htmlElementType)
 	}
 
+	public tag(tag: string, name: string): unknown {
+		return this.#resolve(name, tagType(`<${tag}>`, tag))
+	}
+
 	public button(name: string): unknown {
 		return this.#resolve(name, buttonType)
 	}

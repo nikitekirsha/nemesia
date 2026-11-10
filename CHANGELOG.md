@@ -2,6 +2,14 @@
 
 All notable changes to Nemesia are documented here.
 
+## Unreleased
+
+### Added
+
+- `this.signal`: an `AbortSignal` that aborts when the component is destroyed.
+- `this.on` returns a function that removes the listener before destroy.
+- `this.ref.tag(tag, name)` in every ref family: typed from the HTML tag and checked at runtime.
+
 ## 2.3.0 — 2026-11-10
 
 ### Added

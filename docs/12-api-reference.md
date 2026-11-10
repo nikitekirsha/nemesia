@@ -45,17 +45,18 @@ class Search extends Component('search', { root: 'form' }) {}
 
 ### Instance members
 
-| Member                     | Meaning                                                                              |
-| -------------------------- | ------------------------------------------------------------------------------------ |
-| `root`                     | The element carrying `data-nemesia`.                                                 |
-| `ref`                      | Element lookup by `data-ref`; see below.                                             |
-| `option`                   | Option parsing from `data-option-*`; see below.                                      |
-| `on(target, type, fn, o?)` | Adds a listener that is removed on destroy. `target` may be an array.                |
-| `warn(message, payload?)`  | Logs a warning with the component name and root attached.                            |
-| `find(Class, within?)`     | Like `app.find`, but `within` defaults to the root and the caller is never returned. |
-| `findAll(Class, within?)`  | Like `app.findAll`, with the same defaults.                                          |
-| `onMount()`                | Optional hook. Runs after construction; may return a promise.                        |
-| `onDestroy()`              | Optional hook. Runs once before the listeners from `on` are removed.                 |
+| Member                     | Meaning                                                                                                           |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `root`                     | The element carrying `data-nemesia`.                                                                              |
+| `ref`                      | Element lookup by `data-ref`; see below.                                                                          |
+| `option`                   | Option parsing from `data-option-*`; see below.                                                                   |
+| `on(target, type, fn, o?)` | Adds a listener that is removed on destroy. `target` may be an array. Returns a function that removes it earlier. |
+| `signal`                   | An `AbortSignal` that aborts when the component is destroyed.                                                     |
+| `warn(message, payload?)`  | Logs a warning with the component name and root attached.                                                         |
+| `find(Class, within?)`     | Like `app.find`, but `within` defaults to the root and the caller is never returned.                              |
+| `findAll(Class, within?)`  | Like `app.findAll`, with the same defaults.                                                                       |
+| `onMount()`                | Optional hook. Runs after construction; may return a promise.                                                     |
+| `onDestroy()`              | Optional hook. Runs once before the listeners from `on` are removed.                                              |
 
 ### `this.ref`
 
@@ -68,16 +69,17 @@ Four families share the same helpers:
 | `ref.many`          | `this.ref.many.button('tab')`        | component skipped | all returned      |
 | `ref.optional.many` | `this.ref.optional.many.button('x')` | `[]`              | all returned      |
 
-| Helper     | Element type          | Checked at runtime       |
-| ---------- | --------------------- | ------------------------ |
-| `element`  | `HTMLElement`         | any HTML element         |
-| `button`   | `HTMLButtonElement`   | `<button>`               |
-| `input`    | `HTMLInputElement`    | `<input>`                |
-| `textarea` | `HTMLTextAreaElement` | `<textarea>`             |
-| `select`   | `HTMLSelectElement`   | `<select>`               |
-| `form`     | `HTMLFormElement`     | `<form>`                 |
-| `one<T>`   | `T`                   | no; single families only |
-| `of<T>`    | `T`                   | no; many families only   |
+| Helper           | Element type              | Checked at runtime       |
+| ---------------- | ------------------------- | ------------------------ |
+| `element`        | `HTMLElement`             | any HTML element         |
+| `button`         | `HTMLButtonElement`       | `<button>`               |
+| `input`          | `HTMLInputElement`        | `<input>`                |
+| `textarea`       | `HTMLTextAreaElement`     | `<textarea>`             |
+| `select`         | `HTMLSelectElement`       | `<select>`               |
+| `form`           | `HTMLFormElement`         | `<form>`                 |
+| `tag(tag, name)` | the element type of `tag` | that HTML tag            |
+| `one<T>`         | `T`                       | no; single families only |
+| `of<T>`          | `T`                       | no; many families only   |
 
 An element with the wrong tag skips the component in every family.
 
@@ -114,7 +116,7 @@ One instance is mounted for each exact scope passed to `app.mount`. It has no `r
 | Member                     | Meaning                                                        |
 | -------------------------- | -------------------------------------------------------------- |
 | `scope`                    | The node passed to `app.mount`.                                |
-| `on`, `warn`               | The same as on a concrete component.                           |
+| `on`, `signal`, `warn`     | The same as on a concrete component.                           |
 | `find`, `findAll`          | The same, with `within` defaulting to the scope.               |
 | `onMount()`, `onDestroy()` | The same hooks. `onMount` runs after the concrete components'. |
 

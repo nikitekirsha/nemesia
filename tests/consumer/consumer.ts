@@ -40,6 +40,8 @@ class Typed extends Component('typed', concreteOptions) {
 	optional = this.ref.optional.button('optional')
 	many = this.ref.many.element('item')
 	optionalMany = this.ref.optional.many.input('optionalItem')
+	dialog = this.ref.tag('dialog', 'dialog')
+	links = this.ref.optional.many.tag('a', 'link')
 
 	title = this.option.string('title', { minLength: 1 })
 	subtitle = this.option.optional.string('subtitle', stringOptions)
@@ -58,10 +60,17 @@ class Typed extends Component('typed', concreteOptions) {
 		const count: number = this.count
 		const mode: 'light' | 'dark' = this.mode
 
-		this.on(this.button, 'click', event => {
+		const off: () => void = this.on(this.button, 'click', event => {
 			const x: number = event.clientX
 			void x
 		})
+		const signal: AbortSignal = this.signal
+		const dialog: HTMLDialogElement = this.dialog
+		const links: HTMLAnchorElement[] = this.links
+		void off
+		void signal
+		void dialog
+		void links
 		this.on(this.root, 'cart:update', (event: CustomEvent<{ count: number }>) => {
 			const itemCount: number = event.detail.count
 			void itemCount
