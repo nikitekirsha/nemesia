@@ -53,3 +53,40 @@ jobs:
       # `prepack` checks formatting, runs the tests, and builds before anything is uploaded.
       - name: Publish
         run: npm publish --provenance --access public
+
+  # Runs only after the package is on npm. It is a separate job so that the permission to write releases
+  # never goes to the job that publishes the package.
+  github-release:
+    name: GitHub release
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24.x
+          package-manager-cache: false
+
+      # The notes are the version's section of CHANGELOG.md, or the commits since the last release when there is none.
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "$GITHUB_REF_NAME" > /dev/null 2>&1; then
+            echo "The release $GITHUB_REF_NAME already exists"
+            exit 0
+          fi
+
+          if node scripts/release-notes.mjs "${GITHUB_REF_NAME#v}" > notes.md; then
+            notes=(--notes-file notes.md)
+          else
+            notes=(--generate-notes)
+          fi
+
+          gh release create "$GITHUB_REF_NAME" --title "$GITHUB_REF_NAME" --verify-tag --latest "${notes[@]}"
