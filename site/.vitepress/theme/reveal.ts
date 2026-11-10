@@ -1,14 +1,8 @@
 import { onMounted, onUnmounted, ref, type Ref } from 'vue'
 
 /**
- * Tracks when an element first scrolls into view and calls `show` then.
- *
- * - `ready` turns on once mounted: the CSS fallback that shows hidden parts without scripts is no longer needed.
- * - `shown` turns on when the element comes into view, or right away when motion is reduced.
- * - `animated` is false when motion is reduced, so components can render their final state.
- *
- * A script in the page head adds the nm-motion class to <html> unless motion is reduced,
- * which lets CSS hide these parts before the first paint.
+ * `shown` flips when the element first scrolls into view, or at once with reduced motion
+ * The head script adds nm-motion to <html>, so CSS hides these parts before the first paint
  */
 export function useReveal(target: Ref<HTMLElement | undefined>, show?: () => void) {
 	const ready = ref(false)

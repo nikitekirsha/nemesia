@@ -4,7 +4,7 @@ export function isAbortError(error: unknown): boolean {
 	try {
 		return typeof error === 'object' && error !== null && (error as { name?: unknown }).name === 'AbortError'
 	} catch {
-		// A thrown value may refuse to be inspected; that is still a failure to report, not an abort.
+		// A value that throws on access is a failure, not an abort
 		return false
 	}
 }

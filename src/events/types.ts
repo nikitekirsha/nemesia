@@ -20,10 +20,10 @@ type EventMapFor<TTarget> = TTarget extends Window
 										? VisualViewportEventMap
 										: {}
 
-/** Event name accepted by `on(...)`: a known DOM event for the target or any custom event name. */
+/** Event name accepted by `on(...)`: a known DOM event for the target or any custom event name */
 export type EventName<TTarget> = (keyof EventMapFor<TTarget> & string) | (string & {})
 
-/** Event type for a listener: the DOM event type for known names, otherwise `TEvent` (plain `Event` by default). */
+/** Event type for a listener: the DOM event type for known names, otherwise `TEvent` (plain `Event` by default) */
 export type TargetEvent<TTarget, TName extends string, TEvent extends Event> = TName extends keyof EventMapFor<TTarget>
 	? EventMapFor<TTarget>[TName]
 	: TEvent

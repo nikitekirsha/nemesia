@@ -22,10 +22,10 @@ export class ListenerRegistry {
 		listener: ((event: Event) => void) | ((event: Event, target: TTarget, index: number) => void),
 		options?: AddEventListenerOptions
 	): () => void {
-		// A copy, so that options the caller changes later still remove the listener they added.
+		// Copied, so later edits to the caller's object cannot break removal
 		const registrationOptions = options && { ...options }
 
-		// The browser ignores a listener registered with an aborted signal, so there is nothing to attach or own.
+		// The browser ignores a listener with an aborted signal, so there is nothing to attach
 		if (this.#closed || registrationOptions?.signal?.aborted === true) return nothingToRemove
 
 		if (Array.isArray(targetOrTargets)) {
@@ -44,7 +44,7 @@ export class ListenerRegistry {
 					try {
 						unsubscribe()
 					} catch {
-						// Preserve the original addEventListener error.
+						// Preserve the original addEventListener error
 					}
 				}
 				throw error
@@ -58,7 +58,7 @@ export class ListenerRegistry {
 		return this.#attach(targetOrTargets as TTarget, eventName, listener as (event: Event) => void, registrationOptions)
 	}
 
-	// A channel listener is owned like a DOM listener: removed on destroy, and forgotten as soon as the channel closes.
+	// Owned like a DOM listener, forgotten when the channel closes
 	public subscribe<TValue>(channel: Channel<TValue>, listener: (value: TValue) => void): () => void {
 		if (this.#closed) return nothingToRemove
 
@@ -74,7 +74,7 @@ export class ListenerRegistry {
 		return unsubscribe
 	}
 
-	// Something that is released with the component but is not a listener, such as a channel it created.
+	// Released on destroy, but not a listener, e.g. a channel it created
 	public own(release: () => void): void {
 		if (this.#closed) release()
 		else this.#unsubscribers.add(release)
@@ -105,7 +105,7 @@ export class ListenerRegistry {
 	): () => void {
 		const signal = options?.signal
 
-		// A listener that is gone must not stay referenced until destroy.
+		// Drop references as soon as the listener is gone
 		const release = (): void => {
 			this.#unsubscribers.delete(unsubscribe)
 			signal?.removeEventListener('abort', unsubscribe)
@@ -128,12 +128,12 @@ export class ListenerRegistry {
 			try {
 				target.removeEventListener(eventName, registered, options)
 			} catch {
-				// Preserve the original addEventListener error.
+				// Preserve the original addEventListener error
 			}
 			throw error
 		}
 
-		// Removing the listener here as well keeps cleanup independent of how the target treats the signal.
+		// Remove directly too, so cleanup does not depend on how the target handles the signal
 		signal?.addEventListener('abort', unsubscribe, { once: true })
 		this.#unsubscribers.add(unsubscribe)
 		return unsubscribe

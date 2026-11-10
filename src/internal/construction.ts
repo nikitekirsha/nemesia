@@ -1,8 +1,7 @@
 import type { ComponentCore } from '../component/component-core.js'
 import type { ComponentMetadata, NemesiaApp } from '../component/types.js'
 
-// One entry for every component that is being constructed right now. The base constructor reads it to learn
-// which app is constructing it; the app reads it to see what is under construction when a constructor calls back.
+// Components under construction. The base constructor finds its app here
 export interface Construction {
 	readonly type: Function & { readonly nemesia: ComponentMetadata }
 	readonly target: ParentNode

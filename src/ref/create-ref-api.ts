@@ -2,10 +2,10 @@ import { attributeSelector, isHtmlElement } from '../internal/dom.js'
 import { SkipComponentMountError } from '../internal/errors.js'
 import type { RefApi } from './types.js'
 
-// Ref names repeat across instances, so their selectors are built once.
+// Ref names repeat across instances, so cache the selectors
 const refSelectors = new Map<string, string>()
 
-// One lookup family: `ref`, `ref.optional`, `ref.many`, or `ref.optional.many`.
+// One lookup family, e.g. `ref.optional.many`
 class RefQuery {
 	readonly #root: HTMLElement
 	readonly #component: string
@@ -63,13 +63,13 @@ class RefQuery {
 		return this.#resolve(name, 'HTMLFormElement', 'form')
 	}
 
-	// `expected` names what a mismatch is reported as. `tag` is the required tag, or '' for any HTML element.
+	// `expected` labels the warning, an empty `tag` accepts any HTML element
 	#resolve(name: string, expected?: string, tag?: string): unknown {
 		const root = this.#root
 		let selector = refSelectors.get(name)
 		if (selector === undefined) refSelectors.set(name, (selector = attributeSelector('data-ref', name)))
 
-		// A ref belongs to the nearest root above it; one placed on a nested root belongs to the component above that root.
+		// A nested root's own data-ref belongs to the component above it
 		const elements = [...root.querySelectorAll(selector)].filter(
 			element =>
 				(element.hasAttribute('data-nemesia') ? (element.parentElement as Element) : element).closest(

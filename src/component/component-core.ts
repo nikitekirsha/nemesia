@@ -13,7 +13,7 @@ import {
 import { abortComponentConstruction, teardownComponent } from '../internal/lifecycle.js'
 import type { FindableComponent, NemesiaApp } from './types.js'
 
-/** Behavior shared by concrete and distributed components. */
+/** Behavior shared by concrete and distributed components */
 export abstract class ComponentCore {
 	readonly #listeners = new ListenerRegistry()
 	readonly #componentName: string
@@ -31,20 +31,20 @@ export abstract class ComponentCore {
 	}
 
 	/**
-	 * A signal that aborts when the component is destroyed.
-	 * Pass it to `fetch` or to anything else that accepts a signal, and the work stops with the component.
+	 * A signal that aborts when the component is destroyed
+	 * Pass it to `fetch` or to anything else that accepts a signal, and the work stops with the component
 	 */
 	public get signal(): AbortSignal {
 		this.#controller ??= new AbortController()
-		// Asked for only after the component is gone, the signal is born aborted.
+		// Requested after destroy, the signal starts aborted
 		if (this.#destroyed) this.#controller.abort()
 
 		return this.#controller.signal
 	}
 
 	/**
-	 * Creates a channel: a typed stream of values this component sends with `emit`.
-	 * Other components listen with `this.on(channel, listener)`. The channel closes when this component is destroyed.
+	 * Creates a channel: a typed stream of values this component sends with `emit`
+	 * Other components listen with `this.on(channel, listener)`. The channel closes when this component is destroyed
 	 */
 	public channel<TValue = void>(): Channel<TValue> {
 		const channel = new ComponentChannel<TValue>(error => {
@@ -56,13 +56,13 @@ export abstract class ComponentCore {
 	}
 
 	/**
-	 * Listens to a channel of another component, until this component is destroyed or the channel closes.
-	 * Returns a function that stops listening earlier.
+	 * Listens to a channel of another component, until this component is destroyed or the channel closes
+	 * Returns a function that stops listening earlier
 	 */
 	public on<TValue>(channel: Channel<TValue>, listener: (value: TValue) => void): () => void
 	/**
-	 * Registers an event listener that is removed automatically on destroy, and returns a function that removes it earlier.
-	 * Known DOM events are typed from the target; custom events are `Event` unless the listener parameter is annotated.
+	 * Registers an event listener that is removed automatically on destroy, and returns a function that removes it earlier
+	 * Known DOM events are typed from the target; custom events are `Event` unless the listener parameter is annotated
 	 */
 	public on<TTarget extends EventTarget, TName extends EventName<TTarget>, TEvent extends Event = Event>(
 		target: TTarget,
@@ -70,7 +70,7 @@ export abstract class ComponentCore {
 		listener: (event: TargetEvent<TTarget, TName, TEvent>) => void,
 		options?: AddEventListenerOptions
 	): () => void
-	/** Registers the same event listener for every target in the array; the returned function removes all of them. */
+	/** Registers the same event listener for every target in the array; the returned function removes all of them */
 	public on<TTarget extends EventTarget, TName extends EventName<TTarget>, TEvent extends Event = Event>(
 		targets: readonly TTarget[],
 		eventName: TName,
@@ -87,21 +87,21 @@ export abstract class ComponentCore {
 			return this.#listeners.subscribe(targetOrTargets as Channel<unknown>, eventName)
 		}
 
-		// The registry tells a single target from an array itself; the overloads above only type the listener.
+		// The registry tells single targets from arrays, the overloads only type the listener
 		return this.#listeners.on(targetOrTargets as TTarget, eventName, listener as (event: Event) => void, options)
 	}
 
-	/** Logs a component-scoped warning with optional diagnostic payload. */
+	/** Logs a component-scoped warning with optional diagnostic payload */
 	public warn(message: string, payload?: Record<string, unknown>): void {
 		warnComponent(this.#componentName, this.#context, message, payload)
 	}
 
-	/** Returns the first mounted instance of a component on or inside `within`, which defaults to the root or scope. */
+	/** Returns the first mounted instance of a component on or inside `within`, which defaults to the root or scope */
 	public find<TInstance>(component: FindableComponent<TInstance>, within: ParentNode = this.#target): TInstance | null {
 		return this.findAll(component, within)[0] ?? null
 	}
 
-	/** Returns every mounted instance of a component on or inside `within`, in document order. */
+	/** Returns every mounted instance of a component on or inside `within`, in document order */
 	public findAll<TInstance>(component: FindableComponent<TInstance>, within: ParentNode = this.#target): TInstance[] {
 		return (this.#app?.findAll(component, within) ?? []).filter(instance => instance !== (this as unknown))
 	}
@@ -128,12 +128,12 @@ export abstract class ComponentCore {
 			report(error)
 		}
 
-		// Listeners go right after the hook, whatever it did, and before anything it returned is looked at.
+		// Listeners go after the hook even if it throws
 		for (const error of this.#listeners.clear()) report(error)
 		if (result !== undefined) void observeRejection(result, report)
 	}
 
-	// The signal aborts the moment destruction starts, before `onDestroy` runs.
+	// Aborts before onDestroy runs
 	#markDestroyed(): void {
 		this.#destroyed = true
 		this.#controller?.abort()
@@ -141,9 +141,9 @@ export abstract class ComponentCore {
 }
 
 export interface ComponentCore {
-	/** Called after the component is mounted and its refs and options are available. */
+	/** Called after the component is mounted and its refs and options are available */
 	onMount?(): void | Promise<void>
 
-	/** Called before the component is destroyed; registered listeners are cleaned up afterwards. */
+	/** Called before the component is destroyed; registered listeners are cleaned up afterwards */
 	onDestroy?(): void | Promise<void>
 }

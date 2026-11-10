@@ -11,7 +11,7 @@ import type {
 	StringOptionOptions
 } from './types.js'
 
-// What a parser returns for a value it does not accept. No attribute value can produce it.
+// Marks an invalid value, no attribute value can produce it
 const INVALID = Symbol()
 
 type Parsed<T> = T | typeof INVALID
@@ -21,7 +21,7 @@ const parseNumber = (raw: string): number => (raw.trim() === '' ? NaN : Number(r
 const parseBoolean = (raw: string): Parsed<boolean> =>
 	raw === '' || raw === 'true' || raw === '1' ? true : raw === 'false' || raw === '0' ? false : INVALID
 
-// One lookup family: `option` (required) or `option.optional`.
+// One lookup family, required or optional
 class OptionReader {
 	readonly #root: HTMLElement
 	readonly #component: string
@@ -43,7 +43,7 @@ class OptionReader {
 			let matches = raw.length >= (options?.minLength ?? 0) && raw.length <= (options?.maxLength ?? Infinity)
 
 			if (matches && pattern !== undefined) {
-				// A global or sticky pattern must match from the start and keep its own position afterwards.
+				// Global and sticky patterns keep lastIndex, so reset it for the test
 				const lastIndex = pattern.lastIndex
 
 				try {
@@ -99,7 +99,7 @@ class OptionReader {
 		options?: DefaultOptionOptions<T>
 	): T | undefined {
 		return this.#read(name, `literal ${JSON.stringify(literalValue)}`, options, raw => {
-			// The raw value is read as the literal's own type; anything unreadable can never equal the literal.
+			// Parse into the literal's type, unreadable values never match
 			const parsed =
 				typeof literalValue === 'string' ? raw : typeof literalValue === 'number' ? parseNumber(raw) : parseBoolean(raw)
 

@@ -1,82 +1,82 @@
 import type { BaseComponent } from './base-component.js'
 import type { BaseDistributedComponent } from './base-distributed-component.js'
 
-/** Options used when creating a Nemesia app. */
+/** Options used when creating a Nemesia app */
 export interface CreateAppOptions {
-	/** Watch mounted scopes for later DOM additions and removals. */
+	/** Watch mounted scopes for later DOM additions and removals */
 	observe?: boolean
 }
 
-/** Options for a concrete component created with `Component(...)`. */
+/** Options for a concrete component created with `Component(...)` */
 export interface ConcreteComponentOptions<TTag extends keyof HTMLElementTagNameMap = keyof HTMLElementTagNameMap> {
-	/** Expected root tag name, used for a narrower `this.root` type. */
+	/** Expected root tag name, used for a narrower `this.root` type */
 	root?: TTag
 
-	/** Allow multiple active instances of this component name in one app. */
+	/** Allow multiple active instances of this component name in one app */
 	multiple?: boolean
 }
 
-/** Runtime metadata attached to every concrete component constructor. */
+/** Runtime metadata attached to every concrete component constructor */
 export interface ConcreteMetadata {
-	/** Metadata kind for concrete components. */
+	/** Metadata kind for concrete components */
 	readonly kind: 'concrete'
 
-	/** Component name matched against `data-nemesia`. */
+	/** Component name matched against `data-nemesia` */
 	readonly name: string
 
-	/** Expected root tag name, when declared. */
+	/** Expected root tag name, when declared */
 	readonly root: keyof HTMLElementTagNameMap | undefined
 
-	/** Whether the app may keep more than one active instance of this component. */
+	/** Whether the app may keep more than one active instance of this component */
 	readonly multiple: boolean
 }
 
-/** Runtime metadata attached to every distributed component constructor. */
+/** Runtime metadata attached to every distributed component constructor */
 export interface DistributedMetadata {
-	/** Metadata kind for distributed components. */
+	/** Metadata kind for distributed components */
 	readonly kind: 'distributed'
 
-	/** Component name used for registration and diagnostics. */
+	/** Component name used for registration and diagnostics */
 	readonly name: string
 }
 
-/** Metadata of a component that is loaded on demand. */
+/** Metadata of a component that is loaded on demand */
 export interface LazyMetadata {
-	/** Metadata kind for lazy components. */
+	/** Metadata kind for lazy components */
 	readonly kind: 'lazy'
 
-	/** Component name matched against `data-nemesia`. */
+	/** Component name matched against `data-nemesia` */
 	readonly name: string
 }
 
-/** A component whose module is loaded the first time its root appears. Create it with `lazy(...)`. */
+/** A component whose module is loaded the first time its root appears. Create it with `lazy(...)` */
 export interface LazyComponent {
-	/** Runtime metadata used by the app. */
+	/** Runtime metadata used by the app */
 	readonly nemesia: LazyMetadata
 
-	/** Loads the component class, or the module that exports it. */
+	/** Loads the component class, or the module that exports it */
 	readonly load: () => Promise<unknown>
 }
 
-/** Metadata attached to any Nemesia component constructor. */
+/** Metadata attached to any Nemesia component constructor */
 export type ComponentMetadata = ConcreteMetadata | DistributedMetadata
 
-/** Root element type inferred from a declared root tag name. */
+/** Root element type inferred from a declared root tag name */
 export type RootFor<TTag extends keyof HTMLElementTagNameMap | undefined> = TTag extends keyof HTMLElementTagNameMap
 	? HTMLElementTagNameMap[TTag]
 	: HTMLElement
 
-/** Constructor type for a concrete component instance. */
+/** Constructor type for a concrete component instance */
 export type ConcreteComponentConstructor<TRoot extends HTMLElement = HTMLElement> = (new (
 	root: TRoot
 ) => BaseComponent<TRoot>) & {
-	/** Runtime metadata used by the app. */
+	/** Runtime metadata used by the app */
 	readonly nemesia: ConcreteMetadata
 }
 
-/** Constructor type for a distributed component instance. */
+/** Constructor type for a distributed component instance */
 export type DistributedComponentConstructor = (new (scope: ParentNode) => BaseDistributedComponent) & {
-	/** Runtime metadata used by the app. */
+	/** Runtime metadata used by the app */
 	readonly nemesia: DistributedMetadata
 }
 
@@ -84,49 +84,49 @@ type RegistrableConcreteComponentConstructor = (new (root: never) => BaseCompone
 	readonly nemesia: ConcreteMetadata
 }
 
-/** Component class accepted by `find(...)` and `findAll(...)`, including abstract base classes. */
+/** Component class accepted by `find(...)` and `findAll(...)`, including abstract base classes */
 export type FindableComponent<TInstance> = (abstract new (target: never) => TInstance) & {
-	/** Runtime metadata used to locate mounted instances. */
+	/** Runtime metadata used to locate mounted instances */
 	readonly nemesia: ComponentMetadata
 }
 
-/** Any component constructor that can be registered in an app. */
+/** Any component constructor that can be registered in an app */
 export type ComponentConstructor = RegistrableConcreteComponentConstructor | DistributedComponentConstructor
 
-/** Abstract base constructor returned by `Component(...)`. */
+/** Abstract base constructor returned by `Component(...)` */
 export type AbstractConcreteComponentConstructor<TRoot extends HTMLElement = HTMLElement> = (abstract new (
 	root: TRoot
 ) => BaseComponent<TRoot>) & {
-	/** Runtime metadata inherited by subclasses. */
+	/** Runtime metadata inherited by subclasses */
 	readonly nemesia: ConcreteMetadata
 }
 
-/** Abstract base constructor returned by `DistributedComponent(...)`. */
+/** Abstract base constructor returned by `DistributedComponent(...)` */
 export type AbstractDistributedComponentConstructor = (abstract new (scope: ParentNode) => BaseDistributedComponent) & {
-	/** Runtime metadata inherited by subclasses. */
+	/** Runtime metadata inherited by subclasses */
 	readonly nemesia: DistributedMetadata
 }
 
-/** A Nemesia application instance that owns registrations, mounted instances, and observers. */
+/** A Nemesia application instance that owns registrations, mounted instances, and observers */
 export interface NemesiaApp {
-	/** Normalized app options. */
+	/** Normalized app options */
 	readonly options: Readonly<Required<CreateAppOptions>>
 
-	/** Registers component constructors and lazy components for future mounts. */
+	/** Registers component constructors and lazy components for future mounts */
 	register(components: Array<ComponentConstructor | LazyComponent>): this
 
-	/** Mounts registered components inside a scope. Defaults to `document.body` when available. */
+	/** Mounts registered components inside a scope. Defaults to `document.body` when available */
 	mount(scope?: ParentNode): void
 
-	/** Destroys mounted component instances inside a scope. Defaults to `document.body` when available. */
+	/** Destroys mounted component instances inside a scope. Defaults to `document.body` when available */
 	destroy(scope?: ParentNode): void
 
-	/** Stops observers for one scope, or all observers when no scope is passed. */
+	/** Stops observers for one scope, or all observers when no scope is passed */
 	disconnect(scope?: ParentNode): void
 
-	/** Returns the first mounted instance of a component on or inside `within`. Defaults to `document`. */
+	/** Returns the first mounted instance of a component on or inside `within`. Defaults to `document` */
 	find<TInstance>(component: FindableComponent<TInstance>, within?: ParentNode): TInstance | null
 
-	/** Returns every mounted instance of a component on or inside `within`, in document order. Defaults to `document`. */
+	/** Returns every mounted instance of a component on or inside `within`, in document order. Defaults to `document` */
 	findAll<TInstance>(component: FindableComponent<TInstance>, within?: ParentNode): TInstance[]
 }

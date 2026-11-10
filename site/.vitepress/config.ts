@@ -11,7 +11,7 @@ const root = (path: string): string => fileURLToPath(new URL(`../../${path}`, im
 const site = (path: string): string => fileURLToPath(new URL(`../${path}`, import.meta.url))
 const { version } = JSON.parse(readFileSync(root('package.json'), 'utf8')) as { version: string }
 
-// docs/ and CHANGELOG.md stay the only sources. They are mirrored into site/ (git-ignored) before pages are scanned.
+// docs/ and CHANGELOG.md are the only sources, mirrored into site/ (git-ignored) before pages are scanned
 function mirror(): void {
 	rmSync(site('guide'), { recursive: true, force: true })
 	cpSync(root('docs'), site('guide'), { recursive: true })
@@ -20,7 +20,7 @@ function mirror(): void {
 
 mirror()
 if (process.argv.includes('dev')) {
-	// Directory watchers keep working when editors and git replace files instead of writing into them.
+	// Watch directories, since editors and git replace files instead of writing them
 	watch(root('docs'), () => mirror())
 	watch(root(''), (_event, file) => file === 'CHANGELOG.md' && mirror())
 }
@@ -47,14 +47,14 @@ export default defineConfig({
 		],
 		['meta', { property: 'og:type', content: 'website' }],
 		['meta', { property: 'og:site_name', content: 'Nemesia' }],
-		// Link previews need an absolute URL and a raster image; the source is site/og/og.html.
+		// Link previews need an absolute URL and a raster image, source is site/og/og.html
 		['meta', { property: 'og:image', content: `${siteUrl}og.png` }],
 		['meta', { property: 'og:image:width', content: '1200' }],
 		['meta', { property: 'og:image:height', content: '630' }],
 		['meta', { property: 'og:image:alt', content: `Nemesia: ${description}` }],
 		['meta', { name: 'twitter:card', content: 'summary_large_image' }]
 	],
-	// Every page names its own address, so a preview or a search result never points at a duplicate URL.
+	// Each page names its own address, so search and previews never see duplicates
 	transformHead({ pageData, title, description: pageDescription }) {
 		if (pageData.isNotFound) return []
 
@@ -131,7 +131,7 @@ export default defineConfig({
 		}
 	},
 	transformPageData(pageData) {
-		// The guide already carries its own previous/next links, which also work on GitHub.
+		// Guide pages have their own prev/next links, which also work on GitHub
 		if (pageData.relativePath.startsWith('guide/')) {
 			pageData.frontmatter.prev = false
 			pageData.frontmatter.next = false
@@ -139,7 +139,7 @@ export default defineConfig({
 	},
 	markdown: {
 		config: md => {
-			// docs/ links point at README files so they work on GitHub; map them to site pages.
+			// docs/ links point at README files for GitHub, so map them to site pages
 			md.core.ruler.push('nemesia-readme-links', state => {
 				for (const token of state.tokens) {
 					for (const child of token.children ?? []) {

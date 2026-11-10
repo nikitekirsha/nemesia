@@ -67,7 +67,7 @@ const notes = [
 
 <h1 class="nm-hero__title">Components for the HTML your server already sends.</h1>
 
-<p class="nm-hero__lead">Nemesia finds components in your markup, checks the elements and options they need, and cleans up after them. No virtual DOM, no templates, no build step required.</p>
+<p class="nm-hero__lead">Nemesia finds components in your markup, checks the elements and options they need, and cleans up after them. No virtual DOM, no templates, no build step.</p>
 
 <CopyCommand command="npm install nemesia" />
 
@@ -193,7 +193,7 @@ class Tabs extends Component('tabs') {
 	</article>
 	<article>
 		<h3>Components that work together</h3>
-		<p>Build a page from small parts that know about each other, instead of one script that knows everything.</p>
+		<p>Build a page from small parts that know about each other, not one script that knows everything.</p>
 	</article>
 </FeatureGrid>
 

@@ -1,12 +1,12 @@
 const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml'
 
-// Builds an exact attribute selector, escaping the value as a CSS string.
+// Exact match, escaped for any attribute value
 export function attributeSelector(attribute: string, value: string): string {
 	const escaped = value.replace(/["\\]/g, '\\$&').replace(/[\n\r\f]/g, char => `\\${char.charCodeAt(0).toString(16)} `)
 	return `[${attribute}="${escaped}"]`
 }
 
-// The scope itself counts when it is an element that matches.
+// The scope counts when it matches itself
 export function discoverConcreteRoots(scope: ParentNode, selector = '[data-nemesia]'): Element[] {
 	const descendants = scope.querySelectorAll(selector)
 
@@ -19,7 +19,7 @@ export function isHtmlElement(element: Element): element is HTMLElement {
 	return element.namespaceURI === HTML_NAMESPACE
 }
 
-// A node contains itself, so a root that is the scope counts too.
+// Node.contains is true for the node itself
 export function isWithinScope(root: Element, scope: ParentNode): boolean {
 	return (scope as Node).contains(root)
 }
@@ -31,12 +31,12 @@ export function hasAncestorIn(node: Node | null, ancestors: ReadonlySet<Node>): 
 	return false
 }
 
-// Mutation records list every kind of child node; only elements can be or contain component roots.
+// Only elements can be component roots
 export function distinctMutationRoots(nodes: Iterable<Node>): Element[] {
 	return [...new Set(nodes)].filter((node): node is Element => node.nodeType === 1)
 }
 
-// Drops every root that sits inside another one, which is discovered together with its ancestor.
+// Inner roots come with their ancestor, so they are dropped
 export function normalizeMutationRoots(nodes: Iterable<Node>): Element[] {
 	const roots = distinctMutationRoots(nodes)
 	const rootSet = new Set<Node>(roots)
@@ -44,7 +44,7 @@ export function normalizeMutationRoots(nodes: Iterable<Node>): Element[] {
 	return roots.filter(root => !hasAncestorIn(root.parentNode, rootSet))
 }
 
-// The node itself, then every ancestor up to the root of its tree.
+// The node first, then its ancestors up to the tree root
 export function snapshotAncestry(node: Node): readonly Node[] {
 	const ancestry: Node[] = []
 
@@ -66,7 +66,7 @@ export function documentOrder<T>(items: Iterable<T>, nodeOf: (item: T) => Node):
 	)
 }
 
-// Reorders items given in document order so every node comes after its descendants.
+// Descendants before ancestors
 export function childrenFirst<T>(items: Iterable<T>, nodeOf: (item: T) => Node): T[] {
 	const ordered: T[] = []
 	const open: T[] = []

@@ -98,13 +98,13 @@ app.mount(document.body)
 
 ## Behavior that changed
 
-- **One attribute contract.** Refs are found only by `data-ref` and options only by `data-option-*` on the root. Arbitrary selectors and attribute names are gone, so the markup has to change together with the code.
-- **Nested components own their refs.** A ref belongs to the nearest root above it. A parent no longer sees elements inside a nested component.
-- **One component per root.** Several components can no longer share an element within one app. Nest the roots instead.
-- **Optional refs are stricter.** An optional ref with the wrong tag used to resolve to `null` or `[]`. It now skips the component, the same as a required one.
-- **Booleans are exact.** `true`, `false`, `1`, and `0` are matched as written, without trimming or lowercasing. An empty attribute now means `true`.
+- One attribute contract. Refs are found only by `data-ref` and options only by `data-option-*` on the root. Arbitrary selectors and attribute names are gone, so the markup has to change together with the code.
+- Nested components own their refs. A ref belongs to the nearest root above it. A parent no longer sees elements inside a nested component.
+- One component per root. Several components can no longer share an element within one app. Nest the roots instead.
+- Optional refs are stricter. An optional ref with the wrong tag used to resolve to `null` or `[]`. It now skips the component, the same as a required one.
+- Booleans are exact. `true`, `false`, `1`, and `0` are matched as written, without trimming or lowercasing. An empty attribute now means `true`.
 - **`mount()` defaults to `document.body`**, where v1 searched the whole document. A component on the `<html>` element needs `app.mount(document.documentElement)`.
-- **The UMD global** is still `Nemesia`, with `Component`, `DistributedComponent`, and `createApp` on it.
+- The UMD global is still `Nemesia`, with `Component`, `DistributedComponent`, and `createApp` on it.
 
 Behavior that was spread across a page through selectors, with no single root, fits a [distributed component](09-distributed-components.md).
 

@@ -53,12 +53,12 @@ interface PendingMount {
 	readonly run: () => void
 }
 
-// What an app remembers about a lazy component. The same `lazy(...)` value may be registered in several apps.
+// Per-app state, since one `lazy(...)` value can be registered in several apps
 interface LazyRegistration extends LazyComponent {
 	state: 'idle' | 'loading' | 'failed'
 }
 
-// Where a root that waits for its component was found, so it is constructed by the same rules once the module arrives.
+// Scope the root was found in, so it follows the same rules once its module arrives
 interface WaitingRoot {
 	readonly scope: ParentNode
 	readonly observerDriven: boolean
@@ -83,7 +83,7 @@ function isLazyComponent(value: unknown): value is LazyComponent {
 	return (value as { readonly nemesia?: { readonly kind?: unknown } } | null)?.nemesia?.kind === 'lazy'
 }
 
-// A loader may resolve to the component class or to the module that exports it.
+// The loader may return the class or the module that exports it
 function loadedComponents(name: string, loaded: unknown): ConcreteComponentConstructor[] {
 	const candidates: unknown[] = typeof loaded === 'object' && loaded !== null ? Object.values(loaded) : [loaded]
 
@@ -98,7 +98,7 @@ function describeValue(value: unknown): string {
 	return value === null ? 'null' : typeof value
 }
 
-// A scope from another window is observed with that window's observer; a document without a window uses ours.
+// A scope from another window needs that window's MutationObserver
 function observerConstructor(scope: ParentNode): typeof MutationObserver {
 	const node = scope as Node
 	const ownerDocument = node.nodeType === 9 ? (node as Document) : (node.ownerDocument as Document)
@@ -106,7 +106,7 @@ function observerConstructor(scope: ParentNode): typeof MutationObserver {
 	return ownerDocument.defaultView?.MutationObserver ?? MutationObserver
 }
 
-// Re-reads where each record's node sits now, for the records that are inside one of the given nodes.
+// Re-reads ancestry for records inside the given nodes
 function refreshAncestries<TNode extends Node>(
 	records: Map<TNode, { ancestry: readonly Node[] }>,
 	within: Iterable<Node>
@@ -121,7 +121,7 @@ function refreshAncestries<TNode extends Node>(
 
 const nodeOf = (mount: PendingMount): Node => mount.node
 
-// Runs the hooks of mounts given in document order, nested components before their parents.
+// Children before parents
 function runMounts(mounts: Iterable<PendingMount>): void {
 	for (const mount of childrenFirst(mounts, nodeOf)) mount.run()
 }
@@ -148,7 +148,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			throw new TypeError('[Nemesia] app.register(...) expects an array of components.')
 		}
 
-		// The whole array is checked first, so a bad entry never leaves a partial registration behind.
+		// Validate first, so a bad entry leaves no partial registration
 		components.forEach((component: unknown, index) => {
 			if (isComponentConstructor(component) || isLazyComponent(component)) return
 
@@ -176,7 +176,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 	public mount(scope: ParentNode | undefined = defaultScope()): void {
 		if (scope === undefined) {
-			// Without a document there is nothing to mount; with one, the body has not been parsed yet.
+			// No body while a document exists means it is still being parsed
 			if (typeof document !== 'undefined') warnMissingDefaultScope()
 			return
 		}
@@ -197,7 +197,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		this.#flushMutationBatch()
 		this.#destroyConcrete(scope)
 
-		// A root that still waits for its module is not mounted here once the module arrives.
+		// Roots waiting in this scope must not mount after destroy
 		for (const root of this.#waitingRoots.keys()) {
 			if (isWithinScope(root, scope)) this.#waitingRoots.delete(root)
 		}
@@ -234,7 +234,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	): TInstance[] {
 		if (within === undefined) return []
 
-		// Markup inserted earlier in the same task is mounted before the lookup, not in a later microtask.
+		// Mount pending markup first, so the lookup sees it
 		this.#flushMutationBatch()
 
 		const { kind, name } = component.nemesia
@@ -269,7 +269,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 					.filter(
 						([root, { ancestry }]) =>
 							isWithinScope(root, scope) ||
-							// A root detached from the scope's tree is still owned by the scope it was last mounted in.
+							// A detached root belongs to the scope it was last mounted in
 							(root.getRootNode() !== scopeNode.getRootNode() && ancestry.includes(scopeNode))
 					)
 					.map(([root]) => root)
@@ -307,7 +307,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 	#collectMutations(records: Iterable<MutationRecord>): void {
 		for (const record of records) {
-			// Spreading a node list into push() overflows the call stack for very large records.
+			// Spreading a node list into push() overflows the call stack for very large records
 			for (const node of record.addedNodes) this.#pendingAddedNodes.push(node)
 			for (const node of record.removedNodes) this.#pendingRemovedNodes.push(node)
 		}
@@ -326,7 +326,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 		const mounts: PendingMount[] = []
 
-		// Removal is judged by where things were when they were mounted, not by where a removed node sits now.
+		// Judge removals by where roots were mounted, not where the node is now
 		if (removedRoots.length > 0) {
 			const removed = new Set<Node>(removedRoots)
 			const wasInside = ({ ancestry }: { ancestry: readonly Node[] }): boolean =>
@@ -340,7 +340,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 					.map(([root]) => root)
 			)
 
-			// A scope that is still observed keeps its components, wherever it was moved to.
+			// An observed scope keeps its components when it moves
 			for (const [scope, observed] of scopesToReconcile) {
 				mounts.push(...this.#constructConcrete(scope, true))
 				observed.ancestry = snapshotAncestry(scope as Node)
@@ -357,8 +357,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		this.#loadLazy()
 	}
 
-	// Lazy components that the last pass asked for load together, so that they also mount together:
-	// one pass over the waiting roots, children before parents.
+	// Lazy components requested in one pass load and mount together
 	#loadLazy(): void {
 		if (this.#lazyQueue.size === 0) return
 
@@ -369,7 +368,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		void Promise.all(batch.map(registration => this.#resolveLazy(registration))).then(() => this.#mountWaitingRoots())
 	}
 
-	// Never rejects: a module that fails to load is reported and leaves only its own component unmounted.
+	// Never rejects, a failed module only leaves its own component unmounted
 	async #resolveLazy(registration: LazyRegistration): Promise<void> {
 		const { name } = registration.nemesia
 
@@ -379,7 +378,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 				throw new Error(`Expected exactly one component named "${name}" from the loader, found ${components.length}.`)
 			}
 
-			// A registration replaced while its module was loading stays replaced.
+			// Keep a registration that was replaced while loading
 			if (this.#registrations.get(name) === registration) {
 				this.#registrations.set(name, components[0] as unknown as ComponentConstructor)
 			}
@@ -472,7 +471,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		mounts.push({
 			node: root,
 			run: () => {
-				// An earlier hook in the same batch may have destroyed this instance or moved its root out of scope.
+				// An earlier hook in the batch may have destroyed or moved it
 				if (this.#roots.get(root)?.instance !== instance) return
 				if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) {
 					this.#remove(root, instance)
@@ -493,7 +492,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		})
 	}
 
-	// The root is remembered until its module arrives; the module itself is requested once.
+	// The module is requested once, the root waits for it
 	#awaitLazy(registration: LazyRegistration, root: Element, found: WaitingRoot): void {
 		if (registration.state === 'failed') return
 
@@ -524,7 +523,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			mounts.push({
 				node: scope as Node,
 				run: () => {
-					// An earlier hook in the same batch may have destroyed this instance.
+					// An earlier hook in the batch may have destroyed it
 					if (!isCurrent()) return
 
 					this.#runMountHook(instance, isCurrent, error => {
@@ -553,16 +552,15 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 		if (hookResult === undefined) return
 
-		// Nothing in this handler can throw, so the rejection never becomes an unhandled one.
+		// Keeps a rejected onMount from going unhandled
 		void Promise.resolve(hookResult).catch(error => {
-			// Aborting pending work from onDestroy is expected, not a mount failure.
+			// Aborting pending work from onDestroy is expected, not a mount failure
 			if (isAbortError(error) && !isCurrent()) return
 			fail(error)
 		})
 	}
 
-	// The proxy gives this one construction an identity of its own, so the base constructor can tell it apart
-	// from another instance of the same class that a constructor creates by hand.
+	// A proxy gives this construction its own identity, so a hand-made instance of the same class is not mistaken for it
 	#construct<TInstance extends MountedInstance>(
 		component: (new (target: never) => TInstance) & Construction['type'],
 		target: ParentNode,
@@ -587,7 +585,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		}
 	}
 
-	// Whether this app is constructing a component of that kind right now, optionally for one target or one name.
+	// Whether this app is constructing such a component right now
 	#isConstructing(kind: string, target?: ParentNode, name?: string): boolean {
 		return constructions.some(
 			({ app, type, target: constructed }) =>

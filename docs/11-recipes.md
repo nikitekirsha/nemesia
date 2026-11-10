@@ -1,6 +1,6 @@
 # 11. Recipes
 
-These examples show common patterns without adding abstractions on top of Nemesia.
+Common patterns, written without extra abstractions on top of Nemesia.
 
 ## Accessible disclosure
 
@@ -345,7 +345,7 @@ app.register(components)
 app.mount(document.body)
 ```
 
-Component modules remain independent and can be loaded by the site's existing bundling strategy.
+Each module stays independent, so the existing bundling setup still works.
 
 ## Lazy components
 

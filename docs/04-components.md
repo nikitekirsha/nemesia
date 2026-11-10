@@ -21,14 +21,14 @@ class Search extends Component('search') {
 
 Every concrete instance exposes:
 
-- `root` — the matched root element;
-- `ref` — typed element lookup;
-- `option` — typed root-attribute parsing;
-- `on` — event registration with automatic cleanup;
-- `signal` — an `AbortSignal` that aborts when the component is destroyed;
-- `channel` — creates a typed channel that other components listen to;
-- `warn` — a contextual warning helper;
-- `find` and `findAll` — lookup of other mounted components;
+- `root`: the matched root element;
+- `ref`: typed element lookup;
+- `option`: typed root-attribute parsing;
+- `on`: event registration with automatic cleanup;
+- `signal`: an `AbortSignal` that aborts when the component is destroyed;
+- `channel`: creates a typed channel that other components listen to;
+- `warn`: a contextual warning helper;
+- `find` and `findAll`: lookup of other mounted components;
 - optional `onMount` and `onDestroy` hooks.
 
 ## Root tag constraints
@@ -72,7 +72,7 @@ class Video extends Component('video') {
 }
 ```
 
-This keeps the markup contract beside the behavior that needs it.
+The markup contract stays next to the code that uses it.
 
 If construction fails after listeners were registered, Nemesia aborts the partial instance and removes those listeners without calling `onDestroy`.
 

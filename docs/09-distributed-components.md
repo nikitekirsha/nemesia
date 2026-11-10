@@ -1,6 +1,6 @@
 # 9. Distributed components
 
-Distributed components attach behavior to an application scope rather than a dedicated root element. They work well for event delegation and singleton-like integrations spread across server-rendered markup.
+Distributed components attach behavior to an application scope rather than a dedicated root element. They suit event delegation and singleton-style code across server-rendered markup.
 
 ## Defining one
 
@@ -36,12 +36,12 @@ app.mount(document.body)
 
 A distributed instance exposes:
 
-- `scope` — the exact `ParentNode` passed to `mount`;
-- `on` — listener registration with automatic cleanup;
-- `signal` — an `AbortSignal` that aborts when the instance is destroyed;
-- `channel` — creates a typed channel that other components listen to;
-- `warn` — contextual warnings;
-- `find` and `findAll` — lookup of mounted components, inside the scope by default;
+- `scope`: the exact `ParentNode` passed to `mount`;
+- `on`: listener registration with automatic cleanup;
+- `signal`: an `AbortSignal` that aborts when the instance is destroyed;
+- `channel`: creates a typed channel that other components listen to;
+- `warn`: contextual warnings;
+- `find` and `findAll`: lookup of mounted components, inside the scope by default;
 - optional `onMount` and `onDestroy` hooks.
 
 It does not expose `root`, `ref`, or `option` because there is no component root.
