@@ -3,12 +3,14 @@ import {
 	Component,
 	DistributedComponent,
 	createApp,
+	lazy,
 	type BooleanOptionOptions,
 	type ComponentConstructor,
 	type ConcreteComponentOptions,
 	type CreateAppOptions,
 	type DefaultOptionOptions,
 	type JsonOptionOptions,
+	type LazyComponent,
 	type NemesiaApp,
 	type NumberOptionOptions,
 	type OptionParser,
@@ -136,3 +138,7 @@ if (false) {
 }
 
 void base
+
+const lazyTyped: LazyComponent = lazy('typed', () => Promise.resolve(Typed))
+const lazyApp: NemesiaApp = createApp().register([lazyTyped, lazy('module', () => Promise.resolve({ Typed }))])
+void lazyApp

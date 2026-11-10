@@ -7,10 +7,12 @@ import type {
 	CreateAppOptions,
 	DistributedComponentConstructor,
 	FindableComponent,
+	LazyComponent,
 	NemesiaApp
 } from '../component/types.js'
 import {
 	reportConstructionError,
+	reportLoadError,
 	reportMountError,
 	warnDuplicateRegistration,
 	warnMissingDefaultScope,
@@ -50,6 +52,17 @@ interface PendingMount {
 	readonly run: () => void
 }
 
+// What an app remembers about a lazy component. The same `lazy(...)` value may be registered in several apps.
+interface LazyRegistration extends LazyComponent {
+	state: 'idle' | 'loading' | 'failed'
+}
+
+// Where a root that waits for its component was found, so it is constructed by the same rules once the module arrives.
+interface WaitingRoot {
+	readonly scope: ParentNode
+	readonly observerDriven: boolean
+}
+
 function defaultScope(): ParentNode | undefined {
 	return typeof document === 'undefined' ? undefined : (document.body ?? undefined)
 }
@@ -63,6 +76,20 @@ function isComponentConstructor(value: unknown): value is ComponentConstructor {
 
 	const metadata = (value as { readonly nemesia?: { readonly kind?: unknown; readonly name?: unknown } }).nemesia
 	return typeof metadata?.name === 'string' && (metadata.kind === 'concrete' || metadata.kind === 'distributed')
+}
+
+function isLazyComponent(value: unknown): value is LazyComponent {
+	return (value as { readonly nemesia?: { readonly kind?: unknown } } | null)?.nemesia?.kind === 'lazy'
+}
+
+// A loader may resolve to the component class or to the module that exports it.
+function loadedComponents(name: string, loaded: unknown): ConcreteComponentConstructor[] {
+	const candidates: unknown[] = typeof loaded === 'object' && loaded !== null ? Object.values(loaded) : [loaded]
+
+	return candidates.filter(
+		(candidate): candidate is ConcreteComponentConstructor =>
+			isComponentConstructor(candidate) && candidate.nemesia.kind === 'concrete' && candidate.nemesia.name === name
+	)
 }
 
 function describeValue(value: unknown): string {
@@ -100,7 +127,9 @@ function snapshotAncestry(node: Node): readonly Node[] {
 export class NemesiaAppImplementation implements NemesiaApp {
 	public readonly options: Readonly<Required<CreateAppOptions>>
 
-	readonly #registrations = new Map<string, ComponentConstructor>()
+	readonly #registrations = new Map<string, ComponentConstructor | LazyRegistration>()
+	readonly #lazyQueue = new Set<LazyRegistration>()
+	readonly #waitingRoots = new Map<Element, WaitingRoot>()
 	readonly #roots = new Map<Element, MountedRoot>()
 	readonly #state = new ConcreteComponentState()
 	readonly #scopes = new Map<ParentNode, Map<string, BaseDistributedComponent>>()
@@ -114,14 +143,14 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		this.options = Object.freeze({ observe: options.observe ?? false })
 	}
 
-	public register(components: ComponentConstructor[]): this {
+	public register(components: Array<ComponentConstructor | LazyComponent>): this {
 		if (!Array.isArray(components)) {
 			throw new TypeError('[Nemesia] app.register(...) expects an array of components.')
 		}
 
 		// The whole array is checked first, so a bad entry never leaves a partial registration behind.
 		components.forEach((component: unknown, index) => {
-			if (isComponentConstructor(component)) return
+			if (isComponentConstructor(component) || isLazyComponent(component)) return
 
 			throw new TypeError(
 				`[Nemesia] app.register(...) received ${describeValue(component)} at index ${index}, which is not a component class.` +
@@ -136,7 +165,10 @@ export class NemesiaAppImplementation implements NemesiaApp {
 				warnDuplicateRegistration(name)
 			}
 
-			this.#registrations.set(name, component)
+			this.#registrations.set(
+				name,
+				isLazyComponent(component) ? { nemesia: component.nemesia, load: component.load, state: 'idle' } : component
+			)
 		}
 
 		return this
@@ -156,6 +188,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		this.#runMounts(childrenFirst(concrete, mount => mount.node))
 		this.#runMounts(distributed)
 		this.#refreshMountedRootAncestriesWithin([scope])
+		this.#loadLazy()
 	}
 
 	public destroy(scope: ParentNode | undefined = defaultScope()): void {
@@ -163,6 +196,11 @@ export class NemesiaAppImplementation implements NemesiaApp {
 
 		this.#flushMutationBatch()
 		this.#destroyConcrete(scope)
+
+		// A root that still waits for its module is not mounted here once the module arrives.
+		for (const root of this.#waitingRoots.keys()) {
+			if (isWithinScope(root, scope)) this.#waitingRoots.delete(root)
+		}
 
 		const records = this.#scopes.get(scope)
 		if (records === undefined) return
@@ -308,6 +346,56 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		this.#runMounts(childrenFirst(documentOrder(mounts, nodeOf), nodeOf))
 		this.#refreshMountedRootAncestriesWithin(addedRoots)
 		this.#refreshObservedScopeAncestries(addedRoots)
+		this.#loadLazy()
+	}
+
+	// Lazy components that the last pass asked for load together, so that they also mount together:
+	// one pass over the waiting roots, children before parents.
+	#loadLazy(): void {
+		if (this.#lazyQueue.size === 0) return
+
+		const batch = [...this.#lazyQueue]
+		this.#lazyQueue.clear()
+		for (const registration of batch) registration.state = 'loading'
+
+		void Promise.all(batch.map(registration => this.#resolveLazy(registration))).then(() => this.#mountWaitingRoots())
+	}
+
+	// Never rejects: a module that fails to load is reported and leaves only its own component unmounted.
+	async #resolveLazy(registration: LazyRegistration): Promise<void> {
+		const { name } = registration.nemesia
+
+		try {
+			const components = loadedComponents(name, await registration.load())
+			if (components.length !== 1) {
+				throw new Error(`Expected exactly one component named "${name}" from the loader, found ${components.length}.`)
+			}
+
+			// A registration replaced while its module was loading stays replaced.
+			if (this.#registrations.get(name) === registration) {
+				this.#registrations.set(name, components[0] as unknown as ComponentConstructor)
+			}
+		} catch (error) {
+			registration.state = 'failed'
+			reportLoadError(name, error)
+		}
+	}
+
+	#mountWaitingRoots(): void {
+		this.#flushMutationBatch()
+
+		const waiting = [...this.#waitingRoots]
+		this.#waitingRoots.clear()
+
+		const mounts: PendingMount[] = []
+		for (const [root, { scope, observerDriven }] of waiting) {
+			this.#constructRoot(root, scope, observerDriven, mounts)
+		}
+
+		const nodeOf = (mount: PendingMount): Node => mount.node
+		this.#runMounts(childrenFirst(documentOrder(mounts, nodeOf), nodeOf))
+		this.#refreshMountedRootAncestriesWithin(waiting.map(([root]) => root))
+		this.#loadLazy()
 	}
 
 	#destroyHistoricallyRemovedConcrete(removedRoots: Element[]): void {
@@ -362,79 +450,96 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		const mounts: PendingMount[] = []
 
 		for (const root of discoverConcreteRoots(scope)) {
-			if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) continue
-
-			const name = root.getAttribute('data-nemesia')
-			if (name === null || this.#state.isRootConstructing(root) || this.#roots.has(root)) continue
-
-			const registration = this.#registrations.get(name)
-			if (registration === undefined || registration.nemesia.kind !== 'concrete') {
-				continue
-			}
-
-			const component = registration as unknown as ConcreteComponentConstructor
-			if (!this.#isValidRoot(name, root, component.nemesia)) continue
-
-			if (!component.nemesia.multiple && this.#state.hasActiveOrConstructing(name)) {
-				warnSkippedComponent(name, 'only one instance may be mounted', {
-					component: name,
-					root
-				})
-				continue
-			}
-
-			let instance: BaseComponent
-			const reservation = this.#state.reserveConstruction(root, name)
-			const constructionComponent = new Proxy(component, {})
-			const capture = beginComponentConstruction(constructionComponent, root, this)
-
-			try {
-				instance = new constructionComponent(root)
-			} catch (error) {
-				capture.instance?.[abortComponentConstruction]()
-				if (error instanceof SkipComponentMountError) {
-					warnSkippedComponent(name, error.message, error.payload)
-				} else {
-					reportConstructionError(name, { root }, error)
-				}
-				continue
-			} finally {
-				endComponentConstruction(capture)
-				this.#state.releaseConstruction(reservation)
-			}
-
-			if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) {
-				instance[abortComponentConstruction]()
-				continue
-			}
-
-			this.#roots.set(root, { name, instance, ancestry: snapshotAncestry(root) })
-			this.#state.activate(name)
-			mounts.push({
-				node: root,
-				run: () => {
-					// An earlier hook in the same batch may have destroyed this instance or moved its root out of scope.
-					if (this.#roots.get(root)?.instance !== instance) return
-					if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) {
-						this.#remove(root, instance)
-						instance[abortComponentConstruction]()
-						return
-					}
-
-					this.#runMountHook(
-						instance,
-						() => this.#roots.get(root)?.instance === instance,
-						error => {
-							reportMountError(name, { root }, error)
-							this.#remove(root, instance)
-							instance[teardownComponent]()
-						}
-					)
-				}
-			})
+			this.#constructRoot(root, scope, observerDriven, mounts)
 		}
 
 		return mounts
+	}
+
+	#constructRoot(root: Element, scope: ParentNode, observerDriven: boolean, mounts: PendingMount[]): void {
+		if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) return
+
+		const name = root.getAttribute('data-nemesia')
+		if (name === null || this.#state.isRootConstructing(root) || this.#roots.has(root)) return
+
+		const registration = this.#registrations.get(name)
+		if (registration === undefined) return
+
+		if (registration.nemesia.kind === 'lazy') {
+			this.#awaitLazy(registration as LazyRegistration, root, { scope, observerDriven })
+			return
+		}
+
+		if (registration.nemesia.kind !== 'concrete') return
+
+		const component = registration as unknown as ConcreteComponentConstructor
+		if (!this.#isValidRoot(name, root, component.nemesia)) return
+
+		if (!component.nemesia.multiple && this.#state.hasActiveOrConstructing(name)) {
+			warnSkippedComponent(name, 'only one instance may be mounted', {
+				component: name,
+				root
+			})
+			return
+		}
+
+		let instance: BaseComponent
+		const reservation = this.#state.reserveConstruction(root, name)
+		const constructionComponent = new Proxy(component, {})
+		const capture = beginComponentConstruction(constructionComponent, root, this)
+
+		try {
+			instance = new constructionComponent(root)
+		} catch (error) {
+			capture.instance?.[abortComponentConstruction]()
+			if (error instanceof SkipComponentMountError) {
+				warnSkippedComponent(name, error.message, error.payload)
+			} else {
+				reportConstructionError(name, { root }, error)
+			}
+			return
+		} finally {
+			endComponentConstruction(capture)
+			this.#state.releaseConstruction(reservation)
+		}
+
+		if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) {
+			instance[abortComponentConstruction]()
+			return
+		}
+
+		this.#roots.set(root, { name, instance, ancestry: snapshotAncestry(root) })
+		this.#state.activate(name)
+		mounts.push({
+			node: root,
+			run: () => {
+				// An earlier hook in the same batch may have destroyed this instance or moved its root out of scope.
+				if (this.#roots.get(root)?.instance !== instance) return
+				if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) {
+					this.#remove(root, instance)
+					instance[abortComponentConstruction]()
+					return
+				}
+
+				this.#runMountHook(
+					instance,
+					() => this.#roots.get(root)?.instance === instance,
+					error => {
+						reportMountError(name, { root }, error)
+						this.#remove(root, instance)
+						instance[teardownComponent]()
+					}
+				)
+			}
+		})
+	}
+
+	// The root is remembered until its module arrives; the module itself is requested once.
+	#awaitLazy(registration: LazyRegistration, root: Element, found: WaitingRoot): void {
+		if (registration.state === 'failed') return
+
+		this.#waitingRoots.set(root, found)
+		if (registration.state === 'idle') this.#lazyQueue.add(registration)
 	}
 
 	#constructDistributed(scope: ParentNode): PendingMount[] {

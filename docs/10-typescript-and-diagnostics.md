@@ -3,10 +3,10 @@
 ## Public runtime exports
 
 ```ts
-import { BaseComponent, BaseDistributedComponent, Component, DistributedComponent, createApp } from 'nemesia'
+import { BaseComponent, BaseDistributedComponent, Component, DistributedComponent, createApp, lazy } from 'nemesia'
 ```
 
-Most applications need only `Component`, `DistributedComponent`, and `createApp`. The base classes are exported for typing and advanced integration; concrete classes should normally extend the factories.
+Most applications need only `Component`, `DistributedComponent`, `createApp`, and sometimes `lazy`. The base classes are exported for typing and advanced integration; concrete classes should normally extend the factories.
 
 ## Public types
 
@@ -15,6 +15,7 @@ The package exports:
 - `NemesiaApp`
 - `CreateAppOptions`
 - `ComponentConstructor`
+- `LazyComponent`
 - `ConcreteComponentOptions`
 - `StringOptionOptions`
 - `NumberOptionOptions`

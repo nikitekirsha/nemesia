@@ -6,6 +6,7 @@ import {
 	DistributedComponent,
 	createApp,
 	type ComponentConstructor,
+	type LazyComponent,
 	type NemesiaApp
 } from '../src/index.js'
 
@@ -35,7 +36,7 @@ describe('app creation and registration', () => {
 
 		expect(app.register([First])).toBe(app)
 		expect(app.register([Second])).toBe(app)
-		expectTypeOf(app.register).parameter(0).toEqualTypeOf<ComponentConstructor[]>()
+		expectTypeOf(app.register).parameter(0).toEqualTypeOf<Array<ComponentConstructor | LazyComponent>>()
 
 		if (false) {
 			// @ts-expect-error register intentionally has no single-component overload.

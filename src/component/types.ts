@@ -40,6 +40,24 @@ export interface DistributedMetadata {
 	readonly name: string
 }
 
+/** Metadata of a component that is loaded on demand. */
+export interface LazyMetadata {
+	/** Metadata kind for lazy components. */
+	readonly kind: 'lazy'
+
+	/** Component name matched against `data-nemesia`. */
+	readonly name: string
+}
+
+/** A component whose module is loaded the first time its root appears. Create it with `lazy(...)`. */
+export interface LazyComponent {
+	/** Runtime metadata used by the app. */
+	readonly nemesia: LazyMetadata
+
+	/** Loads the component class, or the module that exports it. */
+	readonly load: () => Promise<unknown>
+}
+
 /** Metadata attached to any Nemesia component constructor. */
 export type ComponentMetadata = ConcreteMetadata | DistributedMetadata
 
@@ -94,8 +112,8 @@ export interface NemesiaApp {
 	/** Normalized app options. */
 	readonly options: Readonly<Required<CreateAppOptions>>
 
-	/** Registers component constructors for future mounts. */
-	register(components: ComponentConstructor[]): this
+	/** Registers component constructors and lazy components for future mounts. */
+	register(components: Array<ComponentConstructor | LazyComponent>): this
 
 	/** Mounts registered components inside a scope. Defaults to `document.body` when available. */
 	mount(scope?: ParentNode): void

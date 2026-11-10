@@ -4,6 +4,7 @@ import type {
 	AbstractConcreteComponentConstructor,
 	AbstractDistributedComponentConstructor,
 	ConcreteComponentOptions,
+	LazyComponent,
 	RootFor
 } from './types.js'
 
@@ -43,4 +44,12 @@ export function DistributedComponent(name: string): AbstractDistributedComponent
 	}
 
 	return DistributedComponentBase
+}
+
+/**
+ * Describes a concrete component whose module is loaded the first time its root appears in a mounted scope.
+ * `load` resolves to the component class or to the module that exports it.
+ */
+export function lazy(name: string, load: () => Promise<unknown>): LazyComponent {
+	return { nemesia: { kind: 'lazy', name }, load }
 }

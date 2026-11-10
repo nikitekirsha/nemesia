@@ -702,4 +702,22 @@ describe('distributed bookkeeping', () => {
 		expect(app.findAll(BodyOnly)).toEqual([app.find(BodyOnly, document.body)])
 		expect(app.find(BodyOnly, inner)).toBeNull()
 	})
+
+	it('does not mount a distributed component on a root that carries its name', () => {
+		const mounted = vi.fn()
+		class Delegation extends DistributedComponent('named-like-a-root') {
+			onMount(): void {
+				mounted()
+			}
+		}
+		const named = document.createElement('div')
+		named.setAttribute('data-nemesia', 'named-like-a-root')
+		document.body.append(named)
+		const app = createApp().register([Delegation])
+
+		app.mount()
+
+		expect(mounted).toHaveBeenCalledOnce()
+		expect(app.find(Delegation)?.scope).toBe(document.body)
+	})
 })

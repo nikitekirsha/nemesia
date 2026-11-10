@@ -32,6 +32,7 @@ function verifyEsmApi(api) {
 	check(typeof api.createApp === 'function', `${label} is missing named createApp`)
 	check(typeof api.Component === 'function', `${label} is missing named Component`)
 	check(typeof api.DistributedComponent === 'function', `${label} is missing named DistributedComponent`)
+	check(typeof api.lazy === 'function', `${label} is missing named lazy`)
 	check(typeof api.BaseComponent === 'function', `${label} is missing BaseComponent`)
 	check(!Object.hasOwn(api, 'Nemesia'), `${label} exports a Nemesia namespace`)
 
@@ -46,7 +47,7 @@ function verifyEsmApi(api) {
 
 function verifyUmdApi(api) {
 	const label = 'UMD global'
-	const expectedExports = ['Component', 'DistributedComponent', 'createApp']
+	const expectedExports = ['Component', 'DistributedComponent', 'createApp', 'lazy']
 
 	check(
 		JSON.stringify(Object.keys(api).sort()) === JSON.stringify(expectedExports),
@@ -56,6 +57,7 @@ function verifyUmdApi(api) {
 	check(typeof api.createApp === 'function', `${label} is missing createApp`)
 	check(typeof api.Component === 'function', `${label} is missing Component`)
 	check(typeof api.DistributedComponent === 'function', `${label} is missing DistributedComponent`)
+	check(typeof api.lazy === 'function', `${label} is missing lazy`)
 
 	verifyDefaultApp(api.createApp, label)
 }

@@ -307,31 +307,25 @@ Component modules remain independent and can be loaded by the site's existing bu
 
 ## Lazy components
 
-Registration mounts nothing by itself. Register a component when its module arrives, then call `mount()` again: roots that are already mounted are skipped, so only the new component mounts.
+Register a component with [`lazy`](03-applications.md#lazy-components) and its module loads the first time its root appears:
 
 ```ts
-import { createApp, type ComponentConstructor } from 'nemesia'
+import { createApp, lazy } from 'nemesia'
 
 const app = createApp({ observe: true })
-app.register([Header, Menu])
+
+app.register([Header, Menu, lazy('map-widget', () => import('./map-widget'))])
 app.mount()
-
-const lazy: Record<string, () => Promise<ComponentConstructor>> = {
-	'map-widget': () => import('./map-widget').then(module => module.MapWidget),
-	'video-player': () => import('./video-player').then(module => module.VideoPlayer)
-}
-
-for (const [name, load] of Object.entries(lazy)) {
-	if (document.querySelector(`[data-nemesia="${name}"]`) === null) continue
-
-	void load().then(component => {
-		app.register([component])
-		app.mount()
-	})
-}
 ```
 
-This loads a module only when its markup is on the page at startup. Once a component is registered, an observed app also mounts its roots that arrive later.
+When every component lives in its own file named after the component, Vite can list the loaders:
+
+```ts
+// ./components/gallery.ts exports the component named "gallery"
+const modules = import.meta.glob('./components/*.ts')
+
+app.register(Object.entries(modules).map(([path, load]) => lazy(path.slice(path.lastIndexOf('/') + 1, -3), load)))
+```
 
 ## Testing a component
 

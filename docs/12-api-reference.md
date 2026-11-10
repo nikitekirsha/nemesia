@@ -105,6 +105,14 @@ this.option.optional.custom('origin', parsePoint, isPoint, { default: { x: 0, y:
 
 A present but invalid value skips the component in both families.
 
+## `lazy(name, load)`
+
+```ts
+app.register([lazy('gallery', () => import('./gallery'))])
+```
+
+Registers a concrete component whose module is loaded the first time a root named `name` is found. `load` returns a promise of the component class or of a module that exports exactly one component with that name. Components found in the same pass load in parallel and mount together.
+
 ## `DistributedComponent(name)`
 
 ```ts
@@ -122,11 +130,11 @@ One instance is mounted for each exact scope passed to `app.mount`. It has no `r
 
 ## Exports
 
-Runtime: `Component`, `DistributedComponent`, `createApp`, `BaseComponent`, `BaseDistributedComponent`.
+Runtime: `Component`, `DistributedComponent`, `createApp`, `lazy`, `BaseComponent`, `BaseDistributedComponent`.
 
-Types: `NemesiaApp`, `CreateAppOptions`, `ComponentConstructor`, `ConcreteComponentOptions`, `StringOptionOptions`, `NumberOptionOptions`, `BooleanOptionOptions`, `JsonOptionOptions`, `DefaultOptionOptions`, `OptionParser`, `OptionValidator`.
+Types: `NemesiaApp`, `CreateAppOptions`, `ComponentConstructor`, `LazyComponent`, `ConcreteComponentOptions`, `StringOptionOptions`, `NumberOptionOptions`, `BooleanOptionOptions`, `JsonOptionOptions`, `DefaultOptionOptions`, `OptionParser`, `OptionValidator`.
 
-The UMD build exposes `Component`, `DistributedComponent`, and `createApp` on the global `Nemesia`.
+The UMD build exposes `Component`, `DistributedComponent`, `createApp`, and `lazy` on the global `Nemesia`.
 
 ## Diagnostics
 
@@ -135,6 +143,7 @@ The UMD build exposes `Component`, `DistributedComponent`, and `createApp` on th
 | Missing, duplicate, or mistyped ref; missing or invalid option | `console.warn`  | That instance is skipped.        |
 | Wrong root tag, or a second root of a `multiple: false`        | `console.warn`  | That root is skipped.            |
 | A name registered twice                                        | `console.warn`  | The latest registration is used. |
+| A lazy component whose module fails to load                    | `console.error` | Its roots stay unmounted.        |
 | `mount()` before `document.body` exists                        | `console.warn`  | Nothing is mounted.              |
 | An error thrown by a constructor or `onMount`                  | `console.error` | That instance is dropped.        |
 | An error thrown by `onDestroy`                                 | `console.error` | Cleanup continues.               |

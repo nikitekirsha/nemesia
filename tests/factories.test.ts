@@ -179,6 +179,7 @@ describe('public component types', () => {
 		expectTypeOf<PackageValues['Component']>().toBeFunction()
 		expectTypeOf<PackageValues['DistributedComponent']>().toBeFunction()
 		expectTypeOf<PackageValues['createApp']>().toBeFunction()
+		expectTypeOf<PackageValues['lazy']>().toBeFunction()
 	})
 
 	it('takes no options for distributed components', () => {

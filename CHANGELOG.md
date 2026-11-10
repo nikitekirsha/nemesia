@@ -9,6 +9,7 @@ All notable changes to Nemesia are documented here.
 - `this.signal`: an `AbortSignal` that aborts when the component is destroyed.
 - `this.on` returns a function that removes the listener before destroy.
 - `this.ref.tag(tag, name)` in every ref family: typed from the HTML tag and checked at runtime.
+- `lazy(name, load)`: a component whose module is loaded the first time its root appears. Components found together load in parallel and mount together, children before parents.
 
 ## 2.3.0 — 2026-11-10
 

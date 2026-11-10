@@ -34,6 +34,37 @@ An entry that is not a component class also throws, and nothing from that array 
 
 Names are unique within an app. Registering another constructor with the same name logs a warning and replaces the registration for future mounts. Existing instances are not replaced automatically.
 
+## Lazy components
+
+A component that only some pages use can stay out of the main bundle. Register it by name with `lazy`, and its module is loaded the first time a root with that name appears:
+
+```ts
+import { createApp, lazy } from 'nemesia'
+
+const app = createApp({ observe: true })
+
+app.register([
+	Header,
+	Modals,
+	lazy('gallery', () => import('./gallery')),
+	lazy('cart', () => import('./cart')),
+	lazy('cart-item', () => import('./cart-item'))
+])
+app.mount()
+```
+
+The loader resolves to the component class or to the module that exports it. From a module, Nemesia takes the one export that is a component with that name.
+
+A module is requested once, when `mount` or the observer first finds a root for it. A page without that root never downloads it. Markup that arrives later triggers the load in an observed app; without observation, the next `mount` call does.
+
+Components found in the same pass load in parallel and then mount together, nested components before their parents, exactly as if they had been registered from the start.
+
+A component that is already loaded does not wait for lazy ones. A parent mounts right away, and its lazy children mount when their modules arrive, so look children up when they are needed rather than in `onMount`.
+
+A module that fails to load is reported with `console.error` and is not requested again. Other components are unaffected.
+
+`lazy` is for components with a root. A distributed component has no root to wait for, so register it directly.
+
 ## Mounting
 
 ```ts

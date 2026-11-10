@@ -76,6 +76,10 @@ export function reportConstructionError(component: string, context: ComponentDia
 	}))
 }
 
+export function reportLoadError(component: string, error: unknown): void {
+	emitError(`[Nemesia] Component "${component}" failed to load.`, () => ({ component, error }))
+}
+
 export function reportMountError(component: string, context: ComponentDiagnosticContext, error: unknown): void {
 	emitError(`[Nemesia] Component "${component}" failed during onMount.`, () => ({
 		component,
