@@ -23,7 +23,8 @@ const { ready, shown } = useReveal(root)
 
 <style>
 .nm-label {
-	font-size: 15px;
+	font-family: var(--vp-font-family-base);
+	font-size: 14px;
 	font-weight: 500;
 	color: var(--nm-accent);
 }
@@ -34,7 +35,8 @@ const { ready, shown } = useReveal(root)
 
 .nm-title {
 	margin: 14px 0 44px !important;
-	max-width: 20em;
+	max-width: 22em;
+	text-wrap: balance;
 	font-size: clamp(30px, 3.6vw, 42px);
 	line-height: 1.12;
 	letter-spacing: -0.025em;

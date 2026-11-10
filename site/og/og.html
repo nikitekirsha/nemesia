@@ -64,6 +64,15 @@
 				letter-spacing: -0.035em;
 			}
 
+			.sub {
+				max-width: 640px;
+				margin-top: 24px;
+				text-wrap: balance;
+				font-size: 28px;
+				line-height: 1.4;
+				color: #58544d;
+			}
+
 			.install {
 				align-self: flex-start;
 				padding: 14px 22px;
@@ -90,7 +99,10 @@
 	</head>
 	<body>
 		<p class="brand"><img src="../public/logo.svg" alt="" />nemesia</p>
-		<h1>Components for the HTML your server already sends.</h1>
+		<div>
+			<h1>Structural sanity for vanilla JS.</h1>
+			<p class="sub">Components for the HTML your server already sends.</p>
+		</div>
 		<p class="install"><span>$</span> npm install nemesia</p>
 		<img class="flower" src="../public/logo.svg" alt="" />
 	</body>

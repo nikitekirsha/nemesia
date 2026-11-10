@@ -12,6 +12,10 @@
 	--nm-text-2: #58544d;
 	--nm-text-3: #8a857c;
 	--nm-radius: 12px;
+	--nm-warn: #e5a50a;
+	--nm-console-bg: #1b1a18;
+	--nm-console-text: #ece9e3;
+	--nm-console-dim: #8f8a80;
 
 	--vp-font-family-base: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
 	--vp-font-family-mono: 'JetBrains Mono Variable', ui-monospace, 'SFMono-Regular', monospace;
@@ -46,6 +50,8 @@
 	--nm-text: #ece9e3;
 	--nm-text-2: #b3ada3;
 	--nm-text-3: #847f76;
+	--nm-warn: #f0b429;
+	--nm-console-bg: #0f0f0e;
 }
 
 /* Landing layout ---------------------------------------------------------- */
@@ -58,10 +64,17 @@
 }
 
 .nm-landing {
-	max-width: 1120px;
+	max-width: var(--vp-layout-max-width);
 	margin: 0 auto;
 	padding: 0 24px;
 	color: var(--nm-text);
+}
+
+/* The same side padding as the VitePress navbar, so the content lines up with the logo and the links */
+@media (min-width: 768px) {
+	.nm-landing {
+		padding: 0 32px;
+	}
 }
 
 .VPContent:has(.nm-landing) {
@@ -85,6 +98,12 @@ html:has(.nm-landing) .VPLocalNav {
 :where(.nm-landing) code {
 	font-family: var(--vp-font-family-mono);
 	font-size: 0.88em;
+}
+
+:where(.nm-landing :not(pre) > code) {
+	padding: 1px 5px;
+	border-radius: 5px;
+	background: var(--nm-soft);
 }
 
 .nm-landing .vp-doc div[class*='language-'] {
@@ -112,26 +131,101 @@ html:has(.nm-landing) .VPLocalNav {
 /* Hero --------------------------------------------------------------------- */
 
 .nm-hero {
+	position: relative;
+	isolation: isolate;
 	display: grid;
 	grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
 	gap: 64px;
 	align-items: center;
-	padding: 88px 0 96px;
+	padding: 88px 0 104px;
+}
+
+/* A faint dot grid that fades out toward the edges: graph paper, not decoration. */
+.nm-hero::before {
+	content: '';
+	position: absolute;
+	inset: 0 -32px;
+	z-index: -1;
+	background-image: radial-gradient(var(--nm-line) 1px, transparent 1.2px);
+	background-size: 22px 22px;
+	mask-image: radial-gradient(ellipse 75% 85% at 25% 45%, #000, transparent 72%);
+	pointer-events: none;
+}
+
+.nm-pill {
+	display: inline-flex;
+	align-items: center;
+	gap: 10px;
+	margin-bottom: 28px;
+	padding: 4px 14px 4px 4px;
+	border: 1px solid var(--nm-line);
+	border-radius: 999px;
+	background: var(--nm-surface);
+	font-family: var(--vp-font-family-base);
+	font-size: 13px;
+	color: var(--nm-text-2) !important;
+	text-decoration: none !important;
+	transition: border-color 0.2s;
+}
+
+.nm-pill b {
+	padding: 2px 9px;
+	border-radius: 999px;
+	background: var(--nm-accent-soft);
+	color: var(--nm-accent);
+	font-weight: 600;
+}
+
+.nm-pill span {
+	display: inline-block;
+	font-family: var(--vp-font-family-base);
+	font-size: 16px;
+	line-height: 1;
+	color: var(--nm-text-2);
+	transition:
+		color 0.2s,
+		transform 0.2s;
+}
+
+.nm-pill:hover {
+	border-color: var(--nm-accent);
+}
+
+.nm-pill:hover span {
+	color: var(--nm-accent);
+	transform: translateX(3px);
 }
 
 .nm-hero__title {
-	font-size: clamp(40px, 4.8vw, 56px);
-	line-height: 1.04;
-	letter-spacing: -0.035em;
+	text-wrap: balance;
+	font-size: clamp(42px, 5.2vw, 62px);
+	line-height: 1.02;
+	letter-spacing: -0.04em;
 	font-weight: 600;
 }
 
 .nm-hero__lead {
-	margin: 24px 0 32px;
-	max-width: 34em;
+	margin: 24px 0 22px;
+	max-width: 32em;
 	font-size: 18px;
 	line-height: 1.6;
 	color: var(--nm-text-2);
+}
+
+.nm-spec {
+	display: flex;
+	flex-wrap: wrap;
+	margin: 0 0 32px;
+	font-family: var(--vp-font-family-base);
+	font-size: 14.5px;
+	line-height: 1.9;
+	color: var(--nm-text);
+}
+
+.nm-spec span + span::before {
+	content: '/';
+	margin: 0 12px;
+	color: var(--nm-text-3);
 }
 
 .nm-hero__actions {
@@ -145,7 +239,8 @@ html:has(.nm-landing) .VPLocalNav {
 	align-items: center;
 	height: 44px;
 	padding: 0 20px;
-	border: 1px solid var(--nm-line);
+	border: 1px solid color-mix(in srgb, var(--nm-text) 32%, var(--nm-bg));
+	background: var(--nm-surface);
 	border-radius: 10px;
 	color: var(--nm-text) !important;
 	font-weight: 500;
@@ -161,7 +256,7 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-button--primary {
-	border-color: var(--nm-accent);
+	border-color: color-mix(in srgb, var(--nm-accent) 55%, var(--nm-bg));
 	background: var(--nm-accent);
 	color: #fff !important;
 }
@@ -171,27 +266,8 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-button--primary:hover {
-	border-color: var(--nm-accent-hover);
+	border-color: color-mix(in srgb, var(--nm-accent-hover) 55%, var(--nm-bg));
 	background: var(--nm-accent-hover);
-}
-
-.nm-meta {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	margin-top: 28px;
-	font-size: 14px;
-	color: var(--nm-text-3);
-}
-
-.nm-meta span + span::before {
-	content: '';
-	display: inline-block;
-	width: 1px;
-	height: 12px;
-	margin: 0 14px;
-	vertical-align: -1px;
-	background: var(--nm-line);
 }
 
 .nm-hero__visual {
@@ -201,7 +277,7 @@ html:has(.nm-landing) .VPLocalNav {
 /* Sections ----------------------------------------------------------------- */
 
 .nm-section {
-	padding: 96px 0;
+	padding: 112px 0;
 	border-top: 1px solid var(--nm-line);
 }
 
@@ -245,7 +321,24 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-compare__panel div[class*='language-'] {
+	display: flex;
 	flex: 1;
+	flex-direction: column;
+	border: 1px solid var(--nm-line);
+	border-radius: var(--nm-radius) !important;
+}
+
+.nm-landing .nm-compare__panel div[class*='language-'] code {
+	padding: 0 16px;
+}
+
+/* The code block is stretched to its neighbour's height, so the scrollbar must stay at its bottom edge. */
+.nm-compare__panel div[class*='language-'] pre {
+	flex: 1;
+}
+
+.nm-compare__panel--after div[class*='language-'] {
+	border-color: color-mix(in srgb, var(--nm-accent) 40%, var(--nm-line));
 }
 
 .nm-compare__panel div[class*='language-'] code {
@@ -290,7 +383,8 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-demo__bar button,
-.nm-compare__bar button {
+.nm-compare__bar button,
+.nm-scenario__bar button {
 	flex: none;
 	padding: 12px 10px;
 	border-bottom: 2px solid transparent;
@@ -300,12 +394,14 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-demo__bar button:hover,
-.nm-compare__bar button:hover {
+.nm-compare__bar button:hover,
+.nm-scenario__bar button:hover {
 	color: var(--nm-text);
 }
 
 .nm-demo__bar button.is-active,
-.nm-compare__bar button.is-active {
+.nm-compare__bar button.is-active,
+.nm-scenario__bar button.is-active {
 	border-bottom-color: var(--nm-accent);
 	color: var(--nm-text);
 }
@@ -369,12 +465,18 @@ html:has(.nm-landing) .VPLocalNav {
 }
 
 .nm-footer__checks {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px 24px;
+	font-family: var(--vp-font-family-base);
 	font-size: 14px;
 	color: var(--nm-text-2);
 }
 
-.nm-footer__checks span {
-	margin-left: 16px;
+.nm-footer__checks span::before {
+	content: '✓';
+	margin-right: 8px;
+	color: var(--nm-accent);
 }
 
 .nm-footer__links {
@@ -397,6 +499,247 @@ html:has(.nm-landing) .VPLocalNav {
 	margin-top: 12px;
 }
 
+/* Structure: the class beside the markup and what the console says --------- */
+
+.nm-contract {
+	display: grid;
+	grid-template-columns: minmax(0, 0.85fr) minmax(0, 1.15fr);
+	gap: 24px;
+	align-items: start;
+}
+
+.nm-contract__class div[class*='language-'] {
+	border: 1px solid var(--nm-line);
+	border-radius: var(--nm-radius) !important;
+}
+
+.nm-legend {
+	display: grid;
+	gap: 10px;
+	margin: 22px 0 0 !important;
+	padding: 0 !important;
+	list-style: none !important;
+	font-size: 14px;
+	color: var(--nm-text-2);
+}
+
+.nm-legend li {
+	margin: 0 !important;
+}
+
+.nm-scenario {
+	overflow: hidden;
+	border: 1px solid var(--nm-line);
+	border-radius: var(--nm-radius);
+	background: var(--nm-surface);
+}
+
+.nm-scenario__bar {
+	display: flex;
+	gap: 4px;
+	padding: 0 12px;
+	border-bottom: 1px solid var(--nm-line);
+	background: var(--nm-soft);
+	overflow-x: auto;
+}
+
+.nm-scenario__panel {
+	display: none;
+}
+
+.nm-scenario__panel.is-active {
+	display: block;
+}
+
+.nm-scenario {
+	--vp-code-line-highlight-color: color-mix(in srgb, var(--nm-warn) 20%, transparent);
+}
+
+.nm-scenario .vp-doc div[class*='language-'] {
+	border-radius: 0 !important;
+	background: var(--nm-surface) !important;
+}
+
+.nm-scenario .highlighted {
+	width: calc(100% + 40px) !important;
+	margin: 0 -20px !important;
+	padding: 0 20px !important;
+}
+
+.nm-console {
+	min-height: 118px;
+	padding: 14px 20px 16px;
+	background: var(--nm-console-bg);
+	font-family: var(--vp-font-family-base);
+	font-size: 13.5px;
+	line-height: 1.7;
+	color: var(--nm-console-text);
+}
+
+.nm-console p {
+	margin: 0 !important;
+	line-height: inherit;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+}
+
+.nm-console__cmd span {
+	margin-right: 8px;
+	color: var(--nm-accent);
+}
+
+.nm-console__warn {
+	color: var(--nm-warn);
+}
+
+.nm-console__warn span {
+	margin-right: 6px;
+}
+
+.nm-console__dim {
+	color: var(--nm-console-dim);
+}
+
+/* Reasons ------------------------------------------------------------------ */
+
+.nm-reasons {
+	border-top: 1px solid var(--nm-line);
+}
+
+.nm-reason {
+	display: grid;
+	grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+	gap: 64px;
+	align-items: start;
+	padding: 52px 0;
+	border-bottom: 1px solid var(--nm-line);
+}
+
+.nm-reason__tag {
+	display: inline-block;
+	margin: 0 0 16px;
+	padding: 3px 10px;
+	border-radius: 999px;
+	background: var(--nm-accent-soft);
+	color: var(--nm-accent);
+	font-family: var(--vp-font-family-base);
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.nm-reason:last-child {
+	border-bottom: 0;
+}
+
+.nm-reason h3 {
+	font-size: 26px;
+	line-height: 1.15;
+	letter-spacing: -0.025em;
+	font-weight: 600;
+}
+
+.nm-reason__text p:not(.nm-reason__tag) {
+	max-width: 30em;
+	margin: 14px 0 0;
+	font-size: 16px;
+	line-height: 1.65;
+	color: var(--nm-text-2);
+}
+
+.nm-reason__code {
+	display: grid;
+	gap: 12px;
+	min-width: 0;
+}
+
+.nm-reason__code div[class*='language-'] {
+	border: 1px solid var(--nm-line);
+	border-radius: var(--nm-radius) !important;
+}
+
+.nm-reason__code .nm-note {
+	margin: 4px 0 0;
+}
+
+/* Capabilities ------------------------------------------------------------- */
+
+.nm-capabilities {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 16px;
+}
+
+.nm-capability {
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+	border: 1px solid var(--nm-line);
+	border-radius: 14px;
+	background: var(--nm-surface);
+}
+
+.nm-capability__text {
+	flex: 1;
+	padding: 24px 24px 22px;
+}
+
+.nm-chip {
+	display: inline-block;
+	margin: 0 0 18px;
+	padding: 3px 10px;
+	border-radius: 999px;
+	background: var(--nm-accent-soft);
+	color: var(--nm-accent);
+	font-family: var(--vp-font-family-base);
+	font-size: 13px;
+	font-weight: 500;
+}
+
+.nm-capability h3 {
+	font-size: 19px;
+	line-height: 1.25;
+	letter-spacing: -0.015em;
+	font-weight: 600;
+}
+
+.nm-capability__text p:not(.nm-chip) {
+	margin: 10px 0 0;
+	font-size: 15px;
+	line-height: 1.6;
+	color: var(--nm-text-2);
+}
+
+.nm-capability__code {
+	min-width: 0;
+}
+
+.nm-capability__code div[class*='language-'] {
+	border-top: 1px solid var(--nm-line);
+	border-radius: 0 !important;
+}
+
+.nm-landing .nm-capability__code div[class*='language-'] code {
+	padding: 0 16px;
+	font-size: 11.5px;
+}
+
+/* Closing call to action ---------------------------------------------------- */
+
+.nm-cta__title {
+	max-width: 14em;
+	text-wrap: balance;
+	font-size: clamp(34px, 4.4vw, 52px);
+	line-height: 1.05;
+	letter-spacing: -0.035em;
+	font-weight: 600;
+}
+
+.nm-cta__lead {
+	margin: 16px 0 32px;
+	font-size: 18px;
+	color: var(--nm-text-2);
+}
+
 /* Motion ------------------------------------------------------------------- */
 
 /* Parts hidden until a component reveals them come back on their own if scripts never run. */
@@ -410,23 +753,8 @@ html:has(.nm-landing) .VPLocalNav {
 
 /* Small screens ------------------------------------------------------------ */
 
-@media (max-width: 960px) {
-	.nm-hero {
-		grid-template-columns: minmax(0, 1fr);
-		gap: 48px;
-		padding: 56px 0 72px;
-	}
-}
-
-@media (max-width: 720px) {
-	.nm-landing {
-		padding: 0 16px;
-	}
-
-	.nm-section {
-		padding: 64px 0;
-	}
-
+/* Half a column is too narrow for the longest line below this width, so one panel is shown at a time */
+@media (max-width: 1100px) {
 	.nm-compare {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 0;
@@ -445,9 +773,62 @@ html:has(.nm-landing) .VPLocalNav {
 	.nm-compare__panel.is-active {
 		display: flex;
 	}
+}
+
+@media (max-width: 960px) {
+	.nm-hero {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 48px;
+		padding: 56px 0 72px;
+	}
+
+	.nm-contract,
+	.nm-capabilities {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.nm-reason {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 28px;
+		padding: 40px 0;
+	}
+}
+
+@media (max-width: 720px) {
+	.nm-landing {
+		padding: 0 24px;
+	}
+
+	.nm-section {
+		padding: 72px 0;
+	}
 
 	.nm-faq {
 		grid-template-columns: minmax(0, 1fr);
+		gap: 32px;
+	}
+
+	.nm-hero__actions {
+		flex-wrap: wrap;
+	}
+
+	.nm-pill {
+		font-size: 12px;
+	}
+
+	.nm-pill span {
+		display: none;
+	}
+
+	/* Two by two, since a separator would end up at the start of a wrapped line */
+	.nm-spec {
+		display: grid;
+		grid-template-columns: repeat(2, max-content);
+		gap: 2px 28px;
+	}
+
+	.nm-spec span + span::before {
+		content: none;
 	}
 
 	.nm-landing .vp-doc div[class*='language-'] code {

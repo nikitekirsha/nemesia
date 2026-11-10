@@ -1,8 +1,7 @@
 import { Component } from 'nemesia'
 import { Cart } from './cart'
-import { ProductCard, type CartLine } from './product-card'
+import { ProductCard } from './product-card'
 import { fetchFlowers } from './server'
-import { Toast } from './toast'
 
 export class Shop extends Component('shop') {
 	grid = this.ref.element('grid')
@@ -14,12 +13,8 @@ export class Shop extends Component('shop') {
 	onMount() {
 		this.write(`mounted ${this.findAll(ProductCard).length} product cards`)
 
-		this.on(this.root, 'product:add', (event: CustomEvent<CartLine>) => {
-			const { name, count } = event.detail
-			this.find(Cart)?.add(event.detail)
-			this.find(Toast, document.body)?.show(`${count} × ${name} added to cart`)
-			this.write(`product:add → cart.add(${name} × ${count})`)
-		})
+		const cart = this.find(Cart)
+		if (cart !== null) this.on(cart.added, ({ name, count }) => this.write(`cart.added → ${count} × ${name}`))
 
 		this.on(this.more, 'click', () => this.loadMore())
 	}
@@ -29,8 +24,12 @@ export class Shop extends Component('shop') {
 		this.write('loading more flowers from the server…')
 
 		const html = await fetchFlowers(++this.page)
+		// The shop may have been removed while the request was in flight
+		if (this.signal.aborted) return
+
+		const before = this.findAll(ProductCard).length
 		this.grid.insertAdjacentHTML('beforeend', html)
-		this.write('new cards arrived · mounted by the observer')
+		this.write(`+${this.findAll(ProductCard).length - before} cards mounted by the observer`)
 
 		this.more.disabled = this.page >= 2
 	}

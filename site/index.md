@@ -1,35 +1,35 @@
 ---
 layout: page
-title: Nemesia - components for the HTML your server already sends
+title: Nemesia - structural sanity for vanilla JS
 titleTemplate: Nemesia
 ---
 
 <script setup>
 const notes = [
 	{
-		line: 2,
-		label: 'Global selectors',
-		problem: 'A global selector grabs every tab on the page. Add a second tab group and the two switch each other.',
-		fix: 'Nemesia: each instance sees only its own elements.'
+		line: 5,
+		label: 'NaN delay',
+		problem: 'Forget data-delay and parseInt gives NaN. setInterval(fn, NaN) then fires every few milliseconds.',
+		fix: 'Nemesia: <code>option.number(\'delay\', { min: 500 })</code> is parsed and validated on mount.'
 	},
 	{
-		line: 3,
-		label: 'Classes as hooks',
-		problem: 'Styling classes double as JavaScript hooks. Rename one for CSS and the logic breaks.',
-		fix: 'Nemesia: behavior hooks live in <code>data-</code> attributes.'
-	},
-	{
-		line: 10,
-		label: 'Missing panel',
-		problem: 'One panel short? It throws on click, long after the page has loaded.',
-		fix: 'Nemesia: a missing panel is reported on load.'
+		line: 14,
+		label: 'Missing button',
+		problem: 'One typo in a class name returns null and throws. forEach stops, so the sliders after it never start.',
+		fix: 'Nemesia: a missing <code>next</code> is reported on load and skips only that slider.'
 	},
 	{
 		line: 15,
-		label: 'Markup loaded later',
-		problem: 'Markup loaded later stays dead until the setup runs again, and listeners can double.',
-		fix: 'Nemesia: new markup mounts itself.'
+		label: 'Leaked timer',
+		problem: 'Nothing clears this timer. Swap the HTML and it keeps ticking over slides that are no longer there.',
+		fix: 'Nemesia: <code>this.signal</code> aborts when the component is removed.'
 	},
+	{
+		line: 20,
+		label: 'Markup loaded later',
+		problem: 'Markup loaded later stays dead until the setup runs again, and the old sliders get listeners twice.',
+		fix: 'Nemesia: new markup mounts itself, once.'
+	}
 ]
 </script>
 
@@ -65,9 +65,13 @@ const notes = [
 <section class="nm-hero">
 <div class="nm-hero__text">
 
-<h1 class="nm-hero__title">Components for the HTML your server already sends.</h1>
+<a class="nm-pill" href="./changelog#_2-4-0-—-2026-11-10"><b>2.4</b> Channels, signals, lazy components<span aria-hidden="true">→</span></a>
 
-<p class="nm-hero__lead">Nemesia finds components in your markup, checks the elements and options they need, and cleans up after them. No virtual DOM, no templates, no build step.</p>
+<h1 class="nm-hero__title">Structural sanity for vanilla JS.</h1>
+
+<p class="nm-hero__lead">Components for the HTML your server already sends. Typed refs and options, markup that is checked when it mounts, and cleanup you never write.</p>
+
+<p class="nm-spec"><span>No virtual DOM</span><span>No build step</span><span>~5.6kb</span></p>
 
 <CopyCommand command="npm install nemesia" />
 
@@ -75,8 +79,6 @@ const notes = [
 	<a class="nm-button nm-button--primary" href="./guide/01-getting-started">Get started</a>
 	<a class="nm-button" href="https://github.com/nikitekirsha/nemesia">GitHub</a>
 </div>
-
-<p class="nm-meta"><span>~6 KB gzip</span><span>No dependencies</span><span>TypeScript</span></p>
 
 </div>
 <div class="nm-hero__visual">
@@ -100,58 +102,67 @@ const notes = [
 
 <section class="nm-section">
 
-<RevealTitle label="The problem" text="The tabs you've written a hundred times." />
+<RevealTitle label="The problem" text="The slider you've written a hundred times." />
 
 <Reveal>
 
-<Tabs kind="compare" label="Tabs without and with Nemesia" :tabs="{ before: 'Before', after: 'After' }">
+<p class="nm-lead">Same slider, same number of lines. Hover the numbers on the left: each one is a bug report you haven't received yet.</p>
+
+<Tabs kind="compare" label="A slider without and with Nemesia" :tabs="{ before: 'Before', after: 'After' }">
 <template v-slot:before>
 <CodeMarkers class="vp-doc" :notes="notes">
 <p class="nm-file">vanilla.js</p>
 
 ```js
-document.addEventListener('DOMContentLoaded', () => {
-	const buttons = document.querySelectorAll('.tab')
-	const panels = document.querySelectorAll('.panel')
+function initSliders() {
+	document.querySelectorAll('.slider').forEach(slider => {
+		const slides = slider.querySelectorAll('.slide')
+		const next = slider.querySelector('.next')
+		const delay = parseInt(slider.dataset.delay)
+		let current = 0
 
-	buttons.forEach((button, i) => {
-		button.addEventListener('click', () => {
-			buttons.forEach(b => b.classList.remove('is-active'))
-			panels.forEach(p => p.classList.remove('is-active'))
-			button.classList.add('is-active')
-			panels[i].classList.add('is-active')
-		})
+		function show() {
+			slides.forEach(s => s.classList.remove('active'))
+			current = (current + 1) % slides.length
+			slides[current].classList.add('active')
+		}
+
+		next.addEventListener('click', show)
+		setInterval(show, delay)
 	})
-})
+}
 
-// More tabs arrived via AJAX? Copy this into initTabs()
-// and call it again… hoping the listeners don't double.
+initSliders()
+// Slides arrived via AJAX? Call initSliders() again…
+// and hope nothing gets a second set of listeners.
 ```
 
 </CodeMarkers>
 </template>
 <template v-slot:after>
 <div class="vp-doc">
-<p class="nm-file">tabs.ts</p>
+<p class="nm-file">slider.ts</p>
 
 ```ts
-class Tabs extends Component('tabs') {
-	tabs = this.ref.many.button('tab')
-	panels = this.ref.many.element('panel')
+class Slider extends Component('slider') {
+	slides = this.ref.many.element('slide')
+	next = this.ref.button('next')
+	delay = this.option.number('delay', { min: 500 })
+
+	private current = 0
 
 	onMount() {
-		this.on(this.tabs, 'click', (_event, _tab, index) => {
-			this.show(index)
-		})
+		this.on(this.next, 'click', () => this.show())
+
+		const id = setInterval(() => this.show(), this.delay)
+		this.signal.addEventListener('abort', () => clearInterval(id))
 	}
 
-	show(index: number) {
-		this.tabs.forEach((tab, i) => {
-			tab.classList.toggle('is-active', i === index)
-		})
-		this.panels.forEach((panel, i) => {
-			panel.classList.toggle('is-active', i === index)
-		})
+	show() {
+		this.current = (this.current + 1) % this.slides.length
+		for (const [i, slide] of this.slides.entries()) {
+			slide.classList.toggle('active', i === this.current)
+		}
 	}
 }
 ```
@@ -166,36 +177,282 @@ class Tabs extends Component('tabs') {
 
 <section class="nm-section">
 
-<RevealTitle label="Features" text="Structure, without a framework." />
+<RevealTitle label="The structure" text="Structure in the HTML. Behavior in the class." />
 
 <Reveal>
 
-<FeatureGrid>
-	<article>
-		<h3>Behavior lives in the class</h3>
-		<p>Components are found by <code>data-nemesia</code>. The elements and options they need are defined in the class.</p>
-	</article>
-	<article>
-		<h3>Broken markup can't break the page</h3>
-		<p>A missing, duplicated or mistyped element skips only that instance, with a warning pointing at the element.</p>
-	</article>
-	<article>
-		<h3>Auto-typed</h3>
-		<p><code>this.ref.button('save')</code> is an <code>HTMLButtonElement</code>. <code>this.option.number('delay')</code> is a number.</p>
-	</article>
-	<article>
-		<h3>Dynamic DOM</h3>
-		<p>With <code>observe: true</code>, markup added by AJAX, htmx or a CMS mounts itself, and removed markup cleans up.</p>
-	</article>
-	<article>
-		<h3>Automatic cleanup</h3>
-		<p>Listeners registered with <code>this.on</code> are removed when a component is destroyed.</p>
-	</article>
-	<article>
-		<h3>Components that work together</h3>
-		<p>Build a page from small parts that know about each other, not one script that knows everything.</p>
-	</article>
-</FeatureGrid>
+<p class="nm-lead">Three attributes are the whole contract. Nemesia checks the markup against the class when a component mounts, so a broken page fails loudly, in one place, instead of silently in many.</p>
+
+<div class="nm-contract">
+<div class="nm-contract__class vp-doc">
+<p class="nm-file">slider.ts</p>
+
+```ts
+class Slider extends Component('slider') {
+	slides = this.ref.many.element('slide')
+	next = this.ref.button('next')
+	delay = this.option.number('delay', { min: 500 })
+}
+```
+
+<ul class="nm-legend">
+	<li><code>data-nemesia</code> names the component</li>
+	<li><code>data-ref</code> marks elements it needs</li>
+	<li><code>data-option-*</code> configures one instance</li>
+</ul>
+
+</div>
+<Tabs kind="scenario" label="Markup scenarios" :tabs="{ valid: 'Valid markup', ref: 'Missing ref', tag: 'Wrong tag', option: 'Bad option' }">
+<template v-slot:valid>
+<div class="vp-doc">
+
+```html
+<div data-nemesia="slider" data-option-delay="4000">
+	<div data-ref="slide">One</div>
+	<div data-ref="slide">Two</div>
+	<button data-ref="next">›</button>
+</div>
+```
+
+</div>
+<div class="nm-console" role="log">
+	<p class="nm-console__cmd"><span aria-hidden="true">&gt;</span> app.findAll(Slider).length</p>
+	<p class="nm-console__out">1</p>
+</div>
+</template>
+<template v-slot:ref>
+<div class="vp-doc">
+
+```html{4}
+<div data-nemesia="slider" data-option-delay="4000">
+	<div data-ref="slide">One</div>
+	<div data-ref="slide">Two</div>
+	<button>›</button>
+</div>
+```
+
+</div>
+<div class="nm-console" role="log">
+	<p class="nm-console__warn"><span aria-hidden="true">⚠</span> [Nemesia] Component "slider" skipped: missing required ref "next".</p>
+	<p class="nm-console__dim">▸ { component: 'slider', root: div, ref: 'next', selector: '[data-ref="next"]' }</p>
+</div>
+</template>
+<template v-slot:tag>
+<div class="vp-doc">
+
+```html{4}
+<div data-nemesia="slider" data-option-delay="4000">
+	<div data-ref="slide">One</div>
+	<div data-ref="slide">Two</div>
+	<div data-ref="next">›</div>
+</div>
+```
+
+</div>
+<div class="nm-console" role="log">
+	<p class="nm-console__warn"><span aria-hidden="true">⚠</span> [Nemesia] Component "slider" skipped: invalid ref "next": expected HTMLButtonElement, received &lt;div&gt; in namespace "http://www.w3.org/1999/xhtml".</p>
+	<p class="nm-console__dim">▸ { component: 'slider', root: div, ref: 'next', expected: 'HTMLButtonElement', … }</p>
+</div>
+</template>
+<template v-slot:option>
+<div class="vp-doc">
+
+```html{1}
+<div data-nemesia="slider" data-option-delay="fast">
+	<div data-ref="slide">One</div>
+	<div data-ref="slide">Two</div>
+	<button data-ref="next">›</button>
+</div>
+```
+
+</div>
+<div class="nm-console" role="log">
+	<p class="nm-console__warn"><span aria-hidden="true">⚠</span> [Nemesia] Component "slider" skipped: invalid option "delay".</p>
+	<p class="nm-console__dim">▸ { component: 'slider', root: div, option: 'delay', attribute: 'data-option-delay', expected: 'number', received: 'fast' }</p>
+</div>
+</template>
+</Tabs>
+</div>
+
+<p class="nm-note">Only that one instance is skipped. Every other component on the page still mounts, and the warning carries the element, so you can inspect it in devtools.</p>
+
+</Reveal>
+
+</section>
+
+<section class="nm-section">
+
+<RevealTitle label="The fit" text="Made for the pages you already have." />
+
+<Reveal>
+
+<div class="nm-reasons">
+
+<article class="nm-reason">
+<div class="nm-reason__text">
+	<p class="nm-reason__tag">app.mount()</p>
+	<h3>Zero hydration</h3>
+	<p>Your server already sent the finished page. Nemesia attaches behavior to it. Nothing is rendered twice, nothing flashes, nothing can mismatch, and the content is there before the script loads.</p>
+</div>
+<div class="nm-reason__code vp-doc">
+
+```html
+<!-- Rendered by Rails, Django, WordPress, Bitrix… -->
+<div data-nemesia="slider" data-option-delay="4000">
+	<div data-ref="slide">One</div>
+	<div data-ref="slide">Two</div>
+	…
+</div>
+```
+
+```ts
+app.register([Slider])
+app.mount() // picks up what is already there
+```
+
+</div>
+</article>
+
+<article class="nm-reason">
+<div class="nm-reason__text">
+	<p class="nm-reason__tag">observe: true</p>
+	<h3>Wakes up on its own</h3>
+	<p>A <code>MutationObserver</code> watches the page. Markup that arrives later comes alive, and markup that leaves is destroyed: listeners removed, signal aborted, <code>onDestroy</code> called. No re-init functions.</p>
+</div>
+<div class="nm-reason__code vp-doc">
+
+```ts
+const app = createApp({ observe: true })
+app.register([Slider, Tabs, Gallery])
+app.mount()
+
+// htmx, Turbo, Bitrix AJAX, your own fetch…
+box.innerHTML = html // new ones mount, old ones clean up
+```
+
+</div>
+</article>
+
+<article class="nm-reason">
+<div class="nm-reason__text">
+	<p class="nm-reason__tag">&lt;script&gt;</p>
+	<h3>No build step</h3>
+	<p>One script tag and a plain class. When you do have a bundler, it is the same API with full types, and the package is ESM with no dependencies.</p>
+</div>
+<div class="nm-reason__code vp-doc">
+
+```html
+<script src="https://cdn.jsdelivr.net/npm/nemesia"></script>
+<script>
+	const { Component, createApp } = Nemesia
+
+	class Hello extends Component('hello') {
+		onMount() {
+			this.root.textContent = 'Hello, structure.'
+		}
+	}
+
+	createApp().register([Hello]).mount()
+</script>
+```
+
+</div>
+</article>
+
+<article class="nm-reason">
+<div class="nm-reason__text">
+	<p class="nm-reason__tag">5.6 KB gzip</p>
+	<h3>Lighter than your logo.png</h3>
+	<p>5.6 KB gzipped for the whole runtime. Probably less than the logo in your header, and about half of Stimulus.</p>
+</div>
+<div class="nm-reason__code">
+
+<SizeBars :rows="[{ name: 'nemesia', size: 5.6, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
+
+<p class="nm-note">Published browser builds, minified and gzipped.</p>
+
+</div>
+</article>
+
+</div>
+
+</Reveal>
+
+</section>
+
+<section class="nm-section">
+
+<RevealTitle label="New in 2.4" text="Small, but not a toy." />
+
+<Reveal>
+
+<p class="nm-lead">Nemesia began as lifecycle and cleanup. It now also lets components talk to each other, cancels work that no longer matters, and loads code only for markup that is on the page. The browser build is still 5.6 KB.</p>
+
+<div class="nm-capabilities">
+
+<article class="nm-capability">
+<div class="nm-capability__text">
+	<p class="nm-chip">this.channel&lt;T&gt;()</p>
+	<h3>Components that talk</h3>
+	<p>A typed stream from one component to others. No DOM events, no string names, no <code>removeEventListener</code>: both sides clean up when either is destroyed.</p>
+</div>
+<div class="nm-capability__code vp-doc">
+
+```ts
+class Counter extends Component('counter') {
+	changed = this.channel<number>()
+	// …this.changed.emit(value)
+}
+
+// in any component that finds a counter
+this.on(counter.changed, value => {
+	// value: number
+})
+```
+
+</div>
+</article>
+
+<article class="nm-capability">
+<div class="nm-capability__text">
+	<p class="nm-chip">this.signal</p>
+	<h3>Work that ends with the component</h3>
+	<p>A plain <code>AbortSignal</code> that aborts on destroy: cancellation, not reactivity. Remove the markup mid-request and the fetch stops, and nothing after the <code>await</code> runs.</p>
+</div>
+<div class="nm-capability__code vp-doc">
+
+```ts
+async onMount() {
+	const res = await fetch(this.url, {
+		signal: this.signal
+	})
+	this.price.textContent = await res.text()
+}
+```
+
+</div>
+</article>
+
+<article class="nm-capability">
+<div class="nm-capability__text">
+	<p class="nm-chip">lazy()</p>
+	<h3>Code that follows the markup</h3>
+	<p>A component's module is requested the first time its root appears in the page. Pages without a map never download the map.</p>
+</div>
+<div class="nm-capability__code vp-doc">
+
+<!-- prettier-ignore -->
+```ts
+app.register([
+	Header,
+	lazy('map', () => import('./map'))
+])
+```
+
+</div>
+</article>
+
+</div>
 
 </Reveal>
 
@@ -207,7 +464,7 @@ class Tabs extends Component('tabs') {
 
 <Reveal>
 
-<p class="nm-lead">Plain server HTML, four small components. Add a few flowers, then load more from the “server”.</p>
+<p class="nm-lead">Server-rendered cards and four small components. The cart announces what happens through channels, and the cards, the toast and the log listen. Load more flowers from the “server”: the new cards join in on their own.</p>
 
 <Tabs kind="demo" label="Flower shop demo" :tabs="{ result: 'Result', html: 'HTML', components: 'Components' }">
 <template v-slot:bar>
@@ -232,33 +489,19 @@ class Tabs extends Component('tabs') {
 
 ::: code-group
 
-<<< @/demo/shop.ts
+<<< @/demo/cart.ts
 
 <<< @/demo/product-card.ts
 
-<<< @/demo/cart.ts
-
 <<< @/demo/toast.ts
+
+<<< @/demo/shop.ts
 
 :::
 
 </div>
 </template>
 </Tabs>
-
-</Reveal>
-
-</section>
-
-<section class="nm-section">
-
-<RevealTitle label="Size" text="Small enough to forget about." />
-
-<Reveal>
-
-<SizeBars :rows="[{ name: 'nemesia', size: 5.6, self: true }, { name: 'petite-vue', size: 7.3 }, { name: 'Stimulus', size: 11.3 }, { name: 'Alpine', size: 19.9 }]" />
-
-<p class="nm-note">Published browser builds, minified and gzipped.</p>
 
 </Reveal>
 
@@ -273,27 +516,27 @@ class Tabs extends Component('tabs') {
 <dl class="nm-faq">
 	<div>
 		<dt>Vue or React?</dt>
-		<dd>They render the page. Nemesia does not: your server already did. If you need client-side templates, routing or reactive state, use them instead.</dd>
+		<dd>They render the page, and you ship the renderer plus a hydration step to redo what your server already did. If you need client-side templates, routing or reactive state, use them. If you need behavior on server HTML, you don't.</dd>
 	</div>
 	<div>
 		<dt>Alpine?</dt>
-		<dd>Alpine puts behavior into HTML attributes. Nemesia keeps it in JavaScript; your markup only defines the structure.</dd>
+		<dd>Alpine puts logic into HTML attributes. Nemesia keeps it in files you can type-check, lint, test and grep. Your markup only describes structure.</dd>
 	</div>
 	<div>
 		<dt>Stimulus?</dt>
-		<dd>The closest in spirit. Nemesia checks refs and options on mount, infers their types without extra declarations, and weighs about half as much.</dd>
+		<dd>The closest in spirit. Nemesia checks refs and options when a component mounts, infers their types without extra declarations, and weighs about half as much.</dd>
 	</div>
 	<div>
 		<dt>jQuery?</dt>
-		<dd>It belongs to another era of the web: selectors, but no structure, no lifecycle, no cleanup.</dd>
+		<dd>Selectors without structure: no lifecycle, no cleanup, no contract. Nemesia is what you end up writing after the fifth <code>initSliders()</code>.</dd>
+	</div>
+	<div>
+		<dt>Is it reactive?</dt>
+		<dd>No, on purpose. There is no state layer and no re-rendering: you update the DOM yourself, in plain code. For markup the server owns, that is usually all the state there is.</dd>
 	</div>
 	<div>
 		<dt>When is Nemesia the wrong choice?</dt>
 		<dd>Single-page apps, or interfaces where most of the DOM is rendered on the client.</dd>
-	</div>
-	<div>
-		<dt>Does it need a build step?</dt>
-		<dd>No. A bundler works, and so does a single <code>&lt;script&gt;</code> tag.</dd>
 	</div>
 </dl>
 
@@ -301,8 +544,27 @@ class Tabs extends Component('tabs') {
 
 </section>
 
+<section class="nm-section nm-cta">
+
+<Reveal>
+
+<h2 class="nm-cta__title">Start with the HTML you already have.</h2>
+
+<p class="nm-cta__lead">Pick one widget on one page, give it a class, and ship it.</p>
+
+<CopyCommand command="npm install nemesia" />
+
+<div class="nm-hero__actions">
+	<a class="nm-button nm-button--primary" href="./guide/01-getting-started">Get started</a>
+	<a class="nm-button" href="./guide/11-recipes">Browse recipes</a>
+</div>
+
+</Reveal>
+
+</section>
+
 <footer class="nm-footer">
-	<p class="nm-footer__checks">✓ TypeScript <span>✓ MIT</span> <span>✓ ESM + UMD</span> <span>✓ No dependencies</span></p>
+	<p class="nm-footer__checks"><span>TypeScript</span><span>MIT</span><span>ESM + UMD</span><span>No dependencies</span></p>
 	<p class="nm-footer__links">
 		<a href="./guide/01-getting-started">Guide</a>
 		<a href="./guide/11-recipes">Recipes</a>

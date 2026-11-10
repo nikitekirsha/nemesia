@@ -14,6 +14,7 @@
 }
 
 .flower {
+	position: relative;
 	display: flex;
 	flex-direction: column;
 	gap: 6px;
@@ -31,6 +32,24 @@
 	padding: 6px;
 	border-radius: 8px;
 	background: color-mix(in srgb, var(--petal) 14%, var(--nm-bg));
+}
+
+.flower__badge {
+	position: absolute;
+	top: 22px;
+	right: 22px;
+	padding: 2px 9px;
+	border-radius: 999px;
+	background: var(--nm-accent);
+	color: var(--nm-bg);
+	font-size: 11.5px;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	animation: nm-appear 0.3s ease both;
+}
+
+.flower__badge[hidden] {
+	display: none;
 }
 
 .flower__name {
@@ -172,22 +191,26 @@
 	grid-column: 1 / -1;
 	margin: 0 -24px -24px !important;
 	padding: 14px 24px !important;
-	min-height: 118px;
-	border-top: 1px solid var(--nm-line);
-	background: var(--nm-soft);
+	min-height: 126px;
+	background: var(--nm-console-bg);
 	list-style: none !important;
-	font-size: 13px;
+	font-family: var(--vp-font-family-base);
+	font-size: 13.5px;
 	line-height: 1.8;
-	color: var(--nm-text-3);
+	color: var(--nm-console-dim);
+}
+
+.shop__log li {
+	margin: 0 !important;
 }
 
 .shop__log li::before {
-	content: '› ';
+	content: '> ';
 	color: var(--nm-accent);
 }
 
 .shop__log li:last-child {
-	color: var(--nm-text);
+	color: var(--nm-console-text);
 }
 
 .toast {
@@ -222,6 +245,7 @@
 
 @media (prefers-reduced-motion: reduce) {
 	.flower,
+	.flower__badge,
 	.toast {
 		animation: none;
 		transition: none;
@@ -254,6 +278,11 @@
 
 	.flower__art {
 		height: 76px;
+	}
+
+	.flower__badge {
+		top: 16px;
+		right: 16px;
 	}
 
 	.shop__log {

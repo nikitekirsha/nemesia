@@ -43,6 +43,8 @@ onUnmounted(() => window.clearTimeout(timer))
 }
 
 .nm-install__command {
+	padding: 0;
+	background: none;
 	font-size: 14px;
 }
 

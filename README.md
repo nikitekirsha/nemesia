@@ -1,8 +1,10 @@
 # Nemesia
 
-Nemesia is a small DOM-first runtime for server-rendered and CMS-driven websites. Your server owns the HTML. Nemesia finds components in the markup and attaches your behavior to them.
+**Structural sanity for vanilla JS.**
 
-It provides typed refs and options, DOM contract validation, lifecycle hooks, component lookup, automatic event cleanup, and optional observation of dynamic DOM changes. It does not render HTML or introduce a client-side application model.
+Nemesia is a small DOM-first runtime for server-rendered and CMS-driven websites. Your server owns the HTML. Nemesia finds components in the markup and attaches your behavior to them. No virtual DOM, no hydration, no build step, 5.6 KB gzipped.
+
+It provides typed refs and options, DOM contract validation, lifecycle hooks, component lookup, automatic event cleanup, and optional observation of dynamic DOM changes. Components can talk to each other through typed channels, cancel their work when they are destroyed with an `AbortSignal`, and load their code only when their markup appears. It does not render HTML or introduce a client-side application model.
 
 ## Install
 
@@ -13,15 +15,15 @@ npm install nemesia
 ```
 
 ```ts
-import { Component, DistributedComponent, createApp } from 'nemesia'
+import { Component, DistributedComponent, createApp, lazy } from 'nemesia'
 ```
 
 ### UMD
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/nemesia/dist/nemesia.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/nemesia"></script>
 <script>
-	const { Component, DistributedComponent, createApp } = Nemesia
+	const { Component, DistributedComponent, createApp, lazy } = Nemesia
 </script>
 ```
 
@@ -64,4 +66,4 @@ app.mount(document.body)
 
 ## Guide
 
-The guide is on the **[website](https://nikitekirsha.github.io/nemesia/guide/01-getting-started)**.
+The guide is on the **[website](https://nikitekirsha.github.io/nemesia/)**.

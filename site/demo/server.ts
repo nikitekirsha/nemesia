@@ -22,6 +22,7 @@ function card({ name, price, petal }: Flower): string {
 	return `
 		<article class="flower" data-nemesia="product-card" data-option-name="${name}" data-option-price="${price}" style="--petal: ${petal}">
 			<svg class="flower__art" viewBox="0 0 32 32" aria-hidden="true"><use href="#nemesia-flower" /></svg>
+			<span class="flower__badge" data-ref="badge" hidden></span>
 			<h3 class="flower__name">${name}</h3>
 			<p class="flower__price">$${price.toFixed(2)}</p>
 			<div class="flower__stepper">
