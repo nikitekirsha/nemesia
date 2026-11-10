@@ -2,21 +2,12 @@ export type DiagnosticPayload = Record<string, unknown>
 
 export type ComponentDiagnosticContext = { readonly root: Element } | { readonly scope: ParentNode }
 
-type DiagnosticPayloadFactory = () => DiagnosticPayload
-
-function emitWarning(message: string, createPayload: DiagnosticPayloadFactory): void {
+// Diagnostics are observational: a console that throws, or a payload that cannot be read, never alters control flow.
+function emit(method: 'warn' | 'error', message: string, payload: DiagnosticPayload, extra?: DiagnosticPayload): void {
 	try {
-		console.warn(message, createPayload())
+		console[method](`[Nemesia] ${message}`, { ...payload, ...extra })
 	} catch {
-		// Diagnostics are observational and must never alter runtime control flow.
-	}
-}
-
-function emitError(message: string, createPayload: DiagnosticPayloadFactory): void {
-	try {
-		console.error(message, createPayload())
-	} catch {
-		// Diagnostics are observational and must never alter runtime control flow.
+		// Nothing to do: the diagnostic itself failed.
 	}
 }
 
@@ -32,68 +23,45 @@ export function warnComponent(
 	component: string,
 	context: ComponentDiagnosticContext,
 	message: string,
-	payload: DiagnosticPayload = {}
+	payload?: DiagnosticPayload
 ): void {
-	emitWarning(`[Nemesia] Component "${component}": ${message}`, () => ({
-		component,
-		...context,
-		...payload
-	}))
-}
-
-export function reportDestroyError(component: string, context: ComponentDiagnosticContext, error: unknown): void {
-	emitError(`[Nemesia] Component "${component}" failed during onDestroy.`, () => ({
-		component,
-		...context,
-		error
-	}))
-}
-
-export function reportChannelError(component: string, context: ComponentDiagnosticContext, error: unknown): void {
-	emitError(`[Nemesia] A listener of a channel of component "${component}" failed.`, () => ({
-		component,
-		...context,
-		error
-	}))
-}
-
-export function warnDuplicateRegistration(component: string): void {
-	emitWarning(
-		`[Nemesia] Component "${component}" was registered more than once. The latest registration was used.`,
-		() => ({ component })
-	)
-}
-
-export function warnMissingDefaultScope(): void {
-	emitWarning(
-		'[Nemesia] app.mount() was called before document.body exists, so nothing was mounted. ' +
-			'Call it after the body is parsed or pass a scope.',
-		() => ({})
-	)
+	emit('warn', `Component "${component}": ${message}`, { component, ...context }, payload)
 }
 
 export function warnSkippedComponent(component: string, reason: string, payload: DiagnosticPayload): void {
-	emitWarning(`[Nemesia] Component "${component}" skipped: ${reason}.`, () => payload)
+	emit('warn', `Component "${component}" skipped: ${reason}.`, payload)
 }
 
-export function reportConstructionError(component: string, context: ComponentDiagnosticContext, error: unknown): void {
-	emitError(`[Nemesia] Component "${component}" failed during construction.`, () => ({
-		component,
-		...context,
-		error
-	}))
+export function warnDuplicateRegistration(component: string): void {
+	emit('warn', `Component "${component}" was registered more than once. The latest registration was used.`, {
+		component
+	})
+}
+
+export function warnMissingDefaultScope(): void {
+	emit(
+		'warn',
+		'app.mount() was called before document.body exists, so nothing was mounted. Call it after the body is parsed or pass a scope.',
+		{}
+	)
+}
+
+// `phase` is where the component failed: construction, onMount, or onDestroy.
+export function reportFailure(
+	component: string,
+	context: ComponentDiagnosticContext,
+	phase: string,
+	error: unknown
+): void {
+	emit('error', `Component "${component}" failed during ${phase}.`, { component, ...context, error })
+}
+
+export function reportChannelError(component: string, context: ComponentDiagnosticContext, error: unknown): void {
+	emit('error', `A listener of a channel of component "${component}" failed.`, { component, ...context, error })
 }
 
 export function reportLoadError(component: string, error: unknown): void {
-	emitError(`[Nemesia] Component "${component}" failed to load.`, () => ({ component, error }))
-}
-
-export function reportMountError(component: string, context: ComponentDiagnosticContext, error: unknown): void {
-	emitError(`[Nemesia] Component "${component}" failed during onMount.`, () => ({
-		component,
-		...context,
-		error
-	}))
+	emit('error', `Component "${component}" failed to load.`, { component, error })
 }
 
 export function observeRejection(result: Promise<void>, onRejected: (error: unknown) => void): Promise<void> {

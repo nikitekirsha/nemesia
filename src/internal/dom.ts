@@ -1,101 +1,63 @@
 const HTML_NAMESPACE = 'http://www.w3.org/1999/xhtml'
 
-function isElement(value: ParentNode): value is Element & ParentNode {
-	return value.nodeType === 1
-}
-
 // Builds an exact attribute selector, escaping the value as a CSS string.
 export function attributeSelector(attribute: string, value: string): string {
 	const escaped = value.replace(/["\\]/g, '\\$&').replace(/[\n\r\f]/g, char => `\\${char.charCodeAt(0).toString(16)} `)
 	return `[${attribute}="${escaped}"]`
 }
 
+// The scope itself counts when it is an element that matches.
 export function discoverConcreteRoots(scope: ParentNode, selector = '[data-nemesia]'): Element[] {
-	const roots: Element[] = []
+	const descendants = scope.querySelectorAll(selector)
 
-	if (isElement(scope) && scope.matches(selector)) {
-		roots.push(scope)
-	}
-
-	roots.push(...scope.querySelectorAll(selector))
-	return roots
+	return scope.nodeType === 1 && (scope as Element).matches(selector)
+		? [scope as Element, ...descendants]
+		: [...descendants]
 }
 
 export function isHtmlElement(element: Element): element is HTMLElement {
 	return element.namespaceURI === HTML_NAMESPACE
 }
 
+// A node contains itself, so a root that is the scope counts too.
 export function isWithinScope(root: Element, scope: ParentNode): boolean {
-	if (root === scope) return true
-
-	return (
-		scope as ParentNode & {
-			contains(node: Node | null): boolean
-		}
-	).contains(root)
+	return (scope as Node).contains(root)
 }
 
-function collectMutationRoots(node: Node, roots: Element[]): void {
-	if (node.nodeType === 1) {
-		roots.push(node as Element)
-		return
+export function hasAncestorIn(node: Node | null, ancestors: ReadonlySet<Node>): boolean {
+	for (let current = node; current !== null; current = current.parentNode) {
+		if (ancestors.has(current)) return true
 	}
-
-	if (node.nodeType !== 9 && node.nodeType !== 11) return
-
-	for (const child of node.childNodes) {
-		collectMutationRoots(child, roots)
-	}
+	return false
 }
 
+// Mutation records list every kind of child node; only elements can be or contain component roots.
 export function distinctMutationRoots(nodes: Iterable<Node>): Element[] {
-	const roots: Element[] = []
-	const seen = new Set<Element>()
-
-	for (const node of nodes) {
-		const processable: Element[] = []
-		collectMutationRoots(node, processable)
-
-		for (const root of processable) {
-			if (seen.has(root)) continue
-			seen.add(root)
-			roots.push(root)
-		}
-	}
-
-	return roots
+	return [...new Set(nodes)].filter((node): node is Element => node.nodeType === 1)
 }
 
+// Drops every root that sits inside another one, which is discovered together with its ancestor.
 export function normalizeMutationRoots(nodes: Iterable<Node>): Element[] {
 	const roots = distinctMutationRoots(nodes)
+	const rootSet = new Set<Node>(roots)
 
-	const rootSet = new Set(roots)
-	return roots.filter(root => {
-		let ancestor = root.parentElement
-
-		while (ancestor !== null) {
-			if (rootSet.has(ancestor)) return false
-			ancestor = ancestor.parentElement
-		}
-
-		return true
-	})
+	return roots.filter(root => !hasAncestorIn(root.parentNode, rootSet))
 }
 
-function nodeDepth(node: Node): number {
-	let depth = 0
-	let current = node.parentNode
+// The node itself, then every ancestor up to the root of its tree.
+export function snapshotAncestry(node: Node): readonly Node[] {
+	const ancestry: Node[] = []
 
-	while (current !== null) {
-		depth += 1
-		current = current.parentNode
-	}
+	for (let current: Node | null = node; current !== null; current = current.parentNode) ancestry.push(current)
 
-	return depth
+	return ancestry
 }
 
 export function deepestFirst(roots: Iterable<Element>): Element[] {
-	return [...roots].sort((left, right) => nodeDepth(right) - nodeDepth(left))
+	return [...roots]
+		.map(root => [snapshotAncestry(root).length, root] as const)
+		.sort(([left], [right]) => right - left)
+		.map(([, root]) => root)
 }
 
 export function documentOrder<T>(items: Iterable<T>, nodeOf: (item: T) => Node): T[] {

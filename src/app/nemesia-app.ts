@@ -11,14 +11,14 @@ import type {
 	NemesiaApp
 } from '../component/types.js'
 import {
-	reportConstructionError,
+	type ComponentDiagnosticContext,
+	reportFailure,
 	reportLoadError,
-	reportMountError,
 	warnDuplicateRegistration,
 	warnMissingDefaultScope,
 	warnSkippedComponent
 } from '../internal/diagnostics.js'
-import { beginComponentConstruction, endComponentConstruction } from '../internal/construction.js'
+import { type Construction, constructions } from '../internal/construction.js'
 import {
 	attributeSelector,
 	childrenFirst,
@@ -26,13 +26,14 @@ import {
 	discoverConcreteRoots,
 	distinctMutationRoots,
 	documentOrder,
+	hasAncestorIn,
 	isHtmlElement,
 	isWithinScope,
-	normalizeMutationRoots
+	normalizeMutationRoots,
+	snapshotAncestry
 } from '../internal/dom.js'
 import { SkipComponentMountError, isAbortError } from '../internal/errors.js'
 import { abortComponentConstruction, teardownComponent } from '../internal/lifecycle.js'
-import { ConcreteComponentState } from './component-state.js'
 
 type MountedInstance = BaseComponent | BaseDistributedComponent
 
@@ -105,23 +106,24 @@ function observerConstructor(scope: ParentNode): typeof MutationObserver {
 	return ownerDocument.defaultView?.MutationObserver ?? MutationObserver
 }
 
-function hasAncestorIn(node: Node, ancestors: ReadonlySet<Node>): boolean {
-	for (let current: Node | null = node; current !== null; current = current.parentNode) {
-		if (ancestors.has(current)) return true
+// Re-reads where each record's node sits now, for the records that are inside one of the given nodes.
+function refreshAncestries<TNode extends Node>(
+	records: Map<TNode, { ancestry: readonly Node[] }>,
+	within: Iterable<Node>
+): void {
+	const nodes = new Set(within)
+	if (nodes.size === 0) return
+
+	for (const [node, record] of records) {
+		if (hasAncestorIn(node, nodes)) record.ancestry = snapshotAncestry(node)
 	}
-	return false
 }
 
-function snapshotAncestry(node: Node): readonly Node[] {
-	const ancestry: Node[] = []
-	let current: Node | null = node
+const nodeOf = (mount: PendingMount): Node => mount.node
 
-	while (current !== null) {
-		ancestry.push(current)
-		current = current.parentNode
-	}
-
-	return ancestry
+// Runs the hooks of mounts given in document order, nested components before their parents.
+function runMounts(mounts: Iterable<PendingMount>): void {
+	for (const mount of childrenFirst(mounts, nodeOf)) mount.run()
 }
 
 export class NemesiaAppImplementation implements NemesiaApp {
@@ -131,9 +133,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	readonly #lazyQueue = new Set<LazyRegistration>()
 	readonly #waitingRoots = new Map<Element, WaitingRoot>()
 	readonly #roots = new Map<Element, MountedRoot>()
-	readonly #state = new ConcreteComponentState()
 	readonly #scopes = new Map<ParentNode, Map<string, BaseDistributedComponent>>()
-	readonly #distributedConstructionReservations = new WeakMap<ParentNode, Set<string>>()
 	readonly #observed = new Map<ParentNode, ObservedScope>()
 	readonly #pendingAddedNodes: Node[] = []
 	readonly #pendingRemovedNodes: Node[] = []
@@ -185,9 +185,9 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		if (this.options.observe) this.#ensureObserver(scope)
 		const distributed = this.#constructDistributed(scope)
 		const concrete = this.#constructConcrete(scope)
-		this.#runMounts(childrenFirst(concrete, mount => mount.node))
-		this.#runMounts(distributed)
-		this.#refreshMountedRootAncestriesWithin([scope])
+		runMounts(concrete)
+		for (const mount of distributed) mount.run()
+		refreshAncestries(this.#roots, [scope as Node])
 		this.#loadLazy()
 	}
 
@@ -260,25 +260,21 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		return found
 	}
 
-	#runMounts(mounts: Iterable<PendingMount>): void {
-		for (const mount of mounts) mount.run()
-	}
-
 	#destroyConcrete(scope: ParentNode): void {
-		const roots: Element[] = []
-		for (const [root, record] of this.#roots) {
-			if (this.#belongsToScope(root, record, scope)) roots.push(root)
-		}
-
-		this.#destroyConcreteRoots(deepestFirst(roots))
-	}
-
-	#belongsToScope(root: Element, record: MountedRoot, scope: ParentNode): boolean {
-		if (isWithinScope(root, scope)) return true
-
-		// A root detached from the scope's tree is still owned by the scope it was last mounted in.
 		const scopeNode = scope as Node
-		return root.getRootNode() !== scopeNode.getRootNode() && record.ancestry.includes(scopeNode)
+
+		this.#destroyConcreteRoots(
+			deepestFirst(
+				[...this.#roots]
+					.filter(
+						([root, { ancestry }]) =>
+							isWithinScope(root, scope) ||
+							// A root detached from the scope's tree is still owned by the scope it was last mounted in.
+							(root.getRootNode() !== scopeNode.getRootNode() && ancestry.includes(scopeNode))
+					)
+					.map(([root]) => root)
+			)
+		)
 	}
 
 	#destroyConcreteRoots(roots: Iterable<Element>): void {
@@ -328,24 +324,36 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		const addedRoots = normalizeMutationRoots(this.#pendingAddedNodes.splice(0))
 		if (removedRoots.length === 0 && addedRoots.length === 0) return
 
-		const scopesToReconcile = this.#observedScopesHistoricallyWithin(removedRoots)
-
-		this.#destroyHistoricallyRemovedConcrete(removedRoots)
-
 		const mounts: PendingMount[] = []
-		for (const [scope, observed] of scopesToReconcile) {
-			mounts.push(...this.#constructConcrete(scope, true))
-			observed.ancestry = snapshotAncestry(scope as Node)
+
+		// Removal is judged by where things were when they were mounted, not by where a removed node sits now.
+		if (removedRoots.length > 0) {
+			const removed = new Set<Node>(removedRoots)
+			const wasInside = ({ ancestry }: { ancestry: readonly Node[] }): boolean =>
+				ancestry.some(node => removed.has(node))
+			const scopesToReconcile = [...this.#observed].filter(([, observed]) => wasInside(observed))
+
+			this.#destroyConcreteRoots(
+				[...this.#roots]
+					.filter(([, record]) => wasInside(record))
+					.sort(([, left], [, right]) => right.ancestry.length - left.ancestry.length)
+					.map(([root]) => root)
+			)
+
+			// A scope that is still observed keeps its components, wherever it was moved to.
+			for (const [scope, observed] of scopesToReconcile) {
+				mounts.push(...this.#constructConcrete(scope, true))
+				observed.ancestry = snapshotAncestry(scope as Node)
+			}
 		}
 
 		for (const root of addedRoots) {
 			if (this.#isWithinObservedScope(root)) mounts.push(...this.#constructConcrete(root, true))
 		}
 
-		const nodeOf = (mount: PendingMount): Node => mount.node
-		this.#runMounts(childrenFirst(documentOrder(mounts, nodeOf), nodeOf))
-		this.#refreshMountedRootAncestriesWithin(addedRoots)
-		this.#refreshObservedScopeAncestries(addedRoots)
+		runMounts(documentOrder(mounts, nodeOf))
+		refreshAncestries(this.#roots, addedRoots)
+		refreshAncestries(this.#observed as Map<Node, ObservedScope>, addedRoots)
 		this.#loadLazy()
 	}
 
@@ -392,47 +400,12 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			this.#constructRoot(root, scope, observerDriven, mounts)
 		}
 
-		const nodeOf = (mount: PendingMount): Node => mount.node
-		this.#runMounts(childrenFirst(documentOrder(mounts, nodeOf), nodeOf))
-		this.#refreshMountedRootAncestriesWithin(waiting.map(([root]) => root))
+		runMounts(documentOrder(mounts, nodeOf))
+		refreshAncestries(
+			this.#roots,
+			waiting.map(([root]) => root)
+		)
 		this.#loadLazy()
-	}
-
-	#destroyHistoricallyRemovedConcrete(removedRoots: Element[]): void {
-		if (removedRoots.length === 0) return
-
-		const removed = new Set<Node>(removedRoots)
-		const records = [...this.#roots].filter(([, record]) => record.ancestry.some(ancestor => removed.has(ancestor)))
-
-		records.sort(([, left], [, right]) => right.ancestry.length - left.ancestry.length)
-		this.#destroyConcreteRoots(records.map(([root]) => root))
-	}
-
-	#observedScopesHistoricallyWithin(removedRoots: Element[]): Array<[ParentNode, ObservedScope]> {
-		if (removedRoots.length === 0) return []
-
-		const removed = new Set<Node>(removedRoots)
-
-		return [...this.#observed].filter(([, observed]) => observed.ancestry.some(ancestor => removed.has(ancestor)))
-	}
-
-	#refreshObservedScopeAncestries(addedRoots: Element[]): void {
-		if (addedRoots.length === 0) return
-
-		const added = new Set<Node>(addedRoots)
-		for (const [scope, observed] of this.#observed) {
-			if (hasAncestorIn(scope as Node, added)) observed.ancestry = snapshotAncestry(scope as Node)
-		}
-	}
-
-	#refreshMountedRootAncestriesWithin(scopes: Iterable<ParentNode>): void {
-		const scopeNodes = new Set<Node>()
-		for (const scope of scopes) scopeNodes.add(scope as Node)
-		if (scopeNodes.size === 0) return
-
-		for (const [root, record] of this.#roots) {
-			if (hasAncestorIn(root, scopeNodes)) record.ancestry = snapshotAncestry(root)
-		}
 	}
 
 	#isWithinObservedScope(root: Element): boolean {
@@ -460,7 +433,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) return
 
 		const name = root.getAttribute('data-nemesia')
-		if (name === null || this.#state.isRootConstructing(root) || this.#roots.has(root)) return
+		if (name === null || this.#isConstructing('concrete', root) || this.#roots.has(root)) return
 
 		const registration = this.#registrations.get(name)
 		if (registration === undefined) return
@@ -475,7 +448,11 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		const component = registration as unknown as ConcreteComponentConstructor
 		if (!this.#isValidRoot(name, root, component.nemesia)) return
 
-		if (!component.nemesia.multiple && this.#state.hasActiveOrConstructing(name)) {
+		if (
+			!component.nemesia.multiple &&
+			(this.#isConstructing('concrete', undefined, name) ||
+				[...this.#roots.values()].some(record => record.name === name))
+		) {
 			warnSkippedComponent(name, 'only one instance may be mounted', {
 				component: name,
 				root
@@ -483,25 +460,8 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			return
 		}
 
-		let instance: BaseComponent
-		const reservation = this.#state.reserveConstruction(root, name)
-		const constructionComponent = new Proxy(component, {})
-		const capture = beginComponentConstruction(constructionComponent, root, this)
-
-		try {
-			instance = new constructionComponent(root)
-		} catch (error) {
-			capture.instance?.[abortComponentConstruction]()
-			if (error instanceof SkipComponentMountError) {
-				warnSkippedComponent(name, error.message, error.payload)
-			} else {
-				reportConstructionError(name, { root }, error)
-			}
-			return
-		} finally {
-			endComponentConstruction(capture)
-			this.#state.releaseConstruction(reservation)
-		}
+		const instance = this.#construct(component, root, { root })
+		if (instance === undefined) return
 
 		if (!this.#isCurrentConcreteCandidate(root, scope, observerDriven)) {
 			instance[abortComponentConstruction]()
@@ -509,7 +469,6 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		}
 
 		this.#roots.set(root, { name, instance, ancestry: snapshotAncestry(root) })
-		this.#state.activate(name)
 		mounts.push({
 			node: root,
 			run: () => {
@@ -525,7 +484,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 					instance,
 					() => this.#roots.get(root)?.instance === instance,
 					error => {
-						reportMountError(name, { root }, error)
+						reportFailure(name, { root }, 'onMount', error)
 						this.#remove(root, instance)
 						instance[teardownComponent]()
 					}
@@ -549,24 +508,10 @@ export class NemesiaAppImplementation implements NemesiaApp {
 			if (registration.nemesia.kind !== 'distributed') continue
 
 			const name = registration.nemesia.name
-			if (this.#scopes.get(scope)?.has(name) || this.#isDistributedConstructing(scope, name)) continue
+			if (this.#scopes.get(scope)?.has(name) || this.#isConstructing('distributed', scope, name)) continue
 
-			const component = registration as DistributedComponentConstructor
-			this.#reserveDistributedConstruction(scope, name)
-			const constructionComponent = new Proxy(component, {})
-			const capture = beginComponentConstruction(constructionComponent, scope, this)
-			let instance: BaseDistributedComponent
-
-			try {
-				instance = new constructionComponent(scope)
-			} catch (error) {
-				capture.instance?.[abortComponentConstruction]()
-				reportConstructionError(name, { scope }, error)
-				continue
-			} finally {
-				endComponentConstruction(capture)
-				this.#releaseDistributedConstruction(scope, name)
-			}
+			const instance = this.#construct(registration as DistributedComponentConstructor, scope, { scope })
+			if (instance === undefined) continue
 
 			let records = this.#scopes.get(scope)
 			if (records === undefined) {
@@ -583,7 +528,7 @@ export class NemesiaAppImplementation implements NemesiaApp {
 					if (!isCurrent()) return
 
 					this.#runMountHook(instance, isCurrent, error => {
-						reportMountError(name, { scope }, error)
+						reportFailure(name, { scope }, 'onMount', error)
 						if (!isCurrent()) return
 
 						records.delete(name)
@@ -616,25 +561,41 @@ export class NemesiaAppImplementation implements NemesiaApp {
 		})
 	}
 
-	#isDistributedConstructing(scope: ParentNode, component: string): boolean {
-		return this.#distributedConstructionReservations.get(scope)?.has(component) ?? false
+	// The proxy gives this one construction an identity of its own, so the base constructor can tell it apart
+	// from another instance of the same class that a constructor creates by hand.
+	#construct<TInstance extends MountedInstance>(
+		component: (new (target: never) => TInstance) & Construction['type'],
+		target: ParentNode,
+		context: ComponentDiagnosticContext
+	): TInstance | undefined {
+		const type = new Proxy(component, {})
+		const construction: Construction = { type, target, app: this }
+		constructions.push(construction)
+
+		try {
+			return new type(target as never)
+		} catch (error) {
+			const { name } = component.nemesia
+
+			construction.instance?.[abortComponentConstruction]()
+			if (error instanceof SkipComponentMountError) warnSkippedComponent(name, error.message, error.payload)
+			else reportFailure(name, context, 'construction', error)
+
+			return undefined
+		} finally {
+			constructions.splice(constructions.lastIndexOf(construction), 1)
+		}
 	}
 
-	#reserveDistributedConstruction(scope: ParentNode, component: string): void {
-		let components = this.#distributedConstructionReservations.get(scope)
-		if (components === undefined) {
-			components = new Set()
-			this.#distributedConstructionReservations.set(scope, components)
-		}
-		components.add(component)
-	}
-
-	#releaseDistributedConstruction(scope: ParentNode, component: string): void {
-		const components = this.#distributedConstructionReservations.get(scope)
-		components?.delete(component)
-		if (components?.size === 0) {
-			this.#distributedConstructionReservations.delete(scope)
-		}
+	// Whether this app is constructing a component of that kind right now, optionally for one target or one name.
+	#isConstructing(kind: string, target?: ParentNode, name?: string): boolean {
+		return constructions.some(
+			({ app, type, target: constructed }) =>
+				app === this &&
+				type.nemesia.kind === kind &&
+				(target === undefined || constructed === target) &&
+				(name === undefined || type.nemesia.name === name)
+		)
 	}
 
 	#isValidRoot(component: string, root: Element, metadata: ConcreteMetadata): root is HTMLElement {
@@ -660,10 +621,6 @@ export class NemesiaAppImplementation implements NemesiaApp {
 	}
 
 	#remove(root: Element, instance: BaseComponent): void {
-		const record = this.#roots.get(root)
-		if (record?.instance !== instance) return
-
-		this.#roots.delete(root)
-		this.#state.deactivate(record.name)
+		if (this.#roots.get(root)?.instance === instance) this.#roots.delete(root)
 	}
 }

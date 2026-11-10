@@ -22,7 +22,8 @@ export class ListenerRegistry {
 		listener: ((event: Event) => void) | ((event: Event, target: TTarget, index: number) => void),
 		options?: AddEventListenerOptions
 	): () => void {
-		const registrationOptions = snapshotOptions(options)
+		// A copy, so that options the caller changes later still remove the listener they added.
+		const registrationOptions = options && { ...options }
 
 		// The browser ignores a listener registered with an aborted signal, so there is nothing to attach or own.
 		if (this.#closed || registrationOptions?.signal?.aborted === true) return nothingToRemove
@@ -136,18 +137,5 @@ export class ListenerRegistry {
 		signal?.addEventListener('abort', unsubscribe, { once: true })
 		this.#unsubscribers.add(unsubscribe)
 		return unsubscribe
-	}
-}
-
-function snapshotOptions(options: AddEventListenerOptions | undefined): AddEventListenerOptions | undefined {
-	if (options === undefined) return undefined
-
-	const { capture = false, once = false, passive = false, signal } = options
-
-	return {
-		capture,
-		once,
-		passive,
-		...(signal === undefined ? {} : { signal })
 	}
 }

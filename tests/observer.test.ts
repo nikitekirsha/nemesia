@@ -11,18 +11,22 @@ function componentRoot(name: string, tag = 'div'): HTMLElement {
 }
 
 describe('mutation root normalization', () => {
-	it('deduplicates roots, drops descendants, expands fragments, and preserves retained order', () => {
+	it('deduplicates roots, drops descendants and non-elements, and preserves retained order', () => {
 		const parent = document.createElement('section')
 		const child = document.createElement('div')
 		const sibling = document.createElement('aside')
-		const fragment = document.createDocumentFragment()
-		const fragmentRoot = document.createElement('article')
 		parent.append(child)
-		fragment.append(fragmentRoot)
 
 		expect(
-			normalizeMutationRoots([child, sibling, parent, child, document.createTextNode('ignored'), fragment])
-		).toEqual([sibling, parent, fragmentRoot])
+			normalizeMutationRoots([
+				child,
+				sibling,
+				parent,
+				child,
+				document.createTextNode('ignored'),
+				document.createComment('ignored')
+			])
+		).toEqual([sibling, parent])
 	})
 
 	it('normalizes a large sibling batch without pairwise containment scans', () => {

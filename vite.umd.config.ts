@@ -14,6 +14,12 @@ export default defineConfig({
 				exports: 'default'
 			}
 		},
+		// This is the file browsers download as is, so it gets the minifier that packs it tightest.
+		minify: 'terser',
+		terserOptions: {
+			ecma: 2020,
+			compress: { passes: 2 }
+		},
 		sourcemap: true
 	}
 })

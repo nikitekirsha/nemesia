@@ -11,129 +11,76 @@ import type {
 	StringOptionOptions
 } from './types.js'
 
-type ParseResult<T> = { readonly valid: true; readonly value: T } | { readonly valid: false }
+// What a parser returns for a value it does not accept. No attribute value can produce it.
+const INVALID = Symbol()
 
-type ParseOption<T> = (raw: string) => ParseResult<T>
+type Parsed<T> = T | typeof INVALID
 
-const valid = <T>(value: T): ParseResult<T> => ({ valid: true, value })
+const parseNumber = (raw: string): number => (raw.trim() === '' ? NaN : Number(raw))
 
-const invalid = <T>(): ParseResult<T> => ({ valid: false })
-
-const hasDefault = <T>(options: { default?: T } | undefined): options is { default: T } =>
-	options !== undefined && 'default' in options
-
-const optionAttribute = (name: string): string =>
-	`data-option-${name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`
-
-const parseNumber = (raw: string): number => (raw.trim() === '' ? Number.NaN : Number(raw))
-
-const parseBoolean = (raw: string): ParseResult<boolean> => {
-	if (raw === '' || raw === 'true' || raw === '1') {
-		return valid(true)
-	}
-
-	if (raw === 'false' || raw === '0') {
-		return valid(false)
-	}
-
-	return invalid()
-}
+const parseBoolean = (raw: string): Parsed<boolean> =>
+	raw === '' || raw === 'true' || raw === '1' ? true : raw === 'false' || raw === '0' ? false : INVALID
 
 // One lookup family: `option` (required) or `option.optional`.
 class OptionReader {
 	readonly #root: HTMLElement
-	readonly #componentName: string
+	readonly #component: string
 	readonly #required: boolean
 
-	public constructor(root: HTMLElement, componentName: string, required: boolean) {
+	public constructor(root: HTMLElement, component: string, required: boolean) {
 		this.#root = root
-		this.#componentName = componentName
+		this.#component = component
 		this.#required = required
 	}
 
+	public get optional(): OptionReader {
+		return new OptionReader(this.#root, this.#component, false)
+	}
+
 	public string(name: string, options?: StringOptionOptions): string | undefined {
-		return this.#resolve(
-			name,
-			'string',
-			raw => {
-				if (options?.minLength !== undefined && raw.length < options.minLength) {
-					return invalid()
+		return this.#read(name, 'string', options, raw => {
+			const pattern = options?.pattern
+			let matches = raw.length >= (options?.minLength ?? 0) && raw.length <= (options?.maxLength ?? Infinity)
+
+			if (matches && pattern !== undefined) {
+				// A global or sticky pattern must match from the start and keep its own position afterwards.
+				const lastIndex = pattern.lastIndex
+
+				try {
+					pattern.lastIndex = 0
+					matches = pattern.test(raw)
+				} finally {
+					pattern.lastIndex = lastIndex
 				}
+			}
 
-				if (options?.maxLength !== undefined && raw.length > options.maxLength) {
-					return invalid()
-				}
-
-				if (options?.pattern !== undefined) {
-					const lastIndex = options.pattern.lastIndex
-					let matches: boolean
-
-					try {
-						options.pattern.lastIndex = 0
-						matches = options.pattern.test(raw)
-					} finally {
-						options.pattern.lastIndex = lastIndex
-					}
-
-					if (!matches) {
-						return invalid()
-					}
-				}
-
-				return valid(raw)
-			},
-			options
-		)
+			return matches ? raw : INVALID
+		})
 	}
 
 	public number(name: string, options?: NumberOptionOptions): number | undefined {
-		return this.#resolve(
-			name,
-			options?.integer === true ? 'integer' : 'number',
-			raw => {
-				const value = parseNumber(raw)
+		return this.#read(name, options?.integer === true ? 'integer' : 'number', options, raw => {
+			const value = parseNumber(raw)
 
-				if (!Number.isFinite(value)) {
-					return invalid()
-				}
-
-				if (options?.integer === true && !Number.isInteger(value)) {
-					return invalid()
-				}
-
-				if (options?.min !== undefined && value < options.min) {
-					return invalid()
-				}
-
-				if (options?.max !== undefined && value > options.max) {
-					return invalid()
-				}
-
-				return valid(value)
-			},
-			options
-		)
+			return Number.isFinite(value) &&
+				value >= (options?.min ?? -Infinity) &&
+				value <= (options?.max ?? Infinity) &&
+				(options?.integer !== true || Number.isInteger(value))
+				? value
+				: INVALID
+		})
 	}
 
 	public boolean(name: string, options?: BooleanOptionOptions): boolean | undefined {
-		return this.#resolve(name, 'boolean', parseBoolean, options)
+		return this.#read(name, 'boolean', options, parseBoolean)
 	}
 
 	public json<T>(name: string, options?: JsonOptionOptions<T>): T | undefined {
-		return this.#resolve(
-			name,
-			'valid JSON',
-			raw => {
-				const value: unknown = JSON.parse(raw)
+		return this.#read(name, 'valid JSON', options, raw => {
+			const value: unknown = JSON.parse(raw)
 
-				if (options?.validate !== undefined && !options.validate(value)) {
-					return invalid()
-				}
-
-				return valid(value as T)
-			},
-			options
-		)
+			return options?.validate === undefined || options.validate(value) ? (value as T) : INVALID
+		})
 	}
 
 	public enum<T extends readonly string[]>(
@@ -141,11 +88,8 @@ class OptionReader {
 		values: T,
 		options?: DefaultOptionOptions<T[number]>
 	): T[number] | undefined {
-		return this.#resolve(
-			name,
-			`one of ${values.map(value => JSON.stringify(value)).join(', ')}`,
-			raw => (values.includes(raw) ? valid(raw as T[number]) : invalid()),
-			options
+		return this.#read(name, `one of ${values.map(value => JSON.stringify(value)).join(', ')}`, options, raw =>
+			values.includes(raw) ? raw : INVALID
 		)
 	}
 
@@ -154,34 +98,13 @@ class OptionReader {
 		literalValue: T,
 		options?: DefaultOptionOptions<T>
 	): T | undefined {
-		return this.#resolve(
-			name,
-			`literal ${JSON.stringify(literalValue)}`,
-			raw => {
-				let parsed: string | number | boolean
+		return this.#read(name, `literal ${JSON.stringify(literalValue)}`, options, raw => {
+			// The raw value is read as the literal's own type; anything unreadable can never equal the literal.
+			const parsed =
+				typeof literalValue === 'string' ? raw : typeof literalValue === 'number' ? parseNumber(raw) : parseBoolean(raw)
 
-				if (typeof literalValue === 'string') {
-					parsed = raw
-				} else if (typeof literalValue === 'number') {
-					parsed = parseNumber(raw)
-
-					if (Number.isNaN(parsed)) {
-						return invalid()
-					}
-				} else {
-					const booleanResult = parseBoolean(raw)
-
-					if (!booleanResult.valid) {
-						return invalid()
-					}
-
-					parsed = booleanResult.value
-				}
-
-				return parsed === literalValue ? valid(literalValue) : invalid()
-			},
-			options
-		)
+			return parsed === literalValue ? literalValue : INVALID
+		})
 	}
 
 	public custom<T>(
@@ -190,71 +113,46 @@ class OptionReader {
 		validator?: OptionValidator<T>,
 		options?: DefaultOptionOptions<T>
 	): T | undefined {
-		return this.#resolve(
-			name,
-			'valid custom value',
-			raw => {
-				const value = parser(raw)
+		return this.#read(name, 'valid custom value', options, raw => {
+			const value = parser(raw)
 
-				if (validator !== undefined && !validator(value)) {
-					return invalid()
-				}
-
-				return valid(value)
-			},
-			options
-		)
+			return validator === undefined || validator(value) ? value : INVALID
+		})
 	}
 
-	#resolve<T>(name: string, expected: string, parser: ParseOption<T>, options?: { default?: T }): T | undefined {
-		const attribute = optionAttribute(name)
-
+	#read<T>(
+		name: string,
+		expected: string,
+		options: { default?: T } | undefined,
+		parse: (raw: string) => Parsed<T>
+	): T | undefined {
+		const attribute = `data-option-${name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase()}`
 		const raw = this.#root.getAttribute(attribute)
+		let value: Parsed<T> | undefined
 
 		if (raw === null) {
-			if (this.#required) {
-				return this.#fail(`missing required option "${name}"`, name, attribute, expected, undefined)
+			if (!this.#required) return options?.default
+		} else {
+			try {
+				value = parse(raw)
+			} catch {
+				value = INVALID
 			}
 
-			return hasDefault(options) ? options.default : undefined
+			if (value !== INVALID) return value
 		}
 
-		let result: ParseResult<T>
-
-		try {
-			result = parser(raw)
-		} catch {
-			return this.#fail(`invalid option "${name}"`, name, attribute, expected, raw)
-		}
-
-		if (!result.valid) {
-			return this.#fail(`invalid option "${name}"`, name, attribute, expected, raw)
-		}
-
-		return result.value
-	}
-
-	#fail(reason: string, name: string, attribute: string, expected: string, received: unknown): never {
-		throw new SkipComponentMountError(reason, {
-			component: this.#componentName,
+		throw new SkipComponentMountError(raw === null ? `missing required option "${name}"` : `invalid option "${name}"`, {
+			component: this.#component,
 			root: this.#root,
 			option: name,
 			attribute,
 			expected,
-			received
+			received: raw ?? undefined
 		})
 	}
 }
 
-class RootOptionReader extends OptionReader {
-	public readonly optional: OptionReader
-
-	public constructor(root: HTMLElement, componentName: string) {
-		super(root, componentName, true)
-		this.optional = new OptionReader(root, componentName, false)
-	}
-}
-
 export function createOptionApi(root: HTMLElement, componentName: string): OptionApi {
-	return new RootOptionReader(root, componentName) as unknown as OptionApi
+	return new OptionReader(root, componentName, true) as unknown as OptionApi
 }

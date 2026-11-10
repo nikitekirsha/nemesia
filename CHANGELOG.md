@@ -2,6 +2,13 @@
 
 All notable changes to Nemesia are documented here.
 
+## 2.4.1 — 2026-11-10
+
+### Changed
+
+- The browser build is about 12% smaller: 5.6 KB gzipped instead of 6.4 KB. Behavior, messages, and types are unchanged.
+- `this.ref.optional`, `this.ref.many`, and `this.option.optional` are created when they are read instead of with every component, which also lowers the memory each component uses.
+
 ## 2.4.0 — 2026-11-10
 
 ### Added

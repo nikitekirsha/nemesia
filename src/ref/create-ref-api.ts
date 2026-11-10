@@ -1,126 +1,30 @@
-import type { DiagnosticPayload } from '../internal/diagnostics.js'
 import { attributeSelector, isHtmlElement } from '../internal/dom.js'
 import { SkipComponentMountError } from '../internal/errors.js'
 import type { RefApi } from './types.js'
 
-interface ExpectedType<TElement extends Element> {
-	readonly name: string
-	readonly accepts: (element: Element) => boolean
-}
-
-const htmlElementType: ExpectedType<HTMLElement> = {
-	name: 'HTMLElement',
-	accepts: isHtmlElement
-}
-
-const tagType = <TElement extends HTMLElement>(name: string, localName: string): ExpectedType<TElement> => ({
-	name,
-	accepts: element => isHtmlElement(element) && element.localName === localName
-})
-
-const buttonType = tagType<HTMLButtonElement>('HTMLButtonElement', 'button')
-const inputType = tagType<HTMLInputElement>('HTMLInputElement', 'input')
-const textareaType = tagType<HTMLTextAreaElement>('HTMLTextAreaElement', 'textarea')
-const selectType = tagType<HTMLSelectElement>('HTMLSelectElement', 'select')
-const formType = tagType<HTMLFormElement>('HTMLFormElement', 'form')
-
-function receivedType(element: Element): string {
-	return `<${element.localName}> in namespace "${element.namespaceURI ?? 'null'}"`
-}
-
-class RefResolver {
-	readonly #root: HTMLElement
-	readonly #componentName: string
-
-	public constructor(root: HTMLElement, componentName: string) {
-		this.#root = root
-		this.#componentName = componentName
-	}
-
-	public resolve(
-		name: string,
-		required: boolean,
-		many: boolean,
-		expected?: ExpectedType<Element>
-	): Element[] | Element | null {
-		const elements = this.#discover(name)
-
-		if (elements.length === 0) {
-			if (required) {
-				return this.#fail(`missing required ref "${name}"`, name)
-			}
-
-			return many ? [] : null
-		}
-
-		if (!many && elements.length > 1) {
-			return this.#fail(`duplicate ref "${name}": expected one element, received ${elements.length}`, name, {
-				expected: 'one element',
-				received: elements.length
-			})
-		}
-
-		const invalid = expected ? elements.find(element => !expected.accepts(element)) : undefined
-
-		if (invalid && expected) {
-			const received = receivedType(invalid)
-			return this.#fail(`invalid ref "${name}": expected ${expected.name}, received ${received}`, name, {
-				expected: expected.name,
-				received
-			})
-		}
-
-		return many ? elements : (elements[0] as Element)
-	}
-
-	#discover(name: string): Element[] {
-		const elements: Element[] = []
-		for (const element of this.#root.querySelectorAll(refSelector(name))) {
-			if (element.getAttribute('data-ref') === name && owner(element) === this.#root) elements.push(element)
-		}
-		return elements
-	}
-
-	#fail(reason: string, name: string, details: DiagnosticPayload = {}): never {
-		throw new SkipComponentMountError(reason, {
-			component: this.#componentName,
-			root: this.#root,
-			ref: name,
-			selector: `[data-ref="${name}"]`,
-			...details
-		})
-	}
-}
-
 // Ref names repeat across instances, so their selectors are built once.
 const refSelectors = new Map<string, string>()
 
-function refSelector(name: string): string {
-	let selector = refSelectors.get(name)
-	if (selector === undefined) {
-		selector = attributeSelector('data-ref', name)
-		refSelectors.set(name, selector)
-	}
-	return selector
-}
-
-// A ref on a nested component root belongs to the component above it.
-function owner(element: Element): Element | null {
-	// The element was found below a root, so a nested root always has a parent element.
-	const start = element.hasAttribute('data-nemesia') ? (element.parentElement as Element) : element
-	return start.closest('[data-nemesia]')
-}
-
-// One lookup family, such as `ref`, `ref.optional`, `ref.many`, or `ref.optional.many`.
+// One lookup family: `ref`, `ref.optional`, `ref.many`, or `ref.optional.many`.
 class RefQuery {
-	readonly #resolver: RefResolver
+	readonly #root: HTMLElement
+	readonly #component: string
 	readonly #required: boolean
 	readonly #many: boolean
 
-	public constructor(resolver: RefResolver, required: boolean, many: boolean) {
-		this.#resolver = resolver
+	public constructor(root: HTMLElement, component: string, required: boolean, many: boolean) {
+		this.#root = root
+		this.#component = component
 		this.#required = required
 		this.#many = many
+	}
+
+	public get optional(): RefQuery {
+		return new RefQuery(this.#root, this.#component, false, this.#many)
+	}
+
+	public get many(): RefQuery {
+		return new RefQuery(this.#root, this.#component, this.#required, true)
 	}
 
 	public one(name: string): unknown {
@@ -132,58 +36,83 @@ class RefQuery {
 	}
 
 	public element(name: string): unknown {
-		return this.#resolve(name, htmlElementType)
+		return this.#resolve(name, 'HTMLElement', '')
 	}
 
 	public tag(tag: string, name: string): unknown {
-		return this.#resolve(name, tagType(`<${tag}>`, tag))
+		return this.#resolve(name, `<${tag}>`, tag)
 	}
 
 	public button(name: string): unknown {
-		return this.#resolve(name, buttonType)
+		return this.#resolve(name, 'HTMLButtonElement', 'button')
 	}
 
 	public input(name: string): unknown {
-		return this.#resolve(name, inputType)
+		return this.#resolve(name, 'HTMLInputElement', 'input')
 	}
 
 	public textarea(name: string): unknown {
-		return this.#resolve(name, textareaType)
+		return this.#resolve(name, 'HTMLTextAreaElement', 'textarea')
 	}
 
 	public select(name: string): unknown {
-		return this.#resolve(name, selectType)
+		return this.#resolve(name, 'HTMLSelectElement', 'select')
 	}
 
 	public form(name: string): unknown {
-		return this.#resolve(name, formType)
+		return this.#resolve(name, 'HTMLFormElement', 'form')
 	}
 
-	#resolve(name: string, expected?: ExpectedType<Element>): unknown {
-		return this.#resolver.resolve(name, this.#required, this.#many, expected)
+	// `expected` names what a mismatch is reported as. `tag` is the required tag, or '' for any HTML element.
+	#resolve(name: string, expected?: string, tag?: string): unknown {
+		const root = this.#root
+		let selector = refSelectors.get(name)
+		if (selector === undefined) refSelectors.set(name, (selector = attributeSelector('data-ref', name)))
+
+		// A ref belongs to the nearest root above it; one placed on a nested root belongs to the component above that root.
+		const elements = [...root.querySelectorAll(selector)].filter(
+			element =>
+				(element.hasAttribute('data-nemesia') ? (element.parentElement as Element) : element).closest(
+					'[data-nemesia]'
+				) === root
+		)
+		const count = elements.length
+
+		if (count === 0) {
+			if (this.#required) this.#fail(name, `missing required ref "${name}"`)
+			return this.#many ? elements : null
+		}
+
+		if (!this.#many && count > 1) {
+			this.#fail(name, `duplicate ref "${name}": expected one element, received ${count}`, {
+				expected: 'one element',
+				received: count
+			})
+		}
+
+		if (expected !== undefined) {
+			const invalid = elements.find(element => !isHtmlElement(element) || (tag !== '' && element.localName !== tag))
+
+			if (invalid !== undefined) {
+				const received = `<${invalid.localName}> in namespace "${invalid.namespaceURI ?? 'null'}"`
+				this.#fail(name, `invalid ref "${name}": expected ${expected}, received ${received}`, { expected, received })
+			}
+		}
+
+		return this.#many ? elements : elements[0]
 	}
-}
 
-class OptionalRefQuery extends RefQuery {
-	public readonly many: RefQuery
-
-	public constructor(resolver: RefResolver) {
-		super(resolver, false, false)
-		this.many = new RefQuery(resolver, false, true)
-	}
-}
-
-class RootRefQuery extends RefQuery {
-	public readonly optional: OptionalRefQuery
-	public readonly many: RefQuery
-
-	public constructor(resolver: RefResolver) {
-		super(resolver, true, false)
-		this.optional = new OptionalRefQuery(resolver)
-		this.many = new RefQuery(resolver, true, true)
+	#fail(name: string, reason: string, details?: Record<string, unknown>): never {
+		throw new SkipComponentMountError(reason, {
+			component: this.#component,
+			root: this.#root,
+			ref: name,
+			selector: `[data-ref="${name}"]`,
+			...details
+		})
 	}
 }
 
 export function createRefApi(root: HTMLElement, componentName: string): RefApi {
-	return new RootRefQuery(new RefResolver(root, componentName)) as unknown as RefApi
+	return new RefQuery(root, componentName, true, false) as unknown as RefApi
 }

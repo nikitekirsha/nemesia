@@ -1,51 +1,26 @@
 import type { ComponentCore } from '../component/component-core.js'
-import type { NemesiaApp } from '../component/types.js'
+import type { ComponentMetadata, NemesiaApp } from '../component/types.js'
 
-type ConstructingComponent = ComponentCore
-
-export interface ComponentConstructionCapture {
-	readonly expectedConstructor: Function
-	readonly expectedTarget: ParentNode
+// One entry for every component that is being constructed right now. The base constructor reads it to learn
+// which app is constructing it; the app reads it to see what is under construction when a constructor calls back.
+export interface Construction {
+	readonly type: Function & { readonly nemesia: ComponentMetadata }
+	readonly target: ParentNode
 	readonly app: NemesiaApp
-	instance: ConstructingComponent | undefined
+	instance?: ComponentCore
 }
 
-const captures: ComponentConstructionCapture[] = []
-
-export function beginComponentConstruction(
-	expectedConstructor: Function,
-	expectedTarget: ParentNode,
-	app: NemesiaApp
-): ComponentConstructionCapture {
-	const capture: ComponentConstructionCapture = {
-		expectedConstructor,
-		expectedTarget,
-		app,
-		instance: undefined
-	}
-	captures.push(capture)
-	return capture
-}
+export const constructions: Construction[] = []
 
 export function captureConstructingComponent(
-	actualConstructor: Function,
-	actualTarget: ParentNode,
-	instance: ConstructingComponent
+	type: Function,
+	target: ParentNode,
+	instance: ComponentCore
 ): NemesiaApp | undefined {
-	for (let index = captures.length - 1; index >= 0; index -= 1) {
-		const capture = captures[index] as ComponentConstructionCapture
-		if (
-			capture.instance === undefined &&
-			capture.expectedConstructor === actualConstructor &&
-			capture.expectedTarget === actualTarget
-		) {
-			capture.instance = instance
-			return capture.app
-		}
-	}
-	return undefined
-}
+	const construction = constructions.findLast(
+		candidate => candidate.instance === undefined && candidate.type === type && candidate.target === target
+	)
+	if (construction !== undefined) construction.instance = instance
 
-export function endComponentConstruction(capture: ComponentConstructionCapture): void {
-	captures.splice(captures.lastIndexOf(capture), 1)
+	return construction?.app
 }

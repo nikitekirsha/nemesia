@@ -6,7 +6,7 @@ import {
 	type ComponentDiagnosticContext,
 	observeRejection,
 	reportChannelError,
-	reportDestroyError,
+	reportFailure,
 	resolveComponentName,
 	warnComponent
 } from '../internal/diagnostics.js'
@@ -87,15 +87,7 @@ export abstract class ComponentCore {
 			return this.#listeners.subscribe(targetOrTargets as Channel<unknown>, eventName)
 		}
 
-		if (Array.isArray(targetOrTargets)) {
-			return this.#listeners.on(
-				targetOrTargets,
-				eventName,
-				listener as (event: Event, target: TTarget, index: number) => void,
-				options
-			)
-		}
-
+		// The registry tells a single target from an array itself; the overloads above only type the listener.
 		return this.#listeners.on(targetOrTargets as TTarget, eventName, listener as (event: Event) => void, options)
 	}
 
@@ -125,32 +117,20 @@ export abstract class ComponentCore {
 		if (this.#destroyed) return
 		this.#markDestroyed()
 
-		let result: Promise<void> | undefined
-		let destroyError: unknown
-		let failed = false
-		let cleanupErrors: readonly unknown[] = []
+		const report = (error: unknown): void => {
+			reportFailure(this.#componentName, this.#context, 'onDestroy', error)
+		}
+		let result: void | Promise<void> = undefined
 
 		try {
-			const hookResult = this.onDestroy?.()
-			if (hookResult !== undefined) result = hookResult
+			result = this.onDestroy?.()
 		} catch (error) {
-			failed = true
-			destroyError = error
-		} finally {
-			cleanupErrors = this.#listeners.clear()
+			report(error)
 		}
 
-		if (failed) {
-			reportDestroyError(this.#componentName, this.#context, destroyError)
-		} else if (result !== undefined) {
-			void observeRejection(result, error => {
-				reportDestroyError(this.#componentName, this.#context, error)
-			})
-		}
-
-		for (const error of cleanupErrors) {
-			reportDestroyError(this.#componentName, this.#context, error)
-		}
+		// Listeners go right after the hook, whatever it did, and before anything it returned is looked at.
+		for (const error of this.#listeners.clear()) report(error)
+		if (result !== undefined) void observeRejection(result, report)
 	}
 
 	// The signal aborts the moment destruction starts, before `onDestroy` runs.
