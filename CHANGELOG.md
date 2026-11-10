@@ -2,6 +2,13 @@
 
 All notable changes to Nemesia are documented here.
 
+## 2.4.3 — 2026-11-10
+
+### Changed
+
+- Every release now has a page on GitHub, and its notes are taken from this changelog. The pages of all earlier versions have been added too.
+- The package itself is unchanged: behavior, messages, and types are the same as in 2.4.2.
+
 ## 2.4.1 — 2026-11-10
 
 ### Changed
