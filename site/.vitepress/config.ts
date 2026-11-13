@@ -6,7 +6,8 @@ const repository = 'https://github.com/nikitekirsha/nemesia'
 const base = '/nemesia/'
 const origin = 'https://nikitekirsha.github.io'
 const siteUrl = `${origin}${base}`
-const description = 'Structural sanity for vanilla JS. Components for the HTML your server already sends.'
+const description =
+	'Typed, lifecycle-managed DOM components for server-rendered HTML. A lightweight TypeScript runtime for vanilla JavaScript.'
 const root = (path: string): string => fileURLToPath(new URL(`../../${path}`, import.meta.url))
 const site = (path: string): string => fileURLToPath(new URL(`../${path}`, import.meta.url))
 const { version } = JSON.parse(readFileSync(root('package.json'), 'utf8')) as { version: string }
