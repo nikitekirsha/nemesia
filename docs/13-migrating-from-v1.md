@@ -90,7 +90,7 @@ app.mount(document.body)
 | `methods(ctx)`                                          | Class methods                                                               |
 | `setup(ctx)`, `ctx.onMount`                             | `onMount()`                                                                 |
 | `ctx.onUnmount`, `ctx.cleanup`                          | `onDestroy()`                                                               |
-| `ctx.on(...)`, which returned a disposer                | `this.on(...)`; pass `once` or `signal` to stop a listener early            |
+| `ctx.on(...)`, which returned a disposer                | `this.on(...)`. Pass `once` or `signal` to stop a listener early            |
 | `app.register(component)`                               | `app.register([Component])`: always an array                                |
 | `app.getInstance(element, name)`                        | `app.find(Class, element)`                                                  |
 | `app.reconcile`, `app.refresh`, `ctx.onRefresh`         | Removed. An instance never re-reads its markup                              |

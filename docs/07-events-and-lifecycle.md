@@ -115,7 +115,7 @@ Nothing has to be cleaned up by hand. The listener is removed when the listening
 
 A listener that throws is reported with `console.error` and does not stop the other listeners or the component that emitted.
 
-The owner may still emit from its `onDestroy`; the channel closes right after the hook.
+The owner may still emit from its `onDestroy`. The channel closes right after the hook.
 
 Code outside a component can listen with `channel.subscribe(listener)`, which returns the function that removes the listener.
 
@@ -137,7 +137,7 @@ If the hook throws, the partial mounted instance is destroyed and other componen
 
 If an asynchronous `onMount` later rejects, Nemesia reports the error and destroys that instance.
 
-Singleton candidates skipped in favor of an instance whose `onMount` fails are not retried automatically; call `mount()` again if needed.
+Singleton candidates skipped in favor of an instance whose `onMount` fails are not retried automatically. Call `mount()` again if needed.
 
 ## `onDestroy`
 

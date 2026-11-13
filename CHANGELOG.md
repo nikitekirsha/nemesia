@@ -2,14 +2,14 @@
 
 All notable changes to Nemesia are documented here.
 
-## 2.4.1 — 2026-11-10
+## 2.4.1 (2026-11-10)
 
 ### Changed
 
 - The browser build is about 12% smaller: 5.6 KB gzipped instead of 6.4 KB. Behavior, messages, and types are unchanged.
 - `this.ref.optional`, `this.ref.many`, and `this.option.optional` are created when they are read instead of with every component, which also lowers the memory each component uses.
 
-## 2.4.0 — 2026-11-10
+## 2.4.0 (2026-11-10)
 
 ### Added
 
@@ -23,7 +23,7 @@ All notable changes to Nemesia are documented here.
 
 - `signal` and `channel` are now members of every component. A subclass that defines its own member with either name has to rename it.
 
-## 2.3.0 — 2026-11-10
+## 2.3.0 (2026-11-10)
 
 ### Added
 
@@ -45,18 +45,18 @@ All notable changes to Nemesia are documented here.
 - A mutation record with more than about a hundred thousand nodes no longer overflows the call stack.
 - An `onMount` rejection whose value throws when inspected is reported and destroys the instance. It used to be swallowed.
 
-## 2.2.2 — 2026-09-26
+## 2.2.2 (2026-09-26)
 
 ### Fixed
 
 - With observation, `find` and `findAll` include markup inserted earlier in the same task and exclude roots removed in it.
 - With observation, `destroy(scope)` also destroys roots inserted into the scope earlier in the same task.
 
-## 2.2.1 — 2026-09-26
+## 2.2.1 (2026-09-26)
 
 - Documentation website. The README links to it instead of listing the guide chapters.
 
-## 2.2.0 — 2026-09-25
+## 2.2.0 (2026-09-25)
 
 ### Added
 
@@ -66,7 +66,7 @@ All notable changes to Nemesia are documented here.
 ### Breaking changes
 
 - The ESM build exports `Component`, `DistributedComponent` and `createApp` by name. The `Nemesia` namespace object exists only in the UMD build.
-- Within one mount, every component is constructed first; `onMount` then runs for nested components before their parents, and for distributed components last.
+- Within one mount, every component is constructed first. `onMount` then runs for nested components before their parents, and for distributed components last.
 - `DistributedComponent(name)` no longer takes an options argument.
 - `this.ref` and `this.option` methods live on the prototype, so they cannot be destructured.
 - When a singleton's `onMount` fails, candidates skipped in its favor mount on the next `mount()` call.
@@ -80,7 +80,7 @@ All notable changes to Nemesia are documented here.
 
 - Number literal options compare with strict equality.
 
-## 2.1.0 — 2026-09-25
+## 2.1.0 (2026-09-25)
 
 ### Added
 
@@ -101,29 +101,29 @@ All notable changes to Nemesia are documented here.
 
 - Mutations that add or remove no elements skip ancestry bookkeeping.
 
-## 2.0.1 — 2026-07-12
+## 2.0.1 (2026-07-12)
 
 - Documentation comments for public methods and properties.
 
-## 2.0.0 — 2026-07-07
+## 2.0.0 (2026-07-07)
 
 - Complete rewrite: class components with typed refs and options, distributed components, DOM contract validation and optional observation of dynamic DOM.
 
-## 1.1.3 — 2026-04-09
+## 1.1.3 (2026-04-09)
 
 - More detailed warnings.
 - Optional `schema.options` in `defineComponent`.
 
-## 1.1.2 — 2026-04-09
+## 1.1.2 (2026-04-09)
 
 - Computed values.
 - Multiple component instances on a single element.
 
-## 1.0.3 — 2026-04-02
+## 1.0.3 (2026-04-02)
 
 - Untagged refs fall back to `HTMLElement`.
 - Best practices chapter in the documentation.
 
-## 1.0.0 — 2026-03-30
+## 1.0.0 (2026-03-30)
 
 - Initial release.

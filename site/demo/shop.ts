@@ -21,7 +21,7 @@ export class Shop extends Component('shop') {
 
 	private async loadMore() {
 		this.more.disabled = true
-		this.write('loading more flowers from the server…')
+		this.write('loading more flowers from the server...')
 
 		const html = await fetchFlowers(++this.page)
 		// The shop may have been removed while the request was in flight

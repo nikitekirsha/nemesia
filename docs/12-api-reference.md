@@ -25,7 +25,7 @@ const app = createApp({ observe: true })
 | Member                    | Returns     | Notes                                                                                                                           |
 | ------------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `options`                 | object      | The normalized, read-only options.                                                                                              |
-| `register(components)`    | the app     | Takes an array. Warns when a name is registered twice; throws for anything that is not a component class.                       |
+| `register(components)`    | the app     | Takes an array. Warns when a name is registered twice. Throws for anything that is not a component class.                       |
 | `mount(scope?)`           | `void`      | Mounts registered components on and inside `scope`, which defaults to `document.body`. Safe to repeat.                          |
 | `destroy(scope?)`         | `void`      | Destroys concrete components on and inside `scope` and distributed components of that exact scope. Defaults to `document.body`. |
 | `disconnect(scope?)`      | `void`      | Stops observing one scope, or every scope when omitted. Destroys nothing.                                                       |
@@ -48,8 +48,8 @@ class Search extends Component('search', { root: 'form' }) {}
 | Member                     | Meaning                                                                                                           |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
 | `root`                     | The element carrying `data-nemesia`.                                                                              |
-| `ref`                      | Element lookup by `data-ref`; see below.                                                                          |
-| `option`                   | Option parsing from `data-option-*`; see below.                                                                   |
+| `ref`                      | Element lookup by `data-ref`. See below.                                                                          |
+| `option`                   | Option parsing from `data-option-*`. See below.                                                                   |
 | `on(target, type, fn, o?)` | Adds a listener that is removed on destroy. `target` may be an array. Returns a function that removes it earlier. |
 | `signal`                   | An `AbortSignal` that aborts when the component is destroyed.                                                     |
 | `channel<T>()`             | Creates a typed channel this component emits into. It closes when the component is destroyed.                     |
@@ -57,7 +57,7 @@ class Search extends Component('search', { root: 'form' }) {}
 | `warn(message, payload?)`  | Logs a warning with the component name and root attached.                                                         |
 | `find(Class, within?)`     | Like `app.find`, but `within` defaults to the root and the caller is never returned.                              |
 | `findAll(Class, within?)`  | Like `app.findAll`, with the same defaults.                                                                       |
-| `onMount()`                | Optional hook. Runs after construction; may return a promise.                                                     |
+| `onMount()`                | Optional hook. Runs after construction. May return a promise.                                                     |
 | `onDestroy()`              | Optional hook. Runs once before the listeners from `on` are removed.                                              |
 
 ### `this.ref`
@@ -71,17 +71,17 @@ Four families share the same helpers:
 | `ref.many`          | `this.ref.many.button('tab')`        | component skipped | all returned      |
 | `ref.optional.many` | `this.ref.optional.many.button('x')` | `[]`              | all returned      |
 
-| Helper           | Element type              | Checked at runtime       |
-| ---------------- | ------------------------- | ------------------------ |
-| `element`        | `HTMLElement`             | any HTML element         |
-| `button`         | `HTMLButtonElement`       | `<button>`               |
-| `input`          | `HTMLInputElement`        | `<input>`                |
-| `textarea`       | `HTMLTextAreaElement`     | `<textarea>`             |
-| `select`         | `HTMLSelectElement`       | `<select>`               |
-| `form`           | `HTMLFormElement`         | `<form>`                 |
-| `tag(tag, name)` | the element type of `tag` | that HTML tag            |
-| `one<T>`         | `T`                       | no; single families only |
-| `of<T>`          | `T`                       | no; many families only   |
+| Helper           | Element type              | Checked at runtime          |
+| ---------------- | ------------------------- | --------------------------- |
+| `element`        | `HTMLElement`             | any HTML element            |
+| `button`         | `HTMLButtonElement`       | `<button>`                  |
+| `input`          | `HTMLInputElement`        | `<input>`                   |
+| `textarea`       | `HTMLTextAreaElement`     | `<textarea>`                |
+| `select`         | `HTMLSelectElement`       | `<select>`                  |
+| `form`           | `HTMLFormElement`         | `<form>`                    |
+| `tag(tag, name)` | the element type of `tag` | that HTML tag               |
+| `one<T>`         | `T`                       | No, only in single families |
+| `of<T>`          | `T`                       | No, only in many families   |
 
 An element with the wrong tag skips the component in every family.
 
@@ -89,8 +89,8 @@ An element with the wrong tag skips the component in every family.
 
 | Helper                             | Result  | Accepts                                                              |
 | ---------------------------------- | ------- | -------------------------------------------------------------------- |
-| `string(name, constraints?)`       | string  | Any value; `minLength`, `maxLength`, `pattern`.                      |
-| `number(name, constraints?)`       | number  | A finite number; `min`, `max`, `integer`.                            |
+| `string(name, constraints?)`       | string  | Any value. Constraints: `minLength`, `maxLength`, `pattern`.         |
+| `number(name, constraints?)`       | number  | A finite number. Constraints: `min`, `max`, `integer`.               |
 | `boolean(name)`                    | boolean | `true`, `false`, `1`, `0`, or an empty attribute, which means true.  |
 | `json<T>(name, { validate? })`     | `T`     | Anything `JSON.parse` accepts, then the optional type guard.         |
 | `enum(name, values)`               | union   | One of the listed strings.                                           |
@@ -140,16 +140,16 @@ The UMD build exposes `Component`, `DistributedComponent`, `createApp`, and `laz
 
 ## Diagnostics
 
-| Situation                                                      | Output          | Effect                           |
-| -------------------------------------------------------------- | --------------- | -------------------------------- |
-| Missing, duplicate, or mistyped ref; missing or invalid option | `console.warn`  | That instance is skipped.        |
-| Wrong root tag, or a second root of a `multiple: false`        | `console.warn`  | That root is skipped.            |
-| A name registered twice                                        | `console.warn`  | The latest registration is used. |
-| A lazy component whose module fails to load                    | `console.error` | Its roots stay unmounted.        |
-| A channel listener that throws                                 | `console.error` | The other listeners still run.   |
-| `mount()` before `document.body` exists                        | `console.warn`  | Nothing is mounted.              |
-| An error thrown by a constructor or `onMount`                  | `console.error` | That instance is dropped.        |
-| An error thrown by `onDestroy`                                 | `console.error` | Cleanup continues.               |
+| Situation                                                         | Output          | Effect                           |
+| ----------------------------------------------------------------- | --------------- | -------------------------------- |
+| Missing, duplicate, or mistyped ref, or missing or invalid option | `console.warn`  | That instance is skipped.        |
+| Wrong root tag, or a second root of a `multiple: false`           | `console.warn`  | That root is skipped.            |
+| A name registered twice                                           | `console.warn`  | The latest registration is used. |
+| A lazy component whose module fails to load                       | `console.error` | Its roots stay unmounted.        |
+| A channel listener that throws                                    | `console.error` | The other listeners still run.   |
+| `mount()` before `document.body` exists                           | `console.warn`  | Nothing is mounted.              |
+| An error thrown by a constructor or `onMount`                     | `console.error` | That instance is dropped.        |
+| An error thrown by `onDestroy`                                    | `console.error` | Cleanup continues.               |
 
 Every message starts with `[Nemesia]` and carries the component name and the element involved.
 

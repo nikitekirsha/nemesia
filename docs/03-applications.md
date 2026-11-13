@@ -55,7 +55,7 @@ app.mount()
 
 The loader resolves to the component class or to the module that exports it. From a module, Nemesia takes the one export that is a component with that name.
 
-A module is requested once, when `mount` or the observer first finds a root for it. A page without that root never downloads it. Markup that arrives later triggers the load in an observed app; without observation, the next `mount` call does.
+A module is requested once, when `mount` or the observer first finds a root for it. A page without that root never downloads it. Markup that arrives later triggers the load in an observed app. Without observation, the next `mount` call does.
 
 Components found in the same pass load in parallel and then mount together, nested components before their parents, exactly as if they had been registered from the start.
 

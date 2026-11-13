@@ -40,7 +40,7 @@ export default defineConfig({
 	head: [
 		['link', { rel: 'icon', type: 'image/svg+xml', href: `${base}logo.svg` }],
 		['meta', { name: 'theme-color', content: '#6356D8' }],
-		// Lets CSS hide animated parts of the landing page before the first paint; see theme/reveal.ts.
+		// Lets CSS hide animated parts of the landing page before the first paint. See theme/reveal.ts.
 		[
 			'script',
 			{},

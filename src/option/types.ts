@@ -151,6 +151,6 @@ export interface OptionalOptionApi {
 
 /** Option lookup API available as `this.option` inside concrete components */
 export interface OptionApi extends RequiredOptionApi {
-	/** Optional option lookup API; missing options return `undefined` unless a default is provided */
+	/** Optional option lookup API. Missing options return `undefined` unless a default is provided */
 	readonly optional: OptionalOptionApi
 }

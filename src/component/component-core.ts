@@ -62,7 +62,7 @@ export abstract class ComponentCore {
 	public on<TValue>(channel: Channel<TValue>, listener: (value: TValue) => void): () => void
 	/**
 	 * Registers an event listener that is removed automatically on destroy, and returns a function that removes it earlier
-	 * Known DOM events are typed from the target; custom events are `Event` unless the listener parameter is annotated
+	 * Known DOM events are typed from the target. Custom events are `Event` unless the listener parameter is annotated
 	 */
 	public on<TTarget extends EventTarget, TName extends EventName<TTarget>, TEvent extends Event = Event>(
 		target: TTarget,
@@ -70,7 +70,7 @@ export abstract class ComponentCore {
 		listener: (event: TargetEvent<TTarget, TName, TEvent>) => void,
 		options?: AddEventListenerOptions
 	): () => void
-	/** Registers the same event listener for every target in the array; the returned function removes all of them */
+	/** Registers the same event listener for every target in the array. The returned function removes all of them */
 	public on<TTarget extends EventTarget, TName extends EventName<TTarget>, TEvent extends Event = Event>(
 		targets: readonly TTarget[],
 		eventName: TName,
@@ -144,6 +144,6 @@ export interface ComponentCore {
 	/** Called after the component is mounted and its refs and options are available */
 	onMount?(): void | Promise<void>
 
-	/** Called before the component is destroyed; registered listeners are cleaned up afterwards */
+	/** Called before the component is destroyed. Registered listeners are cleaned up afterwards */
 	onDestroy?(): void | Promise<void>
 }

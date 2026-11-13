@@ -126,7 +126,7 @@ class MapWidget extends Component('map-widget') {
 }
 ```
 
-Nemesia owns listeners registered through `this.on`; the component owns external objects such as `map`.
+Nemesia owns listeners registered through `this.on`. The component owns external objects such as `map`.
 
 ## Responsive behavior
 

@@ -49,7 +49,7 @@ interface OptionalSingleRefApi {
 	/** Returns one optional form ref by name, or `null` when it is missing */
 	form(name: string): HTMLFormElement | null
 
-	/** Optional multi-ref lookup API; missing refs return an empty array */
+	/** Optional multi-ref lookup API. Missing refs return an empty array */
 	readonly many: OptionalManyRefApi
 }
 
@@ -60,7 +60,7 @@ interface RequiredManyRefApi {
 	/** Returns all required HTMLElement refs by name */
 	element(name: string): HTMLElement[]
 
-	/** Returns all required refs by name; every one must be the given HTML tag */
+	/** Returns all required refs by name. Every one must be the given HTML tag */
 	tag<TTag extends keyof HTMLElementTagNameMap>(tag: TTag, name: string): HTMLElementTagNameMap[TTag][]
 
 	/** Returns all required button refs by name */
@@ -86,7 +86,7 @@ interface OptionalManyRefApi {
 	/** Returns all optional HTMLElement refs by name, or an empty array when none exist */
 	element(name: string): HTMLElement[]
 
-	/** Returns all optional refs by name, or an empty array when none exist; every one must be the given HTML tag */
+	/** Returns all optional refs by name, or an empty array when none exist. Every one must be the given HTML tag */
 	tag<TTag extends keyof HTMLElementTagNameMap>(tag: TTag, name: string): HTMLElementTagNameMap[TTag][]
 
 	/** Returns all optional button refs by name, or an empty array when none exist */
@@ -107,7 +107,7 @@ interface OptionalManyRefApi {
 
 /** Ref lookup API available as `this.ref` inside concrete components */
 export interface RefApi extends RequiredSingleRefApi {
-	/** Optional ref lookup API; missing single refs return `null` */
+	/** Optional ref lookup API. Missing single refs return `null` */
 	readonly optional: OptionalSingleRefApi
 
 	/** Required multi-ref lookup API */

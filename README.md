@@ -4,7 +4,7 @@
 
 Typed, lifecycle-managed DOM components for server-rendered HTML. A lightweight TypeScript runtime for vanilla JavaScript.
 
-Nemesia is a small DOM-first runtime for server-rendered and CMS-driven websites. Your server owns the HTML. Nemesia finds components in the markup and attaches your behavior to them. No virtual DOM, no hydration, no build step.
+Nemesia is a small DOM-first runtime for server-rendered and CMS-driven websites. Your server owns the HTML. Nemesia finds components in the markup and attaches your behavior to them. It runs without a virtual DOM, hydration, or a build step.
 
 It provides typed refs and options, DOM contract validation, lifecycle hooks, component lookup, automatic event cleanup, and optional observation of dynamic DOM changes. Components can talk to each other through typed channels, cancel their work when they are destroyed with an `AbortSignal`, and load their code only when their markup appears. It does not render HTML or introduce a client-side application model.
 

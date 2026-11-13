@@ -118,7 +118,7 @@ fallback = this.option.optional.custom('fallback', parsePoint, isPoint, {
 })
 ```
 
-Parser exceptions and failed validators become normal contract warnings; they do not abort mounting of other roots.
+Parser exceptions and failed validators become normal contract warnings. They do not abort mounting of other roots.
 
 ## Attribute naming
 

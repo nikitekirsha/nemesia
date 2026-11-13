@@ -1,6 +1,6 @@
 ---
 layout: page
-title: Nemesia - structural sanity for vanilla JS
+title: 'Nemesia - structural sanity for vanilla JS'
 titleTemplate: Nemesia
 ---
 
@@ -65,7 +65,7 @@ const notes = [
 <section class="nm-hero">
 <div class="nm-hero__text">
 
-<a class="nm-pill" href="./changelog#_2-4-0-—-2026-11-10"><b>2.4</b> Channels, signals, lazy components<span aria-hidden="true">→</span></a>
+<a class="nm-pill" href="./changelog#_2-4-0-2026-11-10"><b>2.4</b> Channels, signals, lazy components<span aria-hidden="true">→</span></a>
 
 <h1 class="nm-hero__title">Structural sanity for vanilla JS.</h1>
 
@@ -133,7 +133,7 @@ function initSliders() {
 }
 
 initSliders()
-// Slides arrived via AJAX? Call initSliders() again…
+// Slides arrived via AJAX? Call initSliders() again...
 // and hope nothing gets a second set of listeners.
 ```
 
@@ -251,7 +251,7 @@ class Slider extends Component('slider') {
 </div>
 <div class="nm-console" role="log">
 	<p class="nm-console__warn"><span aria-hidden="true">⚠</span> [Nemesia] Component "slider" skipped: invalid ref "next": expected HTMLButtonElement, received &lt;div&gt; in namespace "http://www.w3.org/1999/xhtml".</p>
-	<p class="nm-console__dim">▸ { component: 'slider', root: div, ref: 'next', expected: 'HTMLButtonElement', … }</p>
+	<p class="nm-console__dim">▸ { component: 'slider', root: div, ref: 'next', expected: 'HTMLButtonElement', ... }</p>
 </div>
 </template>
 <template v-slot:option>
@@ -297,11 +297,11 @@ class Slider extends Component('slider') {
 <div class="nm-reason__code vp-doc">
 
 ```html
-<!-- Rendered by Rails, Django, WordPress, Bitrix… -->
+<!-- Rendered by Rails, Django, WordPress, Bitrix... -->
 <div data-nemesia="slider" data-option-delay="4000">
 	<div data-ref="slide">One</div>
 	<div data-ref="slide">Two</div>
-	…
+	...
 </div>
 ```
 
@@ -326,7 +326,7 @@ const app = createApp({ observe: true })
 app.register([Slider, Tabs, Gallery])
 app.mount()
 
-// htmx, Turbo, Bitrix AJAX, your own fetch…
+// htmx, Turbo, Bitrix AJAX, your own fetch...
 box.innerHTML = html // new ones mount, old ones clean up
 ```
 
@@ -394,14 +394,14 @@ box.innerHTML = html // new ones mount, old ones clean up
 <div class="nm-capability__text">
 	<p class="nm-chip">this.channel&lt;T&gt;()</p>
 	<h3>Components that talk</h3>
-	<p>A typed stream from one component to others. No DOM events, no string names, no <code>removeEventListener</code>: both sides clean up when either is destroyed.</p>
+	<p>A typed stream from one component to others. Unlike DOM events, it is typed and needs no <code>removeEventListener</code>. Both sides clean up when either is destroyed.</p>
 </div>
 <div class="nm-capability__code vp-doc">
 
 ```ts
 class Counter extends Component('counter') {
 	changed = this.channel<number>()
-	// …this.changed.emit(value)
+	// ...this.changed.emit(value)
 }
 
 // in any component that finds a counter
@@ -509,7 +509,7 @@ app.register([
 
 <section class="nm-section">
 
-<RevealTitle label="FAQ" text="Why not just…?" />
+<RevealTitle label="FAQ" text="Why not just...?" />
 
 <Reveal stagger>
 
@@ -528,7 +528,7 @@ app.register([
 	</div>
 	<div>
 		<dt>jQuery?</dt>
-		<dd>Selectors without structure: no lifecycle, no cleanup, no contract. Nemesia is what you end up writing after the fifth <code>initSliders()</code>.</dd>
+		<dd>Selectors on their own give you no lifecycle, cleanup, or contract. Nemesia is what you end up writing after the fifth <code>initSliders()</code>.</dd>
 	</div>
 	<div>
 		<dt>Is it reactive?</dt>
