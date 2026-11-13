@@ -79,6 +79,6 @@ app.mount(document.body)
 
 ## Guide
 
-The guide is on the **[website](https://nikitekirsha.github.io/nemesia/)**.
+The guide is on the **[website](https://nikitekirsha.github.io/nemesia)**.
 
-Release notes are in the [changelog](https://github.com/nikitekirsha/nemesia/blob/main/CHANGELOG.md).
+Release notes are in the [changelog](https://nikitekirsha.github.io/nemesia/changelog).
